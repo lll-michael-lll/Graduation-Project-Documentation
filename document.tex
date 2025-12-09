@@ -1,0 +1,297 @@
+\documentclass[12pt,a4paper]{report}
+
+% -----------------------------
+% Packages
+% -----------------------------
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{tocloft}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{lscape}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\geometry{margin=1in}
+\onehalfspacing
+
+% clickable links formatting
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% Make chapter uppercase and bold
+\titleformat{\chapter}{\bfseries\Large}{\thechapter.}{1em}{}
+
+% -----------------------------
+% DOCUMENT START
+% -----------------------------
+\begin{document}
+
+% --------------------------------
+% Cover Page
+% --------------------------------
+\begin{titlepage}
+    \centering
+    {\Large \textbf{Faculty of Engineering – Ain Shams University}}\\[0.5cm]
+    {\Large Computer and Systems Engineering Department}\\[3cm]
+
+    {\Huge \textbf{zGate Gateway: A Zero Trust Database Access Proxy}}\\[1cm]
+    {\Large Graduation Project Thesis}\\[3cm]
+
+    \textbf{Team Members:}\\
+    Michael George\\
+    Karen ...\\
+    Rodina ...\\[1cm]
+
+    \textbf{Supervisor:}\\
+    Dr. …\\[2cm]
+
+    {\Large Academic Year 2025–2026}
+\end{titlepage}
+
+% --------------------------------
+% Acknowledgments
+% --------------------------------
+\chapter*{Acknowledgments}
+We would like to thank...
+
+\newpage
+
+% --------------------------------
+% Abstract
+% --------------------------------
+\chapter*{Abstract}
+This project introduces a Zero Trust–based database access gateway (SecureDB Gateway)...
+
+\newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+
+% ============================================================
+% 1. TEAM INFORMATION
+% ============================================================
+\chapter{Team Information}
+\section{Team Members}
+\section{Roles \& Responsibilities}
+
+% ============================================================
+% 2. INTRODUCTION & PROBLEM DEFINITION
+% ============================================================
+\chapter{Introduction \& Problem Definition}
+\section{Introduction}
+\section{Problem Statement}
+\section{Gap in Existing Solutions}
+\section{Why Zero Trust for Databases is Different}
+
+% ============================================================
+% 3. PROJECT DEFINITION
+% ============================================================
+\chapter{Project Definition}
+\section{Project Definition \& Scope}
+\section{Objectives}
+\section{Expected Academic Contribution}
+
+% ============================================================
+% 4. REQUIREMENTS ENGINEERING
+% ============================================================
+\chapter{Requirements Engineering}
+\section{Functional Requirements}
+\section{Non-Functional Requirements}
+\section{Actors \& Use Cases}
+\section{Use Case Diagrams}
+\section{User Stories}
+
+% ============================================================
+% 5. PROPOSED SOLUTION
+% ============================================================
+\chapter{Proposed Solution}
+\section{Overview of the Proposed Solution}
+\section{Solution Architecture Layers}
+\subsection{Authentication Layer}
+\subsection{Proxy Layer}
+\subsection{Policy Engine Layer}
+\subsection{Data Protection Layer}
+\subsection{Observability Layer}
+\section{Term 1 vs Term 2 Features}
+\section{Feature List}
+
+% ============================================================
+% 6. Alignment with International Standards
+% ============================================================
+\chapter{Alignment with International Standards}
+\section{PCI DSS}
+\section{HIPAA}
+\section{GDPR}
+\section{ISO 27001}
+
+% ============================================================
+% 7. COMPETITOR & MARKET ANALYSIS
+% ============================================================
+\chapter{Competitor \& Market Analysis}
+\section{Competitor Analysis}
+\subsection{Comparison Table}
+\subsection{What Competitors Lack}
+\section{Market Research}
+\subsection{Market Overview}
+\subsection{Zero Trust Demand}
+\subsection{Market Challenges \& Needs}
+\subsection{Regulatory Drivers}
+\subsection{Trends \& Opportunities}
+\subsection{Landscape Summary}
+
+% ============================================================
+% 8. SCIENTIFIC RESEARCH & LITERATURE REVIEW
+% ============================================================
+\chapter{Scientific Research \& Literature Review}
+\section{Paper 1}
+\section{Paper 2}
+\section{Paper 3}
+\section{Paper 4}
+\section{Paper 5}
+\section{Paper 6}
+\section{Paper 7}
+
+% ============================================================
+% 9. SYSTEM ARCHITECTURE
+% ============================================================
+\chapter{System Architecture}
+\section{High-Level Architecture Diagram}
+\section{Main System Components}
+\section{Component Communication Flow}
+\section{Tech Stack Summary}
+
+% ============================================================
+% 10. DETAILED ARCHITECTURE OF THE PROXY
+% ============================================================
+\chapter{Detailed Architecture of the Proxy}
+\section{Connection Lifecycle}
+\section{Authentication Flow}
+\section{Query Filtering Flow}
+\section{Policy Enforcement Flow}
+\section{Session Monitoring Flow}
+\section{User → Gateway → Database Diagram}
+
+% ============================================================
+% 11. HIGH-LEVEL DATA FLOW DIAGRAMS
+% ============================================================
+\chapter{High-Level Data Flow Diagrams}
+\section{Authentication Flow Diagram}
+\section{Query Filtering Diagram}
+\section{Logging \& Auditing Flow Diagram}
+
+% ============================================================
+% 12. TECHNOLOGY JUSTIFICATION
+% ============================================================
+\chapter{Technology Justification}
+\section{Why Go}
+\section{Why Node.js / TS / React}
+\section{Why mTLS (and why TCP is temporary)}
+\section{Why SQLite / Internal Storage}
+\section{Design Decision Summary}
+
+% ============================================================
+% 13. PROTOTYPE – SEMESTER 1
+% ============================================================
+\chapter{Prototype – Semester 1}
+\section{Implemented Features}
+\section{Screenshots (CLI \& Dashboard)}
+\section{What Works vs What Doesn’t}
+\section{Technical Decisions Made}
+\section{Implementation Challenges}
+
+% ============================================================
+% 14. DEVELOPMENT METHODOLOGY
+% ============================================================
+\chapter{Development Methodology}
+\section{Agile Method}
+\section{Meeting Structure}
+\section{Collaboration Tools}
+\section{Documentation \& Observability}
+
+% ============================================================
+% 15. TASK TRACKING
+% ============================================================
+\chapter{Task Tracking}
+\section{Team Task Tracking (Actual Examples)}
+\section{Supervisor Tracking Logs}
+\section{Blockers, Risks \& Resolution Notes}
+
+% ============================================================
+% 16. MILESTONES
+% ============================================================
+\chapter{Milestones}
+\section{Term 1 Milestone Roadmap}
+\subsection{Milestone 1}
+\subsection{Milestone 2}
+\subsection{Milestone 3}
+\subsection{Milestone 4}
+\subsection{Milestone 5}
+\section{Timeline Chart (Gantt-like)}
+
+% ============================================================
+% 17. THREAT MODEL & SECURITY CONSIDERATIONS
+% ============================================================
+\chapter{Threat Model \& Security Considerations}
+\section{Threat Model}
+\section{Risks \& Attack Vectors}
+\section{Mitigation Techniques}
+\section{Why Zero Trust is Needed}
+
+% ============================================================
+% 18. ROADMAP FOR TERM 2
+% ============================================================
+\chapter{Roadmap for Term 2}
+\section{Remaining Features}
+\section{Architecture Improvements}
+\section{Performance Goals}
+\section{Testing \& Validation Plan}
+
+% ============================================================
+% 19. TEAM CONTRIBUTION
+% ============================================================
+\chapter{Team Contribution}
+\section{Overview of Contribution Approach}
+\section{Individual Contributions}
+
+% ============================================================
+% 20. EXPECTED OUTCOMES
+% ============================================================
+\chapter{Expected Outcomes}
+
+% ============================================================
+% 22. CONCLUSION
+% ============================================================
+\chapter{Conclusion}
+\section{Restated Purpose}
+\section{Summary of Achievements}
+\section{Importance \& Contribution}
+\section{Transition to Next Semester}
+
+% ============================================================
+% REFERENCES
+% ============================================================
+\chapter*{References}
+\bibliographystyle{plain}
+\bibliography{references}
+
+% ============================================================
+% APPENDICES
+% ============================================================
+\appendix
+\chapter{Glossary}
+\chapter{Dashboard Mockups}
+
+\end{document}
