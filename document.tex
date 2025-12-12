@@ -165,6 +165,2051 @@ This project introduces a Zero Trust–based database access gateway (SecureDB G
 \section{Paper 7}
 
 % ============================================================
+% X. TECHNICAL BACKGROUND
+% ============================================================
+\chapter{Technical Background}
+
+This chapter provides an in-depth technical overview of all technologies, protocols, and architectural concepts forming the foundation of the zGate Zero Trust Database Access Proxy. The discussion is intentionally extensive to support academic rigor and enable future researchers or developers to extend the project.
+
+% ------------------------------------------------------------
+% 1. Systems Programming (Go Language)
+% ------------------------------------------------------------
+\section{Systems Programming in Go}
+
+The zGate gateway is implemented entirely in Go (Golang) version 1.25.4. Go is selected due to its strong concurrency model, built-in memory safety guarantees, and first-class support for networked systems.
+
+\subsection{Introduction to Go Programming Language}
+
+Go, also known as Golang, is a statically typed, compiled programming language designed at Google in 2007 by Robert Griesemer, Rob Pike, and Ken Thompson. First released publicly in 2009, Go was created to address shortcomings in other languages used for systems programming, particularly in the context of multicore processors, networked systems, and large codebases.
+
+\paragraph{Design Philosophy}
+Go emphasizes simplicity, readability, and pragmatism. Key design principles include:
+\begin{itemize}
+    \item \textbf{Simplicity}: Minimalist syntax with only 25 keywords
+    \item \textbf{Explicit over implicit}: No hidden control flow or magic behaviors
+    \item \textbf{Composition over inheritance}: Interfaces and struct embedding instead of class hierarchies
+    \item \textbf{Fast compilation}: Designed for rapid build times even in large projects
+    \item \textbf{Built-in concurrency}: First-class language support for concurrent programming
+\end{itemize}
+
+\paragraph{Memory Safety}
+Go provides automatic memory management through garbage collection, eliminating entire classes of vulnerabilities:
+\begin{itemize}
+    \item \textbf{No manual memory management}: Prevents use-after-free and double-free errors
+    \item \textbf{Bounds checking}: Array and slice accesses are automatically validated
+    \item \textbf{No pointer arithmetic}: Prevents buffer overflows and memory corruption
+    \item \textbf{Type safety}: Strong static typing prevents type confusion attacks
+\end{itemize}
+
+\paragraph{Standard Library}
+Go's extensive standard library includes production-ready packages for:
+\begin{itemize}
+    \item Network programming (\texttt{net}, \texttt{net/http})
+    \item Cryptography (\texttt{crypto/*})
+    \item Encoding/decoding (\texttt{encoding/json}, \texttt{encoding/xml})
+    \item Testing and benchmarking (\texttt{testing})
+    \item Concurrent programming (\texttt{sync}, \texttt{context})
+\end{itemize}
+
+\subsection{Go Runtime Model}
+
+Go employs a sophisticated user-space thread management architecture based on the G--M--P scheduling model, which enables efficient concurrency without the overhead of traditional OS threads.
+
+\paragraph{The G--M--P Model Explained}
+
+\begin{itemize}
+    \item \textbf{G (Goroutine)}: A goroutine is a lightweight cooperative thread with a dynamically-sized stack that starts at 2KB and can grow to several megabytes. Unlike OS threads, goroutines are managed entirely in user space by the Go runtime. Goroutines use cooperative scheduling, meaning they yield control at specific points (channel operations, system calls, function calls) rather than being preemptively interrupted.
+    
+    \item \textbf{M (Machine)}: An M represents an OS thread managed by the operating system kernel. The Go runtime creates a pool of Ms (typically matching the number of CPU cores) that execute goroutines. When a goroutine performs a blocking system call, the M is detached and a new M may be created to continue executing other goroutines.
+    
+    \item \textbf{P (Processor)}: A P is a scheduling context that maintains a local run queue of goroutines. The number of Ps is typically set to the number of available CPU cores (controlled by GOMAXPROCS). Each M must be associated with a P to execute goroutines. When a goroutine blocks, the P can be handed off to another M, allowing other goroutines to continue execution.
+\end{itemize}
+
+\paragraph{Scheduling Mechanism}
+The scheduler implements work-stealing to balance load:
+\begin{enumerate}
+    \item Each P maintains a local queue of runnable goroutines
+    \item When a P's queue is empty, it attempts to steal work from other Ps
+    \item A global run queue handles goroutines that don't fit in local queues
+    \item Network poller integration enables efficient I/O multiplexing
+\end{enumerate}
+
+\paragraph{Why This Matters for zGate}
+This model enables thousands of goroutines to execute concurrently with negligible overhead. zGate relies on this feature because each client session, backend connection, interceptor callback, and logging pipeline runs as its own goroutine. A typical deployment might handle 10,000+ concurrent database connections, each requiring multiple goroutines, which would be impossible with traditional thread-per-connection models.
+
+\subsection{Concurrency Primitives}
+
+Go provides several built-in primitives for concurrent programming that form the foundation of zGate's concurrent architecture.
+
+\paragraph{Goroutines in Detail}
+
+Goroutines are created using the \texttt{go} keyword followed by a function call. They provide several advantages:
+
+\begin{itemize}
+    \item \textbf{Low memory overhead}: Each goroutine starts with only 2KB stack space vs 1-2MB for OS threads
+    \item \textbf{Fast creation}: Creating a goroutine takes microseconds vs milliseconds for threads
+    \item \textbf{Efficient scheduling}: Context switching between goroutines is faster than kernel thread switches
+    \item \textbf{Scalability}: Applications can easily spawn millions of goroutines
+\end{itemize}
+
+In zGate, goroutines are used for:
+\begin{itemize}
+    \item \textbf{Frontend packet reader}: Continuously reads MySQL packets from client connections
+    \item \textbf{Backend packet writer}: Forwards packets to the database server
+    \item \textbf{Audit logger}: Asynchronously writes audit entries without blocking query processing
+    \item \textbf{TLS handshake worker}: Handles cryptographic handshakes in parallel
+    \item \textbf{Interceptor orchestrators}: Executes policy enforcement logic concurrently
+\end{itemize}
+
+\paragraph{Channels in Depth}
+
+Channels are Go's primary mechanism for communication between goroutines, implementing the CSP (Communicating Sequential Processes) model. Channels are typed, thread-safe queues that can be buffered or unbuffered.
+
+\textbf{Channel Types:}
+\begin{itemize}
+    \item \textbf{Unbuffered channels}: Synchronous - sender blocks until receiver is ready
+    \item \textbf{Buffered channels}: Asynchronous up to buffer size - sender blocks only when buffer is full
+    \item \textbf{Directional channels}: Can be send-only (\texttt{chan<-}) or receive-only (\texttt{<-chan})
+\end{itemize}
+
+\textbf{Channel Operations:}
+\begin{itemize}
+    \item \textbf{Send}: \texttt{ch <- value}
+    \item \textbf{Receive}: \texttt{value := <-ch}
+    \item \textbf{Close}: \texttt{close(ch)}
+    \item \textbf{Select}: Multiplexing over multiple channel operations
+\end{itemize}
+
+In zGate, channels provide synchronization for:
+\begin{itemize}
+    \item \textbf{Session-level error propagation}: When a critical error occurs in any goroutine handling a session
+    \item \textbf{Asynchronous event forwarding}: Audit events, metrics, and alerts
+    \item \textbf{Administrative operation coordination}: Graceful shutdown, configuration reloads
+    \item \textbf{Work distribution}: Distributing query processing tasks across worker pools
+\end{itemize}
+
+\paragraph{Mutexes and Atomic Operations}
+
+\textbf{Mutex (Mutual Exclusion):}
+A mutex is a synchronization primitive that protects shared data from concurrent access:
+
+\begin{itemize}
+    \item \textbf{sync.Mutex}: Provides exclusive locking - only one goroutine can hold the lock
+    \item \textbf{sync.RWMutex}: Reader-writer mutex - allows multiple readers OR one writer
+    \item \textbf{Lock/Unlock pattern}: Must be paired, typically using \texttt{defer} to ensure unlock
+\end{itemize}
+
+\textbf{Atomic Operations:}
+The \texttt{sync/atomic} package provides lock-free operations for simple data types:
+
+\begin{itemize}
+    \item \textbf{Atomic integers}: Add, Load, Store, Swap, CompareAndSwap operations
+    \item \textbf{Performance}: Much faster than mutex-based protection for simple counters
+    \item \textbf{Memory ordering}: Provides happens-before guarantees
+\end{itemize}
+
+Critical shared resources in zGate use:
+\begin{itemize}
+    \item \textbf{sync.Mutex / sync.RWMutex}: For metadata caches (user sessions, prepared statements)
+    \item \textbf{sync.Once}: For one-time initialization of secrets, certificates, and database connections
+    \item \textbf{sync/atomic}: For high-throughput metrics (query counts, error rates, latency tracking)
+\end{itemize}
+
+\subsection{Low-Level TCP Socket Programming}
+
+Unlike typical database clients that rely on high-level drivers, zGate communicates directly using the MySQL wire protocol over raw TCP sockets. This low-level approach provides complete control over the communication pipeline.
+
+\paragraph{TCP/IP Socket Fundamentals}
+
+\textbf{TCP (Transmission Control Protocol):}
+\begin{itemize}
+    \item \textbf{Connection-oriented}: Requires handshake (SYN, SYN-ACK, ACK) before data transfer
+    \item \textbf{Reliable}: Guarantees in-order delivery with automatic retransmission
+    \item \textbf{Flow control}: Prevents sender from overwhelming receiver
+    \item \textbf{Congestion control}: Adapts sending rate based on network conditions
+\end{itemize}
+
+\textbf{Socket Operations in Go:}
+\begin{itemize}
+    \item \textbf{net.Dial()}: Establishes outbound TCP connection
+    \item \textbf{net.Listen()}: Creates listening socket for inbound connections
+    \item \textbf{Accept()}: Accepts incoming connection, returns new socket
+    \item \textbf{Read()/Write()}: Transfer data over established connection
+    \item \textbf{Close()}: Terminates connection gracefully
+\end{itemize}
+
+\paragraph{MySQL Protocol Socket Management}
+
+Important responsibilities in zGate include:
+
+\begin{itemize}
+    \item \textbf{Manual packet header reading}: Every MySQL packet begins with a 4-byte header:
+    \begin{itemize}
+        \item Bytes 0-2: Payload length (24-bit little-endian integer, max 16MB)
+        \item Byte 3: Sequence ID (increments with each packet, wraps at 255)
+    \end{itemize}
+    
+    \item \textbf{Deadline management}: Network timeouts prevent hung connections:
+    \begin{itemize}
+        \item \texttt{SetReadDeadline(time.Now().Add(timeout))}: Aborts read if no data arrives
+        \item \texttt{SetWriteDeadline(time.Now().Add(timeout))}: Aborts write if socket buffer is full
+        \item Deadlines are per-operation, not absolute timeouts
+    \end{itemize}
+    
+    \item \textbf{Zero-copy packet forwarding}: When packets don't require inspection or modification:
+    \begin{itemize}
+        \item Direct buffer passing between client and server sockets
+        \item Avoids serialization/deserialization overhead
+        \item Reduces memory allocations and GC pressure
+        \item Uses \texttt{io.Copy()} or \texttt{io.CopyN()} for efficient transfer
+    \end{itemize}
+    
+    \item \textbf{Full connection lifecycle handling}:
+    \begin{itemize}
+        \item \textbf{Handshake phase}: Initial authentication and capability negotiation
+        \item \textbf{Command phase}: Processing client commands (queries, prepared statements)
+        \item \textbf{Result phase}: Streaming result sets back to client
+        \item \textbf{Cleanup}: Proper resource release on connection termination
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Buffer Management}
+
+Efficient buffer handling is critical for performance:
+
+\begin{itemize}
+    \item \textbf{Buffer pools}: Pre-allocated buffers using \texttt{sync.Pool} to reduce GC
+    \item \textbf{Slice capacity management}: Careful pre-allocation to avoid repeated resizing
+    \item \textbf{Memory reuse}: Buffers are reset and returned to pool after use
+    \item \textbf{Large packet handling}: Special handling for packets exceeding 16MB (split across multiple packets)
+\end{itemize}
+
+\subsection{Context Propagation}
+
+The \texttt{context.Context} package provides a standardized way to carry deadlines, cancellation signals, and request-scoped values across API boundaries and between goroutines.
+
+\paragraph{Context Fundamentals}
+
+\textbf{Context Interface:}
+\begin{verbatim}
+type Context interface {
+    Deadline() (deadline time.Time, ok bool)
+    Done() <-chan struct{}
+    Err() error
+    Value(key interface{}) interface{}
+}
+\end{verbatim}
+
+\textbf{Context Creation Functions:}
+\begin{itemize}
+    \item \textbf{context.Background()}: Root context, never cancelled
+    \item \textbf{context.TODO()}: Placeholder when context is unclear
+    \item \textbf{context.WithCancel()}: Returns context with cancel function
+    \item \textbf{context.WithDeadline()}: Cancels at specific time
+    \item \textbf{context.WithTimeout()}: Cancels after duration
+    \item \textbf{context.WithValue()}: Carries request-scoped data
+\end{itemize}
+
+\paragraph{Context in zGate}
+
+The proxy uses \texttt{context.Context} to ensure bounded execution and clean cancellation. Each incoming query obtains a context with:
+
+\begin{itemize}
+    \item \textbf{Query ID}: Unique identifier for request tracing and correlation
+    \item \textbf{Deadline and timeout settings}: 
+    \begin{itemize}
+        \item Default query timeout (e.g., 30 seconds)
+        \item User-specific timeout overrides
+        \item Inherited from client connection timeout if shorter
+    \end{itemize}
+    \item \textbf{User identity and role information}:
+    \begin{itemize}
+        \item Authenticated username
+        \item Active role assignments
+        \item Permission set
+        \item Session token information
+    \end{itemize}
+    \item \textbf{Logging metadata}:
+    \begin{itemize}
+        \item Source IP address
+        \item Client application identifier
+        \item Connection ID
+        \item Request timestamp
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Cancellation Propagation}
+
+Context cancellation terminates goroutines cleanly, avoiding resource leakage:
+
+\begin{enumerate}
+    \item Client disconnects → context cancelled → all related goroutines notified
+    \item Query timeout exceeded → context cancelled → database connection interrupted
+    \item Admin kills session → context cancelled → graceful cleanup initiated
+    \item Shutdown signal received → root context cancelled → all sessions terminated
+\end{enumerate}
+
+\textbf{Best Practices in zGate:}
+\begin{itemize}
+    \item Always pass context as first parameter to functions
+    \item Check \texttt{ctx.Done()} in long-running loops
+    \item Use \texttt{select} to multiplex context cancellation with other operations
+    \item Never store contexts in structs (pass explicitly)
+    \item Defer cancellation function calls to prevent leaks
+\end{itemize}
+
+% ------------------------------------------------------------
+% 2. Database Wire Protocols (MySQL / MariaDB)
+% ------------------------------------------------------------
+\section{Database Wire Protocols (MySQL/MariaDB)}
+
+A distinguishing feature of zGate is its ability to "speak" the MySQL protocol directly, acting as a full proxy rather than a driver or middleware within the application layer.
+
+\subsection{MySQL Protocol Overview}
+
+The MySQL Client/Server Protocol is a binary protocol used for communication between MySQL clients and servers. It was originally designed in the 1990s and has evolved through multiple versions while maintaining backward compatibility.
+
+\paragraph{Protocol Characteristics}
+
+\begin{itemize}
+    \item \textbf{Binary protocol}: Data is transmitted in compact binary format, not ASCII
+    \item \textbf{Stateful}: Server and client maintain session state across multiple packets
+    \item \textbf{Packet-oriented}: All communication happens in discrete packets
+    \item \textbf{Sequential}: Packets within a command are numbered sequentially
+    \item \textbf{Bidirectional}: Both client and server can initiate certain communications
+\end{itemize}
+
+\paragraph{Protocol Phases}
+
+\begin{enumerate}
+    \item \textbf{Connection Phase}: 
+    \begin{itemize}
+        \item Server sends initial handshake packet with capabilities and auth challenge
+        \item Client responds with handshake response containing credentials
+        \item Server sends OK or ERR packet
+    \end{itemize}
+    
+    \item \textbf{Command Phase}:
+    \begin{itemize}
+        \item Client sends command packets (queries, prepared statements, etc.)
+        \item Server responds with result sets, OK, or ERR packets
+        \item Multiple commands can be sent over same connection
+    \end{itemize}
+    
+    \item \textbf{Termination Phase}:
+    \begin{itemize}
+        \item Client sends COM\_QUIT or closes connection
+        \item Server releases resources and closes socket
+    \end{itemize}
+\end{enumerate}
+
+\subsection{MySQL Packet Structure}
+
+Each MySQL packet contains a precisely defined structure that must be correctly parsed and reconstructed by zGate.
+
+\paragraph{Packet Header Format}
+
+\begin{verbatim}
++------------------+------------------+------------------+
+| Byte 0           | Byte 1           | Byte 2           |
+| Payload Length (LSB)                                   |
++------------------+------------------+------------------+
+| Byte 3           |
+| Sequence ID      |
++------------------+
+\end{verbatim}
+
+\begin{itemize}
+    \item \textbf{3-byte payload length} (little-endian):
+    \begin{itemize}
+        \item Represents length of packet payload in bytes
+        \item Maximum value: 0xFFFFFF (16,777,215 bytes = 16MB - 1)
+        \item Length does NOT include the 4-byte header itself
+        \item Packets exceeding 16MB-1 are split into multiple packets
+    \end{itemize}
+    
+    \item \textbf{1-byte sequence ID}:
+    \begin{itemize}
+        \item Starts at 0 for each new command
+        \item Increments by 1 for each packet in the sequence
+        \item Wraps around after 255 (rare in practice)
+        \item Used to detect packet loss or out-of-order delivery
+        \item Server and client must maintain synchronized counters
+    \end{itemize}
+    
+    \item \textbf{N-byte payload}:
+    \begin{itemize}
+        \item Actual packet content (commands, result data, etc.)
+        \item Format depends on packet type
+        \item Can contain binary or text data
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Large Packet Handling}
+
+When payload exceeds 16MB-1 bytes:
+\begin{enumerate}
+    \item First packet contains maximum payload (0xFFFFFF bytes)
+    \item Sequence ID increments for continuation packet(s)
+    \item Last packet contains remaining data (length < 0xFFFFFF)
+    \item Empty packet (length=0) sent if payload is exact multiple of 16MB-1
+\end{enumerate}
+
+\paragraph{Packet Validation in zGate}
+
+The gateway must validate and reconstruct packets precisely:
+
+\begin{itemize}
+    \item \textbf{Length validation}: Ensure payload length matches actual bytes read
+    \item \textbf{Sequence synchronization}: Track and validate sequence IDs on both sides
+    \item \textbf{Buffer management}: Allocate appropriate buffers based on payload length
+    \item \textbf{Error detection}: Identify corrupted or malformed packets
+    \item \textbf{Large packet assembly}: Correctly reassemble multi-packet messages
+\end{itemize}
+
+\subsection{Command Phase Processing}
+
+The MySQL protocol defines numerous command types that clients can send to servers. zGate must understand and properly handle each command type.
+
+\paragraph{Command Packet Format}
+
+\begin{verbatim}
++------------------+------------------+
+| Command Byte     | Command Payload  |
+| (1 byte)         | (variable)       |
++------------------+------------------+
+\end{verbatim}
+
+\paragraph{Supported Commands in zGate}
+
+The proxy supports various MySQL commands:
+
+\begin{itemize}
+    \item \textbf{COM\_QUERY (0x03)}: Execute textual SQL statement
+    \begin{itemize}
+        \item Payload: SQL string (NOT null-terminated)
+        \item Most common command type
+        \item Response: Result set, OK, or ERR packet
+        \item Example: \texttt{SELECT * FROM users WHERE id=1}
+    \end{itemize}
+    
+    \item \textbf{COM\_INIT\_DB (0x02)}: Change default database
+    \begin{itemize}
+        \item Payload: Database name string
+        \item Similar to SQL: \texttt{USE database\_name}
+        \item Response: OK or ERR packet
+        \item Updates session state in both client and server
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_PREPARE (0x16)}: Prepare SQL statement
+    \begin{itemize}
+        \item Payload: SQL statement with ? placeholders
+        \item Server parses and returns statement ID and parameter metadata
+        \item Enables binary protocol for faster execution
+        \item Statement cached on server until explicitly closed
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_EXECUTE (0x17)}: Execute prepared statement
+    \begin{itemize}
+        \item Payload: Statement ID + flags + parameter values (binary encoded)
+        \item Uses efficient binary protocol instead of text
+        \item Parameters sent as native types (integers, dates, etc.)
+        \item Response: Result set in text or binary protocol
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_CLOSE (0x19)}: Deallocate prepared statement
+    \begin{itemize}
+        \item Payload: Statement ID (4 bytes)
+        \item No response packet (fire-and-forget)
+        \item Frees server resources
+    \end{itemize}
+    
+    \item \textbf{COM\_QUIT (0x01)}: Close connection
+    \begin{itemize}
+        \item No payload
+        \item No response from server
+        \item Graceful connection termination
+    \end{itemize}
+    
+    \item \textbf{COM\_PING (0x0E)}: Test connection liveness
+    \begin{itemize}
+        \item No payload
+        \item Response: OK packet
+        \item Used for keepalive and health checks
+    \end{itemize}
+    
+    \item \textbf{COM\_FIELD\_LIST (0x04)}: List table columns (deprecated)
+    
+    \item \textbf{COM\_STMT\_RESET (0x1A)}: Reset prepared statement
+    
+    \item \textbf{COM\_SET\_OPTION (0x1B)}: Set connection options
+\end{itemize}
+
+\paragraph{Command Processing in zGate}
+
+Each command type has unique processing requirements:
+
+\begin{enumerate}
+    \item \textbf{Parse command byte}: Identify command type from first payload byte
+    \item \textbf{Extract command payload}: Read remaining packet data
+    \item \textbf{Policy enforcement}: Check RBAC permissions for this command
+    \item \textbf{SQL rewriting}: Modify query if needed (COM\_QUERY only)
+    \item \textbf{Forward to backend}: Send modified or original packet to database
+    \item \textbf{Process response}: Intercept and potentially modify result
+    \item \textbf{Audit logging}: Record command execution details
+\end{enumerate}
+
+\subsection{Result Set Encoding}
+
+Result sets in MySQL protocol follow a specific multi-packet format that zGate must parse to enable data masking and filtering.
+
+\paragraph{Result Set Packet Sequence}
+
+A typical result set consists of:
+
+\begin{enumerate}
+    \item \textbf{Column count packet}:
+    \begin{itemize}
+        \item Length-encoded integer indicating number of columns
+        \item Example: 0x03 indicates 3 columns in result
+    \end{itemize}
+    
+    \item \textbf{Column definition packets} (one per column):
+    \begin{itemize}
+        \item Catalog name (usually "def")
+        \item Schema (database) name
+        \item Table alias and original table name
+        \item Column alias and original column name
+        \item Character set encoding
+        \item Column display width
+        \item Column type (INT, VARCHAR, DATE, etc.)
+        \item Column flags (NOT NULL, PRIMARY KEY, etc.)
+        \item Decimal precision (for numeric types)
+    \end{itemize}
+    
+    \item \textbf{EOF packet} (if CLIENT\_DEPRECATE\_EOF not set):
+    \begin{itemize}
+        \item Marks end of column definitions
+        \item Contains server status flags and warning count
+    \end{itemize}
+    
+    \item \textbf{Row data packets}:
+    \begin{itemize}
+        \item One packet per row
+        \item Values encoded as length-encoded strings (text protocol) or native types (binary protocol)
+        \item NULL represented as 0xFB byte in text protocol
+    \end{itemize}
+    
+    \item \textbf{EOF or OK packet}:
+    \begin{itemize}
+        \item Marks end of result set
+        \item Contains affected rows, last insert ID, status flags, warnings
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Length-Encoded Integers}
+
+MySQL uses a variable-length encoding for integers:
+
+\begin{itemize}
+    \item \textbf{Value < 251}: Single byte containing the value
+    \item \textbf{Value = 251 (0xFB)}: NULL value marker
+    \item \textbf{Value = 252 (0xFC)}: Next 2 bytes contain value (little-endian)
+    \item \textbf{Value = 253 (0xFD)}: Next 3 bytes contain value (little-endian)
+    \item \textbf{Value = 254 (0xFE)}: Next 8 bytes contain value (little-endian)
+\end{itemize}
+
+\paragraph{Text vs Binary Protocol}
+
+\textbf{Text Protocol (COM\_QUERY):}
+\begin{itemize}
+    \item All values encoded as strings
+    \item Dates, numbers, etc. formatted as text
+    \item Less efficient but human-readable
+\end{itemize}
+
+\textbf{Binary Protocol (COM\_STMT\_EXECUTE):}
+\begin{itemize}
+    \item Values in native binary format
+    \item NULL bitmap at start of row
+    \item Type-specific encoding (4-byte int, 8-byte double, etc.)
+    \item More efficient, less parsing overhead
+\end{itemize}
+
+\paragraph{zGate Row Interception}
+
+zGate intercepts row-level data for masking and policy enforcement, requiring:
+
+\begin{itemize}
+    \item \textbf{Parsing length-encoded integers}: To determine string/value lengths
+    \item \textbf{Reconstructing text and binary rows}: After applying masking rules
+    \item \textbf{Preserving column metadata}: To understand data types for correct parsing
+    \item \textbf{Maintaining packet integrity}: Recalculating payload lengths and sequence IDs
+    \item \textbf{Streaming processing}: Handling large result sets without buffering all rows
+\end{itemize}
+
+\textbf{Example Masking Scenario:}
+\begin{enumerate}
+    \item Client queries: \texttt{SELECT ssn, name FROM employees}
+    \item zGate parses column definitions, identifies "ssn" column
+    \item For each row packet:
+    \begin{itemize}
+        \item Parse length-encoded string for ssn value
+        \item Apply masking: "123-45-6789" → "XXX-XX-6789"
+        \item Reconstruct row packet with masked value
+        \item Recalculate payload length
+        \item Forward modified packet to client
+    \end{itemize}
+\end{enumerate}
+
+\subsection{SQL Parsing and AST Manipulation}
+
+To safely inject or modify SQL logic, zGate uses an SQL Abstract Syntax Tree (AST) approach rather than string manipulation.
+
+\paragraph{SQL Abstract Syntax Trees}
+
+An Abstract Syntax Tree is a tree representation of the syntactic structure of SQL code. Each node in the tree represents a construct in the SQL grammar.
+
+\textbf{Why AST vs String Manipulation:}
+\begin{itemize}
+    \item \textbf{Semantic understanding}: Parser understands SQL structure, not just text
+    \item \textbf{Safe modification}: Changes preserve syntax validity
+    \item \textbf{SQL injection prevention}: Prevents introduction of new SQL commands
+    \item \textbf{Context awareness}: Distinguishes between identifiers, literals, keywords
+    \item \textbf{Complexity handling}: Correctly processes nested queries, subqueries, CTEs
+\end{itemize}
+
+\paragraph{Parsing Pipeline}
+
+\begin{enumerate}
+    \item \textbf{Lexical Analysis (Tokenization)}:
+    \begin{itemize}
+        \item Input: Raw SQL string
+        \item Process: Break into tokens (keywords, identifiers, operators, literals)
+        \item Output: Token stream
+        \item Example: \texttt{SELECT name FROM users} → [SELECT][name][FROM][users]
+    \end{itemize}
+    
+    \item \textbf{Syntax Analysis (Parsing)}:
+    \begin{itemize}
+        \item Input: Token stream
+        \item Process: Apply grammar rules to build AST
+        \item Output: AST root node
+        \item Detects syntax errors
+    \end{itemize}
+    
+    \item \textbf{AST Manipulation}:
+    \begin{itemize}
+        \item Traverse tree using visitor pattern
+        \item Inspect and modify nodes
+        \item Add new nodes (e.g., WHERE clauses)
+        \item Remove or replace nodes
+    \end{itemize}
+    
+    \item \textbf{Code Generation (Serialization)}:
+    \begin{itemize}
+        \item Input: Modified AST
+        \item Process: Traverse tree and generate SQL text
+        \item Output: Valid SQL string
+        \item Preserves formatting where possible
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{AST Node Types}
+
+Common node types in SQL AST:
+
+\begin{itemize}
+    \item \textbf{SelectStmt}: SELECT query root
+    \item \textbf{SelectExprList}: Target list (columns to return)
+    \item \textbf{FromClause}: Table references
+    \item \textbf{WhereClause}: Filter conditions
+    \item \textbf{JoinExpr}: JOIN operations
+    \item \textbf{BinaryExpr}: Binary operations (AND, OR, =, <, etc.)
+    \item \textbf{FuncCall}: Function calls (COUNT, MAX, etc.)
+    \item \textbf{Identifier}: Table and column names
+    \item \textbf{Literal}: String, numeric, date literals
+    \item \textbf{Subquery}: Nested SELECT statement
+\end{itemize}
+
+\paragraph{AST Manipulation in zGate}
+
+zGate performs node-by-node inspection for:
+
+\begin{itemize}
+    \item \textbf{Target list modification}:
+    \begin{itemize}
+        \item Removing restricted columns from SELECT list
+        \item Adding computed columns for audit purposes
+        \item Replacing sensitive columns with masked expressions
+        \item Example: \texttt{SELECT ssn} → \texttt{SELECT CONCAT('XXX-XX-', SUBSTR(ssn, 8)) AS ssn}
+    \end{itemize}
+    
+    \item \textbf{WHERE clause enforcement}:
+    \begin{itemize}
+        \item Injecting row-level security predicates
+        \item Adding tenant isolation filters
+        \item Enforcing time-based access controls
+        \item Example: User can only see their own records
+        \item Original: \texttt{SELECT * FROM orders}
+        \item Modified: \texttt{SELECT * FROM orders WHERE user\_id = 'alice'}
+    \end{itemize}
+    
+    \item \textbf{Table-level permission checks}:
+    \begin{itemize}
+        \item Identify all referenced tables
+        \item Verify user has access to each table
+        \item Check for column-level permissions
+        \item Reject queries accessing forbidden tables
+    \end{itemize}
+    
+    \item \textbf{Subquery processing}:
+    \begin{itemize}
+        \item Recursively process nested queries
+        \item Apply same policies to subqueries
+        \item Handle correlated subqueries correctly
+    \end{itemize}
+    
+    \item \textbf{JOIN analysis}:
+    \begin{itemize}
+        \item Check permissions on all joined tables
+        \item Inject filters on joined tables if needed
+        \item Prevent information leakage through joins
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Safe Rewriting Examples}
+
+\textbf{Example 1: Column Masking}
+\begin{verbatim}
+Original SQL: SELECT ssn, name, salary FROM employees
+AST Modification:
+  - Locate "ssn" in SelectExprList
+  - Replace with FuncCall node: mask_ssn(ssn)
+Generated SQL: SELECT mask_ssn(ssn), name, mask_salary(salary) 
+               FROM employees
+\end{verbatim}
+
+\textbf{Example 2: Row Filtering}
+\begin{verbatim}
+Original SQL: SELECT * FROM medical_records
+AST Modification:
+  - Navigate to WhereClause (or create if absent)
+  - Add BinaryExpr: department = 'cardiology'
+Generated SQL: SELECT * FROM medical_records 
+               WHERE department = 'cardiology'
+\end{verbatim}
+
+\textbf{Example 3: Table Access Control}
+\begin{verbatim}
+Original SQL: SELECT * FROM hr.salaries
+AST Modification:
+  - Traverse tree, find table reference "hr.salaries"
+  - Check user's table permissions
+  - If denied: Return error before forwarding to database
+  - If allowed: Forward unmodified or with row filters
+\end{verbatim}
+
+\paragraph{Security Benefits}
+
+This AST approach avoids string-based manipulation, preventing:
+
+\begin{itemize}
+    \item \textbf{SQL injection vulnerabilities}: Cannot introduce new SQL commands
+    \item \textbf{Malformed query errors}: Generated SQL is always syntactically valid
+    \item \textbf{Escaping issues}: No need to manually escape quotes and special characters
+    \item \textbf{Context confusion}: Parser understands string literals vs identifiers
+    \item \textbf{Logic errors}: Changes preserve query semantics
+\end{itemize}
+
+% ------------------------------------------------------------
+% 3. Cryptography & Security Engineering
+% ------------------------------------------------------------
+\section{Cryptography and Security Engineering}
+
+Security is the cornerstone of the system. The implementation combines modern cryptographic standards with secure design principles to protect data in transit, at rest, and during processing.
+
+\subsection{TLS / SSL Transport Layer Security}
+
+Transport Layer Security (TLS) and its predecessor Secure Sockets Layer (SSL) are cryptographic protocols designed to provide secure communication over a computer network.
+
+\paragraph{TLS Protocol Overview}
+
+\textbf{Historical Context:}
+\begin{itemize}
+    \item \textbf{SSL 1.0}: Never publicly released (Netscape, 1994)
+    \item \textbf{SSL 2.0}: Released 1995, deprecated 2011 (security flaws)
+    \item \textbf{SSL 3.0}: Released 1996, deprecated 2015 (POODLE attack)
+    \item \textbf{TLS 1.0}: Released 1999, deprecated 2020
+    \item \textbf{TLS 1.1}: Released 2006, deprecated 2020
+    \item \textbf{TLS 1.2}: Released 2008, still widely used
+    \item \textbf{TLS 1.3}: Released 2018, current standard
+\end{itemize}
+
+\textbf{Security Properties:}
+\begin{itemize}
+    \item \textbf{Confidentiality}: Data encrypted using symmetric cipher
+    \item \textbf{Integrity}: MAC (Message Authentication Code) prevents tampering
+    \item \textbf{Authentication}: X.509 certificates verify server/client identity
+    \item \textbf{Forward secrecy}: Session keys not derivable from long-term keys
+\end{itemize}
+
+\paragraph{TLS Handshake Process}
+
+The TLS handshake establishes a secure session:
+
+\begin{enumerate}
+    \item \textbf{Client Hello}:
+    \begin{itemize}
+        \item Supported TLS versions
+        \item Cipher suites (encryption algorithms)
+        \item Random nonce
+        \item Supported extensions
+    \end{itemize}
+    
+    \item \textbf{Server Hello}:
+    \begin{itemize}
+        \item Selected TLS version
+        \item Selected cipher suite
+        \item Server random nonce
+        \item Server certificate (X.509)
+    \end{itemize}
+    
+    \item \textbf{Key Exchange}:
+    \begin{itemize}
+        \item Client verifies server certificate
+        \item Ephemeral Diffie-Hellman key exchange (TLS 1.3)
+        \item Or RSA key exchange (TLS 1.2)
+        \item Derive master secret
+    \end{itemize}
+    
+    \item \textbf{Finished Messages}:
+    \begin{itemize}
+        \item Both sides send encrypted "Finished" message
+        \item Proves they derived same keys
+        \item Handshake complete, application data can flow
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{TLS in zGate}
+
+TLS is used to secure:
+
+\begin{itemize}
+    \item \textbf{Client–Gateway communication}:
+    \begin{itemize}
+        \item MySQL clients connect via TLS-encrypted connections
+        \item Optional mutual TLS (mTLS) for client authentication
+        \item Certificate-based authentication instead of passwords
+    \end{itemize}
+    
+    \item \textbf{Gateway–Database communication}:
+    \begin{itemize}
+        \item Backend connections always use TLS
+        \item Verifies database server certificate
+        \item Protects credentials and query data in transit
+    \end{itemize}
+    
+    \item \textbf{Administrative API (HTTPS)}:
+    \begin{itemize}
+        \item REST API served over HTTPS
+        \item Admin credentials encrypted in transit
+        \item API tokens protected from network sniffing
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Technical Implementation Details}
+
+Technical aspects in zGate include:
+
+\begin{itemize}
+    \item \textbf{Loading X.509 certificates from PEM}:
+    \begin{itemize}
+        \item PEM (Privacy Enhanced Mail) format: Base64-encoded DER certificates
+        \item Private keys protected with passphrase encryption
+        \item Certificate chain loading (intermediate + root CAs)
+        \item Key pair validation (public key matches private key)
+    \end{itemize}
+    
+    \item \textbf{Enforcing TLS 1.2+}:
+    \begin{itemize}
+        \item Minimum version set in \texttt{tls.Config}
+        \item Rejects connections using SSL 3.0, TLS 1.0, TLS 1.1
+        \item Prevents downgrade attacks
+    \end{itemize}
+    
+    \item \textbf{Certificate chain validation}:
+    \begin{itemize}
+        \item Using Go's \texttt{crypto/x509} package
+        \item Verifies certificate signature chain to trusted root CA
+        \item Checks expiration dates
+        \item Validates hostname/IP against certificate SAN (Subject Alternative Names)
+        \item Checks certificate revocation status (OCSP or CRL)
+    \end{itemize}
+    
+    \item \textbf{Cipher suite selection}:
+    \begin{itemize}
+        \item Prefer AEAD ciphers (AES-GCM, ChaCha20-Poly1305)
+        \item Disable weak ciphers (RC4, 3DES, export ciphers)
+        \item Enable perfect forward secrecy (ECDHE key exchange)
+        \item Example strong cipher: TLS\_ECDHE\_RSA\_WITH\_AES\_256\_GCM\_SHA384
+    \end{itemize}
+    
+    \item \textbf{Optional client certificate verification (mTLS)}:
+    \begin{itemize}
+        \item Server requests client certificate during handshake
+        \item Client presents certificate signed by trusted CA
+        \item Server validates certificate and extracts identity (CN or SAN)
+        \item Used for passwordless authentication
+        \item Common in service-to-service authentication
+    \end{itemize}
+\end{itemize}
+
+\subsection{Symmetric Encryption (AES-256)}
+
+Advanced Encryption Standard (AES) is a symmetric block cipher adopted as a standard by NIST in 2001, replacing the older DES algorithm.
+
+\paragraph{AES Fundamentals}
+
+\textbf{Algorithm Properties:}
+\begin{itemize}
+    \item \textbf{Block cipher}: Encrypts fixed-size blocks (128 bits)
+    \item \textbf{Symmetric}: Same key for encryption and decryption
+    \item \textbf{Key sizes}: 128, 192, or 256 bits
+    \item \textbf{Rounds}: 10 (AES-128), 12 (AES-192), 14 (AES-256)
+    \item \textbf{Speed}: Hardware-accelerated on modern CPUs (AES-NI instructions)
+\end{itemize}
+
+\textbf{AES Operations:}
+\begin{enumerate}
+    \item \textbf{SubBytes}: Substitute each byte using S-box
+    \item \textbf{ShiftRows}: Rotate rows of state array
+    \item \textbf{MixColumns}: Linear transformation of columns
+    \item \textbf{AddRoundKey}: XOR with round key
+\end{enumerate}
+
+\paragraph{AES Modes of Operation}
+
+Block ciphers require a "mode" to encrypt data longer than one block:
+
+\begin{itemize}
+    \item \textbf{ECB (Electronic Codebook)}: INSECURE, never use
+    \begin{itemize}
+        \item Each block encrypted independently
+        \item Identical plaintexts produce identical ciphertexts
+        \item Reveals patterns in data
+    \end{itemize}
+    
+    \item \textbf{CBC (Cipher Block Chaining)}: Legacy, requires padding
+    \begin{itemize}
+        \item Each block XORed with previous ciphertext
+        \item Requires padding to block boundary
+        \item Vulnerable to padding oracle attacks if not careful
+        \item Needs separate MAC for authentication
+    \end{itemize}
+    
+    \item \textbf{GCM (Galois/Counter Mode)}: Recommended
+    \begin{itemize}
+        \item AEAD (Authenticated Encryption with Associated Data)
+        \item Provides both confidentiality and authenticity
+        \item No padding required
+        \item Parallelizable (fast)
+        \item Includes authentication tag to detect tampering
+    \end{itemize}
+    
+    \item \textbf{CCM, EAX, OCB}: Alternative AEAD modes
+\end{itemize}
+
+\paragraph{AES-256-GCM in zGate}
+
+The internal SQLite datastore is encrypted using AES-256-GCM. The system uses:
+
+\begin{itemize}
+    \item \textbf{32-byte (256-bit) encryption keys}:
+    \begin{itemize}
+        \item Derived from master password using key derivation function
+        \item Or generated randomly for data-at-rest encryption
+        \item Stored in secure key management system or HSM
+        \item Never logged or exposed in API responses
+    \end{itemize}
+    
+    \item \textbf{CSPRNG-generated nonces}:
+    \begin{itemize}
+        \item Nonce (Number Used Once) = Initialization Vector (IV)
+        \item 12 bytes (96 bits) for GCM mode
+        \item Must be unique for every encryption operation with same key
+        \item Generated using cryptographically secure random number generator
+        \item Stored alongside ciphertext (not secret)
+        \item Nonce reuse catastrophically breaks GCM security
+    \end{itemize}
+    
+    \item \textbf{Authentication tag}:
+    \begin{itemize}
+        \item 16-byte tag appended to ciphertext
+        \item Verifies data integrity and authenticity
+        \item Prevents tampering and bit-flipping attacks
+        \item Decryption fails if tag doesn't match
+    \end{itemize}
+    
+    \item \textbf{Associated Data (AD)}:
+    \begin{itemize}
+        \item Additional authenticated but unencrypted data
+        \item Example: database record ID, timestamp, version
+        \item Binds ciphertext to specific context
+        \item Prevents ciphertext from being moved/reused elsewhere
+    \end{itemize}
+    
+    \item \textbf{Key rotation support}:
+    \begin{itemize}
+        \item Periodic key changes (e.g., quarterly)
+        \item Re-encrypt data with new keys
+        \item Multiple active keys during transition period
+        \item Track which key version encrypted each record
+        \item Old keys archived securely for decryption of historical data
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Encryption Process}
+
+\begin{verbatim}
+Input: Plaintext, Key (32 bytes), Nonce (12 bytes), AD
+Process:
+  1. Generate random 12-byte nonce
+  2. Create GCM cipher instance with key
+  3. Seal(nonce, plaintext, AD) → ciphertext || tag
+  4. Store: nonce || ciphertext || tag
+Output: Encrypted blob
+\end{verbatim}
+
+\paragraph{Decryption Process}
+
+\begin{verbatim}
+Input: Encrypted blob (nonce || ciphertext || tag), Key, AD
+Process:
+  1. Extract nonce from first 12 bytes
+  2. Extract tag from last 16 bytes
+  3. Extract ciphertext from middle
+  4. Open(nonce, ciphertext || tag, AD) → plaintext
+  5. Verify tag matches (automatic in GCM)
+Output: Plaintext (or error if tampered)
+\end{verbatim}
+
+\subsection{Secure Hashing}
+
+Cryptographic hash functions are one-way functions that map arbitrary-size input to fixed-size output. They're essential for password storage and integrity verification.
+
+\paragraph{Hash Function Properties}
+
+A secure hash function must be:
+
+\begin{itemize}
+    \item \textbf{Deterministic}: Same input always produces same output
+    \item \textbf{Quick to compute}: Hash calculation should be fast
+    \item \textbf{Pre-image resistance}: Computationally infeasible to reverse
+    \item \textbf{Collision resistance}: Infeasible to find two inputs with same hash
+    \item \textbf{Avalanche effect}: Small input change drastically changes output
+\end{itemize}
+
+\paragraph{bcrypt for Password Hashing}
+
+Passwords and authentication tokens use:
+
+\begin{itemize}
+    \item \textbf{bcrypt algorithm}:
+    \begin{itemize}
+        \item Based on Blowfish cipher
+        \item Designed specifically for password hashing (1999)
+        \item Adaptive: Adjustable work factor resists brute force
+        \item Includes automatic salt generation
+        \item Output format: \texttt{\$2a\$10\$somerandomsalt22charactershashvalue31characters}
+    \end{itemize}
+    
+    \item \textbf{Cost factor explanation}:
+    \begin{itemize}
+        \item \texttt{\$2a\$10\$...} means cost factor = 10
+        \item Cost factor N means $2^N$ iterations
+        \item Cost 10 = 1,024 iterations (~100ms on modern CPU)
+        \item Cost 12 = 4,096 iterations (~400ms)
+        \item Higher cost = slower hashing = harder to brute force
+        \item Recommended: 10-12 for user passwords (balance security/UX)
+    \end{itemize}
+    
+    \item \textbf{Salt generation}:
+    \begin{itemize}
+        \item 128-bit (16-byte) random salt
+        \item Unique salt for every password
+        \item Prevents rainbow table attacks
+        \item Salt stored in output string (not secret)
+        \item Format: Base64-encoded 22-character string
+    \end{itemize}
+    
+    \item \textbf{Verification process}:
+    \begin{itemize}
+        \item Extract salt and cost from stored hash
+        \item Hash provided password with same salt and cost
+        \item Compare resulting hash with stored hash
+        \item Constant-time comparison to prevent timing attacks
+    \end{itemize}
+\end{itemize}
+
+\paragraph{SHA-256 for Token Hashing}
+
+\begin{itemize}
+    \item \textbf{SHA-256 (Secure Hash Algorithm 256-bit)}:
+    \begin{itemize}
+        \item Part of SHA-2 family designed by NSA (2001)
+        \item Produces 256-bit (32-byte) hash
+        \item Widely used, extensively analyzed
+        \item Fast computation (important for high-volume operations)
+        \item Not suitable for passwords (too fast, enables brute force)
+    \end{itemize}
+    
+    \item \textbf{Use case in zGate}:
+    \begin{itemize}
+        \item Hash refresh tokens before storing
+        \item Client keeps original token
+        \item Database stores SHA-256(token)
+        \item If database compromised, attacker cannot use tokens
+        \item Similar to session ID hashing
+    \end{itemize}
+    
+    \item \textbf{Token verification}:
+    \begin{itemize}
+        \item Client sends token
+        \item Server computes SHA-256(token)
+        \item Compare hash with stored value
+        \item Grant access if match
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Security Principle}
+
+No plaintext-sensitive values are stored at any time:
+
+\begin{itemize}
+    \item Passwords: Stored as bcrypt hashes
+    \item Refresh tokens: Stored as SHA-256 hashes
+    \item API keys: Stored as bcrypt hashes
+    \item Database credentials: Encrypted with AES-256-GCM
+    \item Secrets: Encrypted at rest, decrypted only in memory when needed
+\end{itemize}
+
+\subsection{JWT Authentication}
+
+JSON Web Tokens (JWT) are a compact, URL-safe means of representing claims to be transferred between two parties.
+
+\paragraph{JWT Structure}
+
+A JWT consists of three Base64URL-encoded parts separated by dots:
+
+\begin{verbatim}
+header.payload.signature
+
+Example:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.
+SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+\end{verbatim}
+
+\textbf{Header (Algorithm and Token Type):}
+\begin{verbatim}
+{
+  "alg": "HS256",      // HMAC-SHA256
+  "typ": "JWT"          // Token type
+}
+\end{verbatim}
+
+\textbf{Payload (Claims):}
+\begin{verbatim}
+{
+  "sub": "1234567890",  // Subject (user ID)
+  "name": "John Doe",    // Custom claim
+  "iat": 1516239022,     // Issued at (Unix timestamp)
+  "exp": 1516242622      // Expiration (Unix timestamp)
+}
+\end{verbatim}
+
+\textbf{Signature:}
+\begin{verbatim}
+HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  secret_key
+)
+\end{verbatim}
+
+\paragraph{JWT in zGate Admin API}
+
+The admin API uses JSON Web Tokens with:
+
+\begin{itemize}
+    \item \textbf{HMAC-SHA256 signing}:
+    \begin{itemize}
+        \item Symmetric signing algorithm
+        \item Secret key shared between issuer and verifier
+        \item Alternative: RS256 (RSA) for asymmetric signing
+        \item Signature prevents token tampering
+        \item Any modification invalidates signature
+    \end{itemize}
+    
+    \item \textbf{Short-lived access tokens}:
+    \begin{itemize}
+        \item Typical lifetime: 15 minutes
+        \item Contains user identity and permissions
+        \item Used for API authentication
+        \item Sent in Authorization header: \texttt{Bearer <token>}
+        \item Short lifetime limits damage if compromised
+        \item No need to track/revoke (expires quickly)
+    \end{itemize}
+    
+    \item \textbf{Long-lived refresh tokens}:
+    \begin{itemize}
+        \item Typical lifetime: 30-90 days
+        \item Used to obtain new access tokens
+        \item Stored hashed in database (SHA-256)
+        \item Can be revoked (blacklisted)
+        \item Sent via secure cookie or separate header
+        \item Refresh endpoint: Exchange refresh token for new access token
+    \end{itemize}
+    
+    \item \textbf{Embedded role and permission claims}:
+    \begin{itemize}
+        \item \texttt{sub}: User ID
+        \item \texttt{username}: Human-readable username
+        \item \texttt{roles}: Array of assigned roles
+        \item \texttt{permissions}: Array of granted permissions
+        \item \texttt{iat}: Issued at timestamp
+        \item \texttt{exp}: Expiration timestamp
+        \item \texttt{jti}: JWT ID (unique identifier for revocation)
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Token Lifecycle}
+
+\begin{enumerate}
+    \item \textbf{Login}:
+    \begin{itemize}
+        \item User provides username/password
+        \item Server validates credentials
+        \item Server generates access + refresh tokens
+        \item Returns both tokens to client
+    \end{itemize}
+    
+    \item \textbf{API Request}:
+    \begin{itemize}
+        \item Client sends access token in Authorization header
+        \item Middleware validates token signature
+        \item Middleware checks expiration
+        \item Middleware extracts permissions from claims
+        \item Request proceeds if authorized
+    \end{itemize}
+    
+    \item \textbf{Token Refresh}:
+    \begin{itemize}
+        \item Access token expires
+        \item Client sends refresh token to /refresh endpoint
+        \item Server validates refresh token hash
+        \item Server issues new access token (and optionally new refresh token)
+        \item Client continues using new access token
+    \end{itemize}
+    
+    \item \textbf{Revocation}:
+    \begin{itemize}
+        \item Admin revokes user's refresh token
+        \item Refresh token hash removed from database
+        \item User cannot obtain new access tokens
+        \item Existing access tokens expire naturally (15min)
+        \item For immediate revocation: Maintain token blacklist
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Middleware Validation}
+
+Middleware validates token integrity and permissions before allowing administrative actions:
+
+\begin{enumerate}
+    \item Extract token from Authorization header
+    \item Verify signature using secret key
+    \item Check expiration timestamp (\texttt{exp} claim)
+    \item Check issued-at timestamp (\texttt{iat} claim) for clock skew
+    \item Extract user identity and permissions
+    \item Check if requested action is allowed for user's role
+    \item Reject request if any validation fails
+    \item Attach user context to request for downstream handlers
+\end{enumerate}
+
+% ------------------------------------------------------------
+% 4. Architecture & Design Patterns
+% ------------------------------------------------------------
+\section{Software Architecture and Design Patterns}
+
+The gateway employs well-defined architectural patterns to maintain extensibility, modularity, and clarity of responsibility.
+
+\subsection{Proxy Pattern}
+
+The Proxy Pattern provides a surrogate or placeholder object that controls access to another object. In zGate, the gateway acts as a full MySQL proxy.
+
+\paragraph{Proxy Pattern Fundamentals}
+
+\textbf{Intent:}
+\begin{itemize}
+    \item Control access to an object
+    \item Add additional functionality without modifying original object
+    \item Lazy initialization, logging, access control, caching
+\end{itemize}
+
+\textbf{Pattern Structure:}
+\begin{itemize}
+    \item \textbf{Subject}: Interface defining operations (MySQL protocol)
+    \item \textbf{RealSubject}: Actual object (MySQL database server)
+    \item \textbf{Proxy}: Controls access to RealSubject (zGate)
+    \item \textbf{Client}: Uses proxy transparently (database client application)
+\end{itemize}
+
+\paragraph{zGate as MySQL Proxy}
+
+zGate acts as a full MySQL proxy, maintaining:
+
+\begin{itemize}
+    \item \textbf{Session state}:
+    \begin{itemize}
+        \item \textbf{Transaction flags}: IN\_TRANSACTION, AUTOCOMMIT status
+        \item \textbf{Character set}: Client and connection character sets
+        \item \textbf{Selected database}: Current default schema
+        \item \textbf{Session variables}: SQL\_MODE, time zone, etc.
+        \item \textbf{Connection attributes}: Client version, OS, application name
+    \end{itemize}
+    
+    \item \textbf{Prepared statement metadata}:
+    \begin{itemize}
+        \item Mapping of statement IDs to SQL text
+        \item Parameter count and types
+        \item Column metadata for result sets
+        \item Statement cached on both client and server side
+        \item Proper cleanup on COM\_STMT\_CLOSE
+    \end{itemize}
+    
+    \item \textbf{Sequence ID tracking}:
+    \begin{itemize}
+        \item Separate sequence counters for client-side and server-side
+        \item Reset to 0 at start of each command
+        \item Increment for each packet sent/received
+        \item Critical for protocol correctness
+        \item Mismatch causes protocol errors
+    \end{itemize}
+    
+    \item \textbf{Connection pooling}:
+    \begin{itemize}
+        \item Reuse database connections across client sessions
+        \item Reduce connection establishment overhead
+        \item Maintain pool of ready connections
+        \item Health checking idle connections
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Proxy Benefits}
+
+This isolates the clients from the database while enabling:
+
+\begin{itemize}
+    \item \textbf{Transparent enforcement}: Clients unaware of proxy presence
+    \item \textbf{Zero Trust controls}: Every query subject to policy
+    \item \textbf{Centralized security}: Single enforcement point
+    \item \textbf{Audit logging}: Complete visibility into database access
+    \item \textbf{Protocol translation}: Can add features database doesn't support
+    \item \textbf{Load balancing}: Distribute queries across multiple backends
+\end{itemize}
+
+\subsection{Interceptor Chain Pattern}
+
+The Interceptor (Chain of Responsibility) Pattern allows multiple objects to handle a request without coupling the sender to specific receivers.
+
+\paragraph{Pattern Overview}
+
+\textbf{Intent:}
+\begin{itemize}
+    \item Decouple request senders from receivers
+    \item Allow multiple handlers to process request
+    \item Dynamically configure processing pipeline
+\end{itemize}
+
+\textbf{Pattern Structure:}
+\begin{itemize}
+    \item \textbf{Handler interface}: Defines processing method
+    \item \textbf{Concrete handlers}: Implement specific processing logic
+    \item \textbf{Chain}: Ordered sequence of handlers
+    \item \textbf{Client}: Initiates request into chain
+\end{itemize}
+
+\paragraph{Interceptor Chain in zGate}
+
+A configurable chain of interceptors processes every query:
+
+\begin{itemize}
+    \item \textbf{BeforeQuery interceptors}:
+    \begin{itemize}
+        \item \textbf{SQL parsing}: Lex and parse SQL into AST
+        \item \textbf{Permission checks}: Verify table and column access
+        \item \textbf{SQL rewriting}: Inject WHERE clauses, modify SELECT lists
+        \item \textbf{Query validation}: Check for blacklisted patterns
+        \item \textbf{Rate limiting}: Enforce query rate limits per user
+        \item \textbf{Query complexity analysis}: Reject overly expensive queries
+    \end{itemize}
+    Example interceptors:
+    \begin{itemize}
+        \item RBACInterceptor: Role-based access control
+        \item RowLevelSecurityInterceptor: Inject row filters
+        \item AuditPreInterceptor: Log original query
+    \end{itemize}
+    
+    \item \textbf{OnRow interceptors}:
+    \begin{itemize}
+        \item \textbf{Column masking}: Replace sensitive data with masked values
+        \item \textbf{Row filtering}: Skip rows based on policy
+        \item \textbf{Data transformation}: Encrypt/decrypt column values
+        \item \textbf{Value substitution}: Replace values based on rules
+        \item \textbf{Redaction}: Remove columns entirely from results
+    \end{itemize}
+    Example interceptors:
+    \begin{itemize}
+        \item MaskingInterceptor: Apply data masking rules
+        \item EncryptionInterceptor: Client-side encryption
+        \item SensitiveDataInterceptor: Redact PII
+    \end{itemize}
+    
+    \item \textbf{AfterQuery interceptors}:
+    \begin{itemize}
+        \item \textbf{Audit logging}: Record query execution details
+        \item \textbf{Anomaly detection}: Identify suspicious patterns
+        \item \textbf{Performance monitoring}: Track query latency
+        \item \textbf{Alert triggers}: Notify on policy violations
+        \item \textbf{Metrics collection}: Aggregate statistics
+    \end{itemize}
+    Example interceptors:
+    \begin{itemize}
+        \item AuditPostInterceptor: Complete audit records
+        \item MetricsInterceptor: Update query statistics
+        \item AlertInterceptor: Trigger security alerts
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Chain Execution Flow}
+
+\begin{enumerate}
+    \item Client sends query to zGate
+    \item Query enters interceptor chain
+    \item Each BeforeQuery interceptor processes in order
+    \item If any interceptor rejects: Return error, skip remaining chain
+    \item Forward (possibly rewritten) query to database
+    \item Database returns result set
+    \item Each OnRow interceptor processes every row
+    \item Forward (possibly modified) rows to client
+    \item Each AfterQuery interceptor processes
+    \item Complete request handling
+\end{enumerate}
+
+\paragraph{Configuration and Extensibility}
+
+This modularity enables new security features without modifying the core proxy loop:
+
+\begin{itemize}
+    \item \textbf{Plugin architecture}: New interceptors implement standard interface
+    \item \textbf{Runtime configuration}: Enable/disable interceptors via config file
+    \item \textbf{Ordering control}: Specify execution order in configuration
+    \item \textbf{Conditional execution}: Interceptors can check context and skip
+    \item \textbf{Error handling}: Interceptors can halt chain or allow continuation
+    \item \textbf{Performance optimization}: Short-circuit chain when possible
+\end{itemize}
+
+% ------------------------------------------------------------
+% 5. Embedded Storage (SQLite)
+% ------------------------------------------------------------
+\section{Embedded Storage (SQLite)}
+
+SQLite is a C-language library that implements a small, fast, self-contained, full-featured SQL database engine. It is the most deployed database engine in the world.
+
+\subsection{SQLite Overview}
+
+\paragraph{SQLite Characteristics}
+
+\textbf{Why SQLite for zGate:}
+\begin{itemize}
+    \item \textbf{Self-contained}: No separate server process required
+    \item \textbf{Zero-configuration}: No installation or admin needed
+    \item \textbf{Single file}: Entire database in one file on disk
+    \item \textbf{Cross-platform}: Works on all major operating systems
+    \item \textbf{Reliable}: ACID-compliant, crash-safe transactions
+    \item \textbf{Small footprint}: ~600KB compiled library
+    \item \textbf{Fast}: Optimized for local database operations
+    \item \textbf{Public domain}: No licensing concerns
+\end{itemize}
+
+\textbf{SQLite Architecture:}
+\begin{itemize}
+    \item \textbf{SQL compiler}: Parses SQL into bytecode
+    \item \textbf{Virtual Machine}: Executes bytecode
+    \item \textbf{B-tree}: Data structure for tables and indexes
+    \item \textbf{Pager}: Manages database pages and caching
+    \item \textbf{OS Interface}: Platform-specific file I/O
+\end{itemize}
+
+\textbf{Transaction Support:}
+\begin{itemize}
+    \item \textbf{ACID properties}: Atomicity, Consistency, Isolation, Durability
+    \item \textbf{Write-Ahead Log (WAL)}: Improves concurrency and performance
+    \item \textbf{Journaling}: Rollback journal for crash recovery
+    \item \textbf{Locking}: Database-level locking (readers don't block readers)
+\end{itemize}
+
+\paragraph{Encryption with SQLCipher}
+
+zGate uses SQLite with SQLCipher for transparent database encryption:
+
+\begin{itemize}
+    \item \textbf{SQLCipher}: Open-source extension for encrypted SQLite databases
+    \item \textbf{Transparent encryption}: Entire database file encrypted
+    \item \textbf{AES-256-CBC}: Encryption algorithm used
+    \item \textbf{PBKDF2}: Key derivation from passphrase
+    \item \textbf{HMAC-SHA1}: Page authentication
+    \item \textbf{No plaintext on disk}: All data encrypted at rest
+\end{itemize}
+
+\subsection{Schema Design}
+
+The RBAC (Role-Based Access Control) system includes carefully designed tables with appropriate constraints and relationships.
+
+\paragraph{Core Tables}
+
+\begin{itemize}
+    \item \textbf{users table}:
+    \begin{verbatim}
+CREATE TABLE users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    email TEXT UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT 1,
+    last_login TIMESTAMP,
+    failed_login_attempts INTEGER DEFAULT 0
+);
+    \end{verbatim}
+    Stores user account information and authentication data.
+    
+    \item \textbf{roles table}:
+    \begin{verbatim}
+CREATE TABLE roles (
+    role_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_system_role BOOLEAN DEFAULT 0
+);
+    \end{verbatim}
+    Defines available roles (e.g., admin, analyst, developer).
+    
+    \item \textbf{permissions table}:
+    \begin{verbatim}
+CREATE TABLE permissions (
+    permission_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resource TEXT NOT NULL,
+    action TEXT NOT NULL,
+    description TEXT,
+    UNIQUE(resource, action)
+);
+    \end{verbatim}
+    Defines granular permissions (e.g., database:read, table:write).
+    
+    \item \textbf{role\_permissions table} (junction table):
+    \begin{verbatim}
+CREATE TABLE role_permissions (
+    role_id INTEGER NOT NULL,
+    permission_id INTEGER NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(role_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(permission_id)
+        ON DELETE CASCADE
+);
+    \end{verbatim}
+    Maps which permissions each role has (many-to-many relationship).
+    
+    \item \textbf{user\_roles table} (junction table):
+    \begin{verbatim}
+CREATE TABLE user_roles (
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    granted_by INTEGER,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id)
+        ON DELETE CASCADE
+);
+    \end{verbatim}
+    Assigns roles to users (many-to-many relationship).
+    
+    \item \textbf{user\_custom\_permissions table}:
+    \begin{verbatim}
+CREATE TABLE user_custom_permissions (
+    user_id INTEGER NOT NULL,
+    permission_id INTEGER NOT NULL,
+    is_grant BOOLEAN NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, permission_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(permission_id)
+        ON DELETE CASCADE
+);
+    \end{verbatim}
+    Allows granting/revoking individual permissions to users, overriding role permissions.
+    
+    \item \textbf{audit\_logs table}:
+    \begin{verbatim}
+CREATE TABLE audit_logs (
+    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER,
+    username TEXT NOT NULL,
+    client_ip TEXT,
+    database_name TEXT,
+    original_query TEXT NOT NULL,
+    rewritten_query TEXT,
+    query_result TEXT,
+    rows_affected INTEGER,
+    execution_time_ms INTEGER,
+    policy_action TEXT,
+    was_blocked BOOLEAN DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE SET NULL
+);
+CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_audit_user ON audit_logs(user_id);
+CREATE INDEX idx_audit_blocked ON audit_logs(was_blocked);
+    \end{verbatim}
+    Comprehensive audit trail of all database access.
+\end{itemize}
+
+\paragraph{Referential Integrity}
+
+Foreign key constraints ensure referential integrity:
+
+\begin{itemize}
+    \item \textbf{ON DELETE CASCADE}: When parent record deleted, child records automatically deleted
+    \begin{itemize}
+        \item Example: Delete role → all role\_permissions entries deleted
+        \item Example: Delete user → all user\_roles entries deleted
+    \end{itemize}
+    
+    \item \textbf{ON DELETE SET NULL}: When parent deleted, foreign key in child set to NULL
+    \begin{itemize}
+        \item Example: Delete user → audit\_logs.user\_id set to NULL (preserve audit history)
+    \end{itemize}
+    
+    \item \textbf{Constraint enforcement}: SQLite validates all constraints on INSERT/UPDATE/DELETE
+    
+    \item \textbf{Transaction rollback}: Constraint violations roll back entire transaction
+\end{itemize}
+
+Cascading deletes help maintain consistency by automatically cleaning up related records.
+
+\subsection{Audit Logging}
+
+Every query generates an audit log entry, providing comprehensive visibility and compliance support.
+
+\paragraph{Audit Log Contents}
+
+Each audit record stores:
+
+\begin{itemize}
+    \item \textbf{User identity}:
+    \begin{itemize}
+        \item User ID and username
+        \item Authentication method used
+        \item User's active roles at time of query
+    \end{itemize}
+    
+    \item \textbf{Timestamp}:
+    \begin{itemize}
+        \item High-precision timestamp (microseconds)
+        \item Time zone information
+        \item Server time vs client time
+    \end{itemize}
+    
+    \item \textbf{Context information}:
+    \begin{itemize}
+        \item Client IP address
+        \item Application name/version
+        \item Session ID
+        \item Database name
+    \end{itemize}
+    
+    \item \textbf{Original query}:
+    \begin{itemize}
+        \item Exact SQL as submitted by client
+        \item Parameter values (for prepared statements)
+        \item Query type (SELECT, INSERT, UPDATE, DELETE, DDL)
+    \end{itemize}
+    
+    \item \textbf{Rewritten query}:
+    \begin{itemize}
+        \item SQL after policy enforcement modifications
+        \item Added WHERE clauses
+        \item Column masking expressions
+        \item Shows what was actually executed
+    \end{itemize}
+    
+    \item \textbf{Execution metrics}:
+    \begin{itemize}
+        \item Rows affected or returned
+        \item Execution time in milliseconds
+        \item Success or error status
+        \item Error message if failed
+    \end{itemize}
+    
+    \item \textbf{Policy action taken}:
+    \begin{itemize}
+        \item ALLOW: Query permitted and forwarded
+        \item MODIFY: Query rewritten before execution
+        \item MASK: Results masked on return
+        \item BLOCK: Query rejected
+        \item Reason for action (which policy triggered)
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Audit Log Use Cases}
+
+Logs are essential for:
+
+\begin{itemize}
+    \item \textbf{Compliance and regulatory requirements}:
+    \begin{itemize}
+        \item GDPR: Demonstrating data access controls
+        \item HIPAA: Healthcare data access audit trails
+        \item SOX: Financial data access logging
+        \item PCI-DSS: Cardholder data access tracking
+    \end{itemize}
+    
+    \item \textbf{Forensic analysis}:
+    \begin{itemize}
+        \item Investigating security incidents
+        \item Identifying data breach scope
+        \item Tracking unauthorized access attempts
+        \item Timeline reconstruction
+    \end{itemize}
+    
+    \item \textbf{Anomaly detection}:
+    \begin{itemize}
+        \item Unusual query patterns
+        \item Off-hours access
+        \item Large data extractions
+        \item Permission escalation attempts
+    \end{itemize}
+    
+    \item \textbf{Performance analysis}:
+    \begin{itemize}
+        \item Identifying slow queries
+        \item Query frequency analysis
+        \item User behavior patterns
+    \end{itemize}
+    
+    \item \textbf{User behavior analytics}:
+    \begin{itemize}
+        \item Establish baselines for normal activity
+        \item Detect insider threats
+        \item Monitor privileged user actions
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Audit Log Management}
+
+\begin{itemize}
+    \item \textbf{Retention policies}: Configure how long logs are kept
+    \item \textbf{Log rotation}: Archive old logs to separate storage
+    \item \textbf{Tamper protection}: Logs cryptographically signed
+    \item \textbf{Export capabilities}: Export to SIEM or log aggregation systems
+    \item \textbf{Query interface}: Search and filter audit logs via API
+\end{itemize}
+
+% ------------------------------------------------------------
+% 6. REST API Design
+% ------------------------------------------------------------
+\section{REST API Design}
+
+The administrative control plane is implemented using a REST (Representational State Transfer) API built with Gorilla Mux, a popular HTTP router for Go.
+
+\subsection{REST Architectural Style}
+
+\paragraph{REST Principles}
+
+REST is an architectural style for distributed systems defined by Roy Fielding in his 2000 doctoral dissertation. Key constraints include:
+
+\begin{itemize}
+    \item \textbf{Client-Server}: Separation of concerns between UI and data storage
+    \item \textbf{Stateless}: Each request contains all necessary information
+    \item \textbf{Cacheable}: Responses explicitly indicate if they can be cached
+    \item \textbf{Uniform Interface}: Standardized communication protocol (HTTP)
+    \item \textbf{Layered System}: Intermediaries (proxies, gateways) can be transparent
+    \item \textbf{Code on Demand (optional)}: Servers can extend client functionality
+\end{itemize}
+
+\paragraph{HTTP Methods in REST}
+
+\begin{itemize}
+    \item \textbf{GET}: Retrieve resource (idempotent, safe, cacheable)
+    \item \textbf{POST}: Create new resource (not idempotent)
+    \item \textbf{PUT}: Update/replace resource (idempotent)
+    \item \textbf{PATCH}: Partial update (idempotent)
+    \item \textbf{DELETE}: Remove resource (idempotent)
+    \item \textbf{HEAD}: Get headers only (like GET without body)
+    \item \textbf{OPTIONS}: Describe communication options (CORS)
+\end{itemize}
+
+\paragraph{HTTP Status Codes}
+
+\begin{itemize}
+    \item \textbf{2xx Success}:
+    \begin{itemize}
+        \item 200 OK: Request succeeded
+        \item 201 Created: Resource created
+        \item 204 No Content: Success, no response body
+    \end{itemize}
+    
+    \item \textbf{3xx Redirection}:
+    \begin{itemize}
+        \item 301 Moved Permanently
+        \item 304 Not Modified: Use cached version
+    \end{itemize}
+    
+    \item \textbf{4xx Client Errors}:
+    \begin{itemize}
+        \item 400 Bad Request: Invalid syntax
+        \item 401 Unauthorized: Authentication required
+        \item 403 Forbidden: Insufficient permissions
+        \item 404 Not Found: Resource doesn't exist
+        \item 409 Conflict: Request conflicts with current state
+        \item 422 Unprocessable Entity: Validation failed
+    \end{itemize}
+    
+    \item \textbf{5xx Server Errors}:
+    \begin{itemize}
+        \item 500 Internal Server Error
+        \item 503 Service Unavailable: Temporary overload
+    \end{itemize}
+\end{itemize}
+
+\subsection{API Characteristics}
+
+\paragraph{Gorilla Mux Router}
+
+Gorilla Mux is a powerful HTTP router for Go applications:
+
+\begin{itemize}
+    \item \textbf{Path and method-based routing}:
+    \begin{itemize}
+        \item Match routes by HTTP method and URL path
+        \item Path variables: \texttt{/users/\{id\}}
+        \item Query parameters: \texttt{/users?role=admin}
+        \item Host-based routing: Different handlers for different domains
+    \end{itemize}
+    
+    \item \textbf{Middleware support}:
+    \begin{itemize}
+        \item Chain middleware functions
+        \item Execute before/after route handlers
+        \item Common middleware: logging, auth, CORS, rate limiting
+    \end{itemize}
+    
+    \item \textbf{Subrouters}:
+    \begin{itemize}
+        \item Group related routes
+        \item Apply middleware to route groups
+        \item Organize API versions (e.g., /api/v1, /api/v2)
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Request/Response Format}
+
+\begin{itemize}
+    \item \textbf{JSON request/response formatting}:
+    \begin{itemize}
+        \item All request bodies use JSON
+        \item All responses return JSON (even errors)
+        \item Content-Type: application/json header required
+        \item Consistent error response format
+    \end{itemize}
+    
+    \item \textbf{Example Request}:
+\begin{verbatim}
+POST /api/v1/users
+Content-Type: application/json
+Authorization: Bearer eyJhbGc...
+
+{
+  "username": "alice",
+  "email": "alice@example.com",
+  "roles": ["analyst"]
+}
+\end{verbatim}
+    
+    \item \textbf{Example Success Response}:
+\begin{verbatim}
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "user_id": 42,
+  "username": "alice",
+  "email": "alice@example.com",
+  "roles": ["analyst"],
+  "created_at": "2025-12-12T10:30:00Z"
+}
+\end{verbatim}
+    
+    \item \textbf{Example Error Response}:
+\begin{verbatim}
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "error": "Insufficient permissions",
+  "code": "FORBIDDEN",
+  "details": "User lacks 'user:create' permission"
+}
+\end{verbatim}
+\end{itemize}
+
+\paragraph{Authentication and Authorization}
+
+\begin{itemize}
+    \item \textbf{JWT-based authorization middleware}:
+    \begin{itemize}
+        \item Extracts token from Authorization header
+        \item Validates token signature and expiration
+        \item Checks required permissions for endpoint
+        \item Attaches user context to request
+    \end{itemize}
+    
+    \item \textbf{Permission-based access control}:
+    \begin{itemize}
+        \item Each endpoint requires specific permissions
+        \item Example: POST /users requires "user:create"
+        \item Permissions checked against JWT claims
+        \item Granular control over API access
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Transport Security}
+
+\begin{itemize}
+    \item \textbf{TLS for transport security}:
+    \begin{itemize}
+        \item All API traffic over HTTPS
+        \item TLS 1.2+ enforced
+        \item HSTS header: Strict-Transport-Security
+        \item Certificate pinning option for mobile clients
+    \end{itemize}
+\end{itemize}
+
+\subsection{Administrative Capabilities}
+
+The API exposes comprehensive management endpoints.
+
+\paragraph{User and Role Management}
+
+\begin{itemize}
+    \item \textbf{User operations}:
+    \begin{itemize}
+        \item GET /api/v1/users - List all users
+        \item GET /api/v1/users/\{id\} - Get user details
+        \item POST /api/v1/users - Create new user
+        \item PUT /api/v1/users/\{id\} - Update user
+        \item DELETE /api/v1/users/\{id\} - Delete user
+        \item POST /api/v1/users/\{id\}/roles - Assign roles
+        \item DELETE /api/v1/users/\{id\}/roles/\{roleId\} - Revoke role
+    \end{itemize}
+    
+    \item \textbf{Role operations}:
+    \begin{itemize}
+        \item GET /api/v1/roles - List all roles
+        \item POST /api/v1/roles - Create role
+        \item PUT /api/v1/roles/\{id\} - Update role
+        \item DELETE /api/v1/roles/\{id\} - Delete role
+        \item GET /api/v1/roles/\{id\}/permissions - List role permissions
+        \item POST /api/v1/roles/\{id\}/permissions - Grant permissions
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Security Operations}
+
+\begin{itemize}
+    \item \textbf{Key and certificate rotation}:
+    \begin{itemize}
+        \item POST /api/v1/crypto/rotate-key - Rotate encryption keys
+        \item POST /api/v1/crypto/rotate-cert - Update TLS certificates
+        \item GET /api/v1/crypto/status - View key/cert status
+    \end{itemize}
+    
+    \item \textbf{Token management}:
+    \begin{itemize}
+        \item POST /api/v1/auth/revoke - Revoke refresh token
+        \item DELETE /api/v1/auth/sessions/\{id\} - Kill user session
+        \item GET /api/v1/auth/sessions - List active sessions
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Policy Management}
+
+\begin{itemize}
+    \item \textbf{Masking rules}:
+    \begin{itemize}
+        \item GET /api/v1/policies/masking - List masking policies
+        \item POST /api/v1/policies/masking - Create masking rule
+        \item PUT /api/v1/policies/masking/\{id\} - Update rule
+        \item DELETE /api/v1/policies/masking/\{id\} - Delete rule
+    \end{itemize}
+    
+    \item \textbf{RBAC policies}:
+    \begin{itemize}
+        \item GET /api/v1/policies/rbac - List access policies
+        \item POST /api/v1/policies/rbac - Create policy
+        \item PUT /api/v1/policies/rbac/\{id\} - Update policy
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Monitoring and Administration}
+
+\begin{itemize}
+    \item \textbf{Active session monitoring}:
+    \begin{itemize}
+        \item GET /api/v1/sessions - List active connections
+        \item GET /api/v1/sessions/\{id\} - Session details
+        \item DELETE /api/v1/sessions/\{id\} - Kill session
+    \end{itemize}
+    
+    \item \textbf{Audit log access}:
+    \begin{itemize}
+        \item GET /api/v1/audit - Query audit logs
+        \item GET /api/v1/audit/export - Export logs (CSV, JSON)
+        \item POST /api/v1/audit/search - Advanced search
+    \end{itemize}
+    
+    \item \textbf{System health}:
+    \begin{itemize}
+        \item GET /api/v1/health - Health check endpoint
+        \item GET /api/v1/metrics - Prometheus metrics
+        \item GET /api/v1/stats - System statistics
+    \end{itemize}
+\end{itemize}
+
+\newpage
+
+\newpage
+
+
+% ============================================================
 % 9. SYSTEM ARCHITECTURE
 % ============================================================
 \chapter{System Architecture}

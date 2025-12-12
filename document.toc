@@ -1,118 +1,222 @@
-\contentsline {chapter}{\numberline {1}Team Information}{7}{chapter.1}%
-\contentsline {section}{\numberline {1.1}Team Members}{7}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Roles \& Responsibilities}{7}{section.1.2}%
-\contentsline {chapter}{\numberline {2}Introduction \& Problem Definition}{8}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Introduction}{8}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Problem Statement}{8}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Gap in Existing Solutions}{8}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Why Zero Trust for Databases is Different}{8}{section.2.4}%
-\contentsline {chapter}{\numberline {3}Project Definition}{9}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Project Definition \& Scope}{9}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Objectives}{9}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Expected Academic Contribution}{9}{section.3.3}%
-\contentsline {chapter}{\numberline {4}Requirements Engineering}{10}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Functional Requirements}{10}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Non-Functional Requirements}{10}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Actors \& Use Cases}{10}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Use Case Diagrams}{10}{section.4.4}%
-\contentsline {section}{\numberline {4.5}User Stories}{10}{section.4.5}%
-\contentsline {chapter}{\numberline {5}Proposed Solution}{11}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Overview of the Proposed Solution}{11}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Solution Architecture Layers}{11}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Authentication Layer}{11}{subsection.5.2.1}%
-\contentsline {subsection}{\numberline {5.2.2}Proxy Layer}{11}{subsection.5.2.2}%
-\contentsline {subsection}{\numberline {5.2.3}Policy Engine Layer}{11}{subsection.5.2.3}%
-\contentsline {subsection}{\numberline {5.2.4}Data Protection Layer}{11}{subsection.5.2.4}%
-\contentsline {subsection}{\numberline {5.2.5}Observability Layer}{11}{subsection.5.2.5}%
-\contentsline {section}{\numberline {5.3}Term 1 vs Term 2 Features}{11}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Feature List}{11}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Alignment with International Standards}{12}{chapter.6}%
-\contentsline {section}{\numberline {6.1}PCI DSS}{12}{section.6.1}%
-\contentsline {section}{\numberline {6.2}HIPAA}{12}{section.6.2}%
-\contentsline {section}{\numberline {6.3}GDPR}{12}{section.6.3}%
-\contentsline {section}{\numberline {6.4}ISO 27001}{12}{section.6.4}%
-\contentsline {chapter}{\numberline {7}Competitor \& Market Analysis}{13}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Competitor Analysis}{13}{section.7.1}%
-\contentsline {subsection}{\numberline {7.1.1}Comparison Table}{13}{subsection.7.1.1}%
-\contentsline {subsection}{\numberline {7.1.2}What Competitors Lack}{13}{subsection.7.1.2}%
-\contentsline {section}{\numberline {7.2}Market Research}{13}{section.7.2}%
-\contentsline {subsection}{\numberline {7.2.1}Market Overview}{13}{subsection.7.2.1}%
-\contentsline {subsection}{\numberline {7.2.2}Zero Trust Demand}{13}{subsection.7.2.2}%
-\contentsline {subsection}{\numberline {7.2.3}Market Challenges \& Needs}{13}{subsection.7.2.3}%
-\contentsline {subsection}{\numberline {7.2.4}Regulatory Drivers}{13}{subsection.7.2.4}%
-\contentsline {subsection}{\numberline {7.2.5}Trends \& Opportunities}{13}{subsection.7.2.5}%
-\contentsline {subsection}{\numberline {7.2.6}Landscape Summary}{13}{subsection.7.2.6}%
-\contentsline {chapter}{\numberline {8}Scientific Research \& Literature Review}{14}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Paper 1}{14}{section.8.1}%
-\contentsline {section}{\numberline {8.2}Paper 2}{14}{section.8.2}%
-\contentsline {section}{\numberline {8.3}Paper 3}{14}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Paper 4}{14}{section.8.4}%
-\contentsline {section}{\numberline {8.5}Paper 5}{14}{section.8.5}%
-\contentsline {section}{\numberline {8.6}Paper 6}{14}{section.8.6}%
-\contentsline {section}{\numberline {8.7}Paper 7}{14}{section.8.7}%
-\contentsline {chapter}{\numberline {9}System Architecture}{15}{chapter.9}%
-\contentsline {section}{\numberline {9.1}High-Level Architecture Diagram}{15}{section.9.1}%
-\contentsline {section}{\numberline {9.2}Main System Components}{15}{section.9.2}%
-\contentsline {section}{\numberline {9.3}Component Communication Flow}{15}{section.9.3}%
-\contentsline {section}{\numberline {9.4}Tech Stack Summary}{15}{section.9.4}%
-\contentsline {chapter}{\numberline {10}Detailed Architecture of the Proxy}{16}{chapter.10}%
-\contentsline {section}{\numberline {10.1}Connection Lifecycle}{16}{section.10.1}%
-\contentsline {section}{\numberline {10.2}Authentication Flow}{16}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Query Filtering Flow}{16}{section.10.3}%
-\contentsline {section}{\numberline {10.4}Policy Enforcement Flow}{16}{section.10.4}%
-\contentsline {section}{\numberline {10.5}Session Monitoring Flow}{16}{section.10.5}%
-\contentsline {section}{\numberline {10.6}User → Gateway → Database Diagram}{16}{section.10.6}%
-\contentsline {chapter}{\numberline {11}High-Level Data Flow Diagrams}{17}{chapter.11}%
-\contentsline {section}{\numberline {11.1}Authentication Flow Diagram}{17}{section.11.1}%
-\contentsline {section}{\numberline {11.2}Query Filtering Diagram}{17}{section.11.2}%
-\contentsline {section}{\numberline {11.3}Logging \& Auditing Flow Diagram}{17}{section.11.3}%
-\contentsline {chapter}{\numberline {12}Technology Justification}{18}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Why Go}{18}{section.12.1}%
-\contentsline {section}{\numberline {12.2}Why Node.js / TS / React}{18}{section.12.2}%
-\contentsline {section}{\numberline {12.3}Why mTLS (and why TCP is temporary)}{18}{section.12.3}%
-\contentsline {section}{\numberline {12.4}Why SQLite / Internal Storage}{18}{section.12.4}%
-\contentsline {section}{\numberline {12.5}Design Decision Summary}{18}{section.12.5}%
-\contentsline {chapter}{\numberline {13}Prototype – Semester 1}{19}{chapter.13}%
-\contentsline {section}{\numberline {13.1}Implemented Features}{19}{section.13.1}%
-\contentsline {section}{\numberline {13.2}Screenshots (CLI \& Dashboard)}{19}{section.13.2}%
-\contentsline {section}{\numberline {13.3}What Works vs What Doesn’t}{19}{section.13.3}%
-\contentsline {section}{\numberline {13.4}Technical Decisions Made}{19}{section.13.4}%
-\contentsline {section}{\numberline {13.5}Implementation Challenges}{19}{section.13.5}%
-\contentsline {chapter}{\numberline {14}Development Methodology}{20}{chapter.14}%
-\contentsline {section}{\numberline {14.1}Agile Method}{20}{section.14.1}%
-\contentsline {section}{\numberline {14.2}Meeting Structure}{20}{section.14.2}%
-\contentsline {section}{\numberline {14.3}Collaboration Tools}{20}{section.14.3}%
-\contentsline {section}{\numberline {14.4}Documentation \& Observability}{20}{section.14.4}%
-\contentsline {chapter}{\numberline {15}Task Tracking}{21}{chapter.15}%
-\contentsline {section}{\numberline {15.1}Team Task Tracking (Actual Examples)}{21}{section.15.1}%
-\contentsline {section}{\numberline {15.2}Supervisor Tracking Logs}{21}{section.15.2}%
-\contentsline {section}{\numberline {15.3}Blockers, Risks \& Resolution Notes}{21}{section.15.3}%
-\contentsline {chapter}{\numberline {16}Milestones}{22}{chapter.16}%
-\contentsline {section}{\numberline {16.1}Term 1 Milestone Roadmap}{22}{section.16.1}%
-\contentsline {subsection}{\numberline {16.1.1}Milestone 1}{22}{subsection.16.1.1}%
-\contentsline {subsection}{\numberline {16.1.2}Milestone 2}{22}{subsection.16.1.2}%
-\contentsline {subsection}{\numberline {16.1.3}Milestone 3}{22}{subsection.16.1.3}%
-\contentsline {subsection}{\numberline {16.1.4}Milestone 4}{22}{subsection.16.1.4}%
-\contentsline {subsection}{\numberline {16.1.5}Milestone 5}{22}{subsection.16.1.5}%
-\contentsline {section}{\numberline {16.2}Timeline Chart (Gantt-like)}{22}{section.16.2}%
-\contentsline {chapter}{\numberline {17}Threat Model \& Security Considerations}{23}{chapter.17}%
-\contentsline {section}{\numberline {17.1}Threat Model}{23}{section.17.1}%
-\contentsline {section}{\numberline {17.2}Risks \& Attack Vectors}{23}{section.17.2}%
-\contentsline {section}{\numberline {17.3}Mitigation Techniques}{23}{section.17.3}%
-\contentsline {section}{\numberline {17.4}Why Zero Trust is Needed}{23}{section.17.4}%
-\contentsline {chapter}{\numberline {18}Roadmap for Term 2}{24}{chapter.18}%
-\contentsline {section}{\numberline {18.1}Remaining Features}{24}{section.18.1}%
-\contentsline {section}{\numberline {18.2}Architecture Improvements}{24}{section.18.2}%
-\contentsline {section}{\numberline {18.3}Performance Goals}{24}{section.18.3}%
-\contentsline {section}{\numberline {18.4}Testing \& Validation Plan}{24}{section.18.4}%
-\contentsline {chapter}{\numberline {19}Team Contribution}{25}{chapter.19}%
-\contentsline {section}{\numberline {19.1}Overview of Contribution Approach}{25}{section.19.1}%
-\contentsline {section}{\numberline {19.2}Individual Contributions}{25}{section.19.2}%
-\contentsline {chapter}{\numberline {20}Expected Outcomes}{26}{chapter.20}%
-\contentsline {chapter}{\numberline {21}Conclusion}{27}{chapter.21}%
-\contentsline {section}{\numberline {21.1}Restated Purpose}{27}{section.21.1}%
-\contentsline {section}{\numberline {21.2}Summary of Achievements}{27}{section.21.2}%
-\contentsline {section}{\numberline {21.3}Importance \& Contribution}{27}{section.21.3}%
-\contentsline {section}{\numberline {21.4}Transition to Next Semester}{27}{section.21.4}%
-\contentsline {chapter}{\numberline {A}Glossary}{29}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Dashboard Mockups}{30}{appendix.B}%
+\contentsline {chapter}{\numberline {1}Team Information}{8}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Team Members}{8}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Roles \& Responsibilities}{8}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Introduction \& Problem Definition}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Introduction}{9}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Problem Statement}{9}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Gap in Existing Solutions}{9}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Why Zero Trust for Databases is Different}{9}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Project Definition}{10}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Project Definition \& Scope}{10}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Objectives}{10}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Expected Academic Contribution}{10}{section.3.3}%
+\contentsline {chapter}{\numberline {4}Requirements Engineering}{11}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Functional Requirements}{11}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Non-Functional Requirements}{11}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Actors \& Use Cases}{11}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Use Case Diagrams}{11}{section.4.4}%
+\contentsline {section}{\numberline {4.5}User Stories}{11}{section.4.5}%
+\contentsline {chapter}{\numberline {5}Proposed Solution}{12}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Overview of the Proposed Solution}{12}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Solution Architecture Layers}{12}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Authentication Layer}{12}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Proxy Layer}{12}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Policy Engine Layer}{12}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Data Protection Layer}{12}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.5}Observability Layer}{12}{subsection.5.2.5}%
+\contentsline {section}{\numberline {5.3}Term 1 vs Term 2 Features}{12}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Feature List}{12}{section.5.4}%
+\contentsline {chapter}{\numberline {6}Alignment with International Standards}{13}{chapter.6}%
+\contentsline {section}{\numberline {6.1}PCI DSS}{13}{section.6.1}%
+\contentsline {section}{\numberline {6.2}HIPAA}{13}{section.6.2}%
+\contentsline {section}{\numberline {6.3}GDPR}{13}{section.6.3}%
+\contentsline {section}{\numberline {6.4}ISO 27001}{13}{section.6.4}%
+\contentsline {chapter}{\numberline {7}Competitor \& Market Analysis}{14}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Competitor Analysis}{14}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Comparison Table}{14}{subsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.1.2}What Competitors Lack}{14}{subsection.7.1.2}%
+\contentsline {section}{\numberline {7.2}Market Research}{14}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Market Overview}{14}{subsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.2.2}Zero Trust Demand}{14}{subsection.7.2.2}%
+\contentsline {subsection}{\numberline {7.2.3}Market Challenges \& Needs}{14}{subsection.7.2.3}%
+\contentsline {subsection}{\numberline {7.2.4}Regulatory Drivers}{14}{subsection.7.2.4}%
+\contentsline {subsection}{\numberline {7.2.5}Trends \& Opportunities}{14}{subsection.7.2.5}%
+\contentsline {subsection}{\numberline {7.2.6}Landscape Summary}{14}{subsection.7.2.6}%
+\contentsline {chapter}{\numberline {8}Scientific Research \& Literature Review}{15}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Paper 1}{15}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Paper 2}{15}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Paper 3}{15}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Paper 4}{15}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Paper 5}{15}{section.8.5}%
+\contentsline {section}{\numberline {8.6}Paper 6}{15}{section.8.6}%
+\contentsline {section}{\numberline {8.7}Paper 7}{15}{section.8.7}%
+\contentsline {chapter}{\numberline {9}Technical Background}{16}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Systems Programming in Go}{16}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Introduction to Go Programming Language}{16}{subsection.9.1.1}%
+\contentsline {paragraph}{Design Philosophy}{16}{paragraph*.3}%
+\contentsline {paragraph}{Memory Safety}{17}{paragraph*.4}%
+\contentsline {paragraph}{Standard Library}{17}{paragraph*.5}%
+\contentsline {subsection}{\numberline {9.1.2}Go Runtime Model}{17}{subsection.9.1.2}%
+\contentsline {paragraph}{The G--M--P Model Explained}{17}{paragraph*.6}%
+\contentsline {paragraph}{Scheduling Mechanism}{18}{paragraph*.7}%
+\contentsline {paragraph}{Why This Matters for zGate}{18}{paragraph*.8}%
+\contentsline {subsection}{\numberline {9.1.3}Concurrency Primitives}{18}{subsection.9.1.3}%
+\contentsline {paragraph}{Goroutines in Detail}{18}{paragraph*.9}%
+\contentsline {paragraph}{Channels in Depth}{19}{paragraph*.10}%
+\contentsline {paragraph}{Mutexes and Atomic Operations}{20}{paragraph*.11}%
+\contentsline {subsection}{\numberline {9.1.4}Low-Level TCP Socket Programming}{20}{subsection.9.1.4}%
+\contentsline {paragraph}{TCP/IP Socket Fundamentals}{20}{paragraph*.12}%
+\contentsline {paragraph}{MySQL Protocol Socket Management}{21}{paragraph*.13}%
+\contentsline {paragraph}{Buffer Management}{22}{paragraph*.14}%
+\contentsline {subsection}{\numberline {9.1.5}Context Propagation}{22}{subsection.9.1.5}%
+\contentsline {paragraph}{Context Fundamentals}{22}{paragraph*.15}%
+\contentsline {paragraph}{Context in zGate}{22}{paragraph*.16}%
+\contentsline {paragraph}{Cancellation Propagation}{23}{paragraph*.17}%
+\contentsline {section}{\numberline {9.2}Database Wire Protocols (MySQL/MariaDB)}{24}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}MySQL Protocol Overview}{24}{subsection.9.2.1}%
+\contentsline {paragraph}{Protocol Characteristics}{24}{paragraph*.18}%
+\contentsline {paragraph}{Protocol Phases}{24}{paragraph*.19}%
+\contentsline {subsection}{\numberline {9.2.2}MySQL Packet Structure}{25}{subsection.9.2.2}%
+\contentsline {paragraph}{Packet Header Format}{25}{paragraph*.20}%
+\contentsline {paragraph}{Large Packet Handling}{25}{paragraph*.21}%
+\contentsline {paragraph}{Packet Validation in zGate}{26}{paragraph*.22}%
+\contentsline {subsection}{\numberline {9.2.3}Command Phase Processing}{26}{subsection.9.2.3}%
+\contentsline {paragraph}{Command Packet Format}{26}{paragraph*.23}%
+\contentsline {paragraph}{Supported Commands in zGate}{26}{paragraph*.24}%
+\contentsline {paragraph}{Command Processing in zGate}{28}{paragraph*.25}%
+\contentsline {subsection}{\numberline {9.2.4}Result Set Encoding}{28}{subsection.9.2.4}%
+\contentsline {paragraph}{Result Set Packet Sequence}{28}{paragraph*.26}%
+\contentsline {paragraph}{Length-Encoded Integers}{29}{paragraph*.27}%
+\contentsline {paragraph}{Text vs Binary Protocol}{29}{paragraph*.28}%
+\contentsline {paragraph}{zGate Row Interception}{30}{paragraph*.29}%
+\contentsline {subsection}{\numberline {9.2.5}SQL Parsing and AST Manipulation}{30}{subsection.9.2.5}%
+\contentsline {paragraph}{SQL Abstract Syntax Trees}{30}{paragraph*.30}%
+\contentsline {paragraph}{Parsing Pipeline}{31}{paragraph*.31}%
+\contentsline {paragraph}{AST Node Types}{31}{paragraph*.32}%
+\contentsline {paragraph}{AST Manipulation in zGate}{32}{paragraph*.33}%
+\contentsline {paragraph}{Safe Rewriting Examples}{33}{paragraph*.34}%
+\contentsline {paragraph}{Security Benefits}{33}{paragraph*.35}%
+\contentsline {section}{\numberline {9.3}Cryptography and Security Engineering}{34}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}TLS / SSL Transport Layer Security}{34}{subsection.9.3.1}%
+\contentsline {paragraph}{TLS Protocol Overview}{34}{paragraph*.36}%
+\contentsline {paragraph}{TLS Handshake Process}{34}{paragraph*.37}%
+\contentsline {paragraph}{TLS in zGate}{35}{paragraph*.38}%
+\contentsline {paragraph}{Technical Implementation Details}{36}{paragraph*.39}%
+\contentsline {subsection}{\numberline {9.3.2}Symmetric Encryption (AES-256)}{37}{subsection.9.3.2}%
+\contentsline {paragraph}{AES Fundamentals}{37}{paragraph*.40}%
+\contentsline {paragraph}{AES Modes of Operation}{37}{paragraph*.41}%
+\contentsline {paragraph}{AES-256-GCM in zGate}{38}{paragraph*.42}%
+\contentsline {paragraph}{Encryption Process}{39}{paragraph*.43}%
+\contentsline {paragraph}{Decryption Process}{39}{paragraph*.44}%
+\contentsline {subsection}{\numberline {9.3.3}Secure Hashing}{39}{subsection.9.3.3}%
+\contentsline {paragraph}{Hash Function Properties}{39}{paragraph*.45}%
+\contentsline {paragraph}{bcrypt for Password Hashing}{40}{paragraph*.46}%
+\contentsline {paragraph}{SHA-256 for Token Hashing}{41}{paragraph*.47}%
+\contentsline {paragraph}{Security Principle}{41}{paragraph*.48}%
+\contentsline {subsection}{\numberline {9.3.4}JWT Authentication}{41}{subsection.9.3.4}%
+\contentsline {paragraph}{JWT Structure}{42}{paragraph*.49}%
+\contentsline {paragraph}{JWT in zGate Admin API}{42}{paragraph*.50}%
+\contentsline {paragraph}{Token Lifecycle}{43}{paragraph*.51}%
+\contentsline {paragraph}{Middleware Validation}{44}{paragraph*.52}%
+\contentsline {section}{\numberline {9.4}Software Architecture and Design Patterns}{45}{section.9.4}%
+\contentsline {subsection}{\numberline {9.4.1}Proxy Pattern}{45}{subsection.9.4.1}%
+\contentsline {paragraph}{Proxy Pattern Fundamentals}{45}{paragraph*.53}%
+\contentsline {paragraph}{zGate as MySQL Proxy}{45}{paragraph*.54}%
+\contentsline {paragraph}{Proxy Benefits}{46}{paragraph*.55}%
+\contentsline {subsection}{\numberline {9.4.2}Interceptor Chain Pattern}{46}{subsection.9.4.2}%
+\contentsline {paragraph}{Pattern Overview}{47}{paragraph*.56}%
+\contentsline {paragraph}{Interceptor Chain in zGate}{47}{paragraph*.57}%
+\contentsline {paragraph}{Chain Execution Flow}{48}{paragraph*.58}%
+\contentsline {paragraph}{Configuration and Extensibility}{49}{paragraph*.59}%
+\contentsline {section}{\numberline {9.5}Embedded Storage (SQLite)}{49}{section.9.5}%
+\contentsline {subsection}{\numberline {9.5.1}SQLite Overview}{49}{subsection.9.5.1}%
+\contentsline {paragraph}{SQLite Characteristics}{49}{paragraph*.60}%
+\contentsline {paragraph}{Encryption with SQLCipher}{50}{paragraph*.61}%
+\contentsline {subsection}{\numberline {9.5.2}Schema Design}{50}{subsection.9.5.2}%
+\contentsline {paragraph}{Core Tables}{50}{paragraph*.62}%
+\contentsline {paragraph}{Referential Integrity}{53}{paragraph*.63}%
+\contentsline {subsection}{\numberline {9.5.3}Audit Logging}{54}{subsection.9.5.3}%
+\contentsline {paragraph}{Audit Log Contents}{54}{paragraph*.64}%
+\contentsline {paragraph}{Audit Log Use Cases}{55}{paragraph*.65}%
+\contentsline {paragraph}{Audit Log Management}{56}{paragraph*.66}%
+\contentsline {section}{\numberline {9.6}REST API Design}{56}{section.9.6}%
+\contentsline {subsection}{\numberline {9.6.1}REST Architectural Style}{56}{subsection.9.6.1}%
+\contentsline {paragraph}{REST Principles}{56}{paragraph*.67}%
+\contentsline {paragraph}{HTTP Methods in REST}{57}{paragraph*.68}%
+\contentsline {paragraph}{HTTP Status Codes}{57}{paragraph*.69}%
+\contentsline {subsection}{\numberline {9.6.2}API Characteristics}{58}{subsection.9.6.2}%
+\contentsline {paragraph}{Gorilla Mux Router}{58}{paragraph*.70}%
+\contentsline {paragraph}{Request/Response Format}{58}{paragraph*.71}%
+\contentsline {paragraph}{Authentication and Authorization}{59}{paragraph*.72}%
+\contentsline {paragraph}{Transport Security}{60}{paragraph*.73}%
+\contentsline {subsection}{\numberline {9.6.3}Administrative Capabilities}{60}{subsection.9.6.3}%
+\contentsline {paragraph}{User and Role Management}{60}{paragraph*.74}%
+\contentsline {paragraph}{Security Operations}{60}{paragraph*.75}%
+\contentsline {paragraph}{Policy Management}{61}{paragraph*.76}%
+\contentsline {paragraph}{Monitoring and Administration}{61}{paragraph*.77}%
+\contentsline {chapter}{\numberline {10}System Architecture}{62}{chapter.10}%
+\contentsline {section}{\numberline {10.1}High-Level Architecture Diagram}{62}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Main System Components}{62}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Component Communication Flow}{62}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Tech Stack Summary}{62}{section.10.4}%
+\contentsline {chapter}{\numberline {11}Detailed Architecture of the Proxy}{63}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Connection Lifecycle}{63}{section.11.1}%
+\contentsline {section}{\numberline {11.2}Authentication Flow}{63}{section.11.2}%
+\contentsline {section}{\numberline {11.3}Query Filtering Flow}{63}{section.11.3}%
+\contentsline {section}{\numberline {11.4}Policy Enforcement Flow}{63}{section.11.4}%
+\contentsline {section}{\numberline {11.5}Session Monitoring Flow}{63}{section.11.5}%
+\contentsline {section}{\numberline {11.6}User → Gateway → Database Diagram}{63}{section.11.6}%
+\contentsline {chapter}{\numberline {12}High-Level Data Flow Diagrams}{64}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Authentication Flow Diagram}{64}{section.12.1}%
+\contentsline {section}{\numberline {12.2}Query Filtering Diagram}{64}{section.12.2}%
+\contentsline {section}{\numberline {12.3}Logging \& Auditing Flow Diagram}{64}{section.12.3}%
+\contentsline {chapter}{\numberline {13}Technology Justification}{65}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Why Go}{65}{section.13.1}%
+\contentsline {section}{\numberline {13.2}Why Node.js / TS / React}{65}{section.13.2}%
+\contentsline {section}{\numberline {13.3}Why mTLS (and why TCP is temporary)}{65}{section.13.3}%
+\contentsline {section}{\numberline {13.4}Why SQLite / Internal Storage}{65}{section.13.4}%
+\contentsline {section}{\numberline {13.5}Design Decision Summary}{65}{section.13.5}%
+\contentsline {chapter}{\numberline {14}Prototype – Semester 1}{66}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Implemented Features}{66}{section.14.1}%
+\contentsline {section}{\numberline {14.2}Screenshots (CLI \& Dashboard)}{66}{section.14.2}%
+\contentsline {section}{\numberline {14.3}What Works vs What Doesn’t}{66}{section.14.3}%
+\contentsline {section}{\numberline {14.4}Technical Decisions Made}{66}{section.14.4}%
+\contentsline {section}{\numberline {14.5}Implementation Challenges}{66}{section.14.5}%
+\contentsline {chapter}{\numberline {15}Development Methodology}{67}{chapter.15}%
+\contentsline {section}{\numberline {15.1}Agile Method}{67}{section.15.1}%
+\contentsline {section}{\numberline {15.2}Meeting Structure}{67}{section.15.2}%
+\contentsline {section}{\numberline {15.3}Collaboration Tools}{67}{section.15.3}%
+\contentsline {section}{\numberline {15.4}Documentation \& Observability}{67}{section.15.4}%
+\contentsline {chapter}{\numberline {16}Task Tracking}{68}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Team Task Tracking (Actual Examples)}{68}{section.16.1}%
+\contentsline {section}{\numberline {16.2}Supervisor Tracking Logs}{68}{section.16.2}%
+\contentsline {section}{\numberline {16.3}Blockers, Risks \& Resolution Notes}{68}{section.16.3}%
+\contentsline {chapter}{\numberline {17}Milestones}{69}{chapter.17}%
+\contentsline {section}{\numberline {17.1}Term 1 Milestone Roadmap}{69}{section.17.1}%
+\contentsline {subsection}{\numberline {17.1.1}Milestone 1}{69}{subsection.17.1.1}%
+\contentsline {subsection}{\numberline {17.1.2}Milestone 2}{69}{subsection.17.1.2}%
+\contentsline {subsection}{\numberline {17.1.3}Milestone 3}{69}{subsection.17.1.3}%
+\contentsline {subsection}{\numberline {17.1.4}Milestone 4}{69}{subsection.17.1.4}%
+\contentsline {subsection}{\numberline {17.1.5}Milestone 5}{69}{subsection.17.1.5}%
+\contentsline {section}{\numberline {17.2}Timeline Chart (Gantt-like)}{69}{section.17.2}%
+\contentsline {chapter}{\numberline {18}Threat Model \& Security Considerations}{70}{chapter.18}%
+\contentsline {section}{\numberline {18.1}Threat Model}{70}{section.18.1}%
+\contentsline {section}{\numberline {18.2}Risks \& Attack Vectors}{70}{section.18.2}%
+\contentsline {section}{\numberline {18.3}Mitigation Techniques}{70}{section.18.3}%
+\contentsline {section}{\numberline {18.4}Why Zero Trust is Needed}{70}{section.18.4}%
+\contentsline {chapter}{\numberline {19}Roadmap for Term 2}{71}{chapter.19}%
+\contentsline {section}{\numberline {19.1}Remaining Features}{71}{section.19.1}%
+\contentsline {section}{\numberline {19.2}Architecture Improvements}{71}{section.19.2}%
+\contentsline {section}{\numberline {19.3}Performance Goals}{71}{section.19.3}%
+\contentsline {section}{\numberline {19.4}Testing \& Validation Plan}{71}{section.19.4}%
+\contentsline {chapter}{\numberline {20}Team Contribution}{72}{chapter.20}%
+\contentsline {section}{\numberline {20.1}Overview of Contribution Approach}{72}{section.20.1}%
+\contentsline {section}{\numberline {20.2}Individual Contributions}{72}{section.20.2}%
+\contentsline {chapter}{\numberline {21}Expected Outcomes}{73}{chapter.21}%
+\contentsline {chapter}{\numberline {22}Conclusion}{74}{chapter.22}%
+\contentsline {section}{\numberline {22.1}Restated Purpose}{74}{section.22.1}%
+\contentsline {section}{\numberline {22.2}Summary of Achievements}{74}{section.22.2}%
+\contentsline {section}{\numberline {22.3}Importance \& Contribution}{74}{section.22.3}%
+\contentsline {section}{\numberline {22.4}Transition to Next Semester}{74}{section.22.4}%
+\contentsline {chapter}{\numberline {A}Glossary}{76}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Dashboard Mockups}{77}{appendix.B}%
