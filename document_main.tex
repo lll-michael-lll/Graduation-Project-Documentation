@@ -1,0 +1,118 @@
+\documentclass[12pt,a4paper]{report}
+
+% -----------------------------
+% Packages
+% -----------------------------
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{tocloft}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{lscape}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\geometry{margin=1in}
+\onehalfspacing
+
+% clickable links formatting
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% Make chapter uppercase and bold
+\titleformat{\chapter}{\bfseries\Large}{\thechapter.}{1em}{}
+
+% -----------------------------
+% DOCUMENT START
+% -----------------------------
+\begin{document}
+
+% --------------------------------
+% Cover Page
+% --------------------------------
+\begin{titlepage}
+    \centering
+    {\Large \textbf{Faculty of Engineering – Ain Shams University}}\\[0.5cm]
+    {\Large Computer and Systems Engineering Department}\\[3cm]
+
+    {\Huge \textbf{zGate Gateway: A Zero Trust Database Access Proxy}}\\[1cm]
+    {\Large Graduation Project Thesis}\\[3cm]
+
+   
+
+    \textbf{Supervisor:}\\
+    Dr. Mohammed Sobh\\[2cm]
+
+    {\Large Academic Year 2025–2026}
+\end{titlepage}
+
+% --------------------------------
+% Acknowledgments
+% --------------------------------
+\chapter*{Acknowledgments}
+We would like to thank...
+
+\newpage
+
+% --------------------------------
+% Abstract
+% --------------------------------
+\chapter*{Abstract}
+This project introduces a Zero Trust–based database access gateway (SecureDB Gateway)...
+
+\newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+
+% ============================================================
+% MAIN CONTENT - CHAPTERS
+% ============================================================
+\input{chapters/01_team_information}
+\input{chapters/02_introduction}
+\input{chapters/03_project_definition}
+\input{chapters/04_requirements}
+\input{chapters/05_proposed_solution}
+\input{chapters/06_standards}
+\input{chapters/07_competitor_analysis}
+\input{chapters/08_literature_review}
+\input{chapters/09_technical_background}
+\input{chapters/10_system_architecture}
+\input{chapters/11_proxy_architecture}
+\input{chapters/12_data_flow}
+\input{chapters/13_technology_justification}
+\input{chapters/14_prototype}
+\input{chapters/15_methodology}
+\input{chapters/16_task_tracking}
+\input{chapters/17_milestones}
+\input{chapters/18_threat_model}
+\input{chapters/19_roadmap_term2}
+\input{chapters/20_team_contribution}
+\input{chapters/21_expected_outcomes}
+\input{chapters/22_conclusion}
+
+% ============================================================
+% REFERENCES
+% ============================================================
+\chapter*{References}
+\bibliographystyle{plain}
+\bibliography{references}
+
+% ============================================================
+% APPENDICES
+% ============================================================
+\input{chapters/appendices}
+
+\end{document}
