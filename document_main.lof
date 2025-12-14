@@ -1,14 +1,38 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces what zGate offers }}{22}{figure.caption.4}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Overview of system actors: End Users, System Administrators, Super Administrators, and Backend Databases}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces End user workflows: authentication, database listing, connection, session management, and logout}}{45}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Administrator functions: database configuration, user and role management, session monitoring, and audit review}}{45}{figure.caption.43}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Complete system use case diagram showing all actor interactions within the zGate Gateway}}{45}{figure.caption.44}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces System component interactions showing data flow between CLI, Gateway Server, Web Dashboard, Policy Engine, and Backend Databases}}{46}{figure.caption.45}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces zgate proposed solution architecture}}{60}{figure.caption.80}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces zGate backend architecture showing authentication, policy engine, and proxy layers}}{60}{figure.caption.82}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces zGate CLI workflow illustrating token management and database access process}}{62}{figure.caption.85}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces zGate technology stack}}{65}{figure.caption.90}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Multi-layered security architecture in zGate platform}}{66}{figure.caption.91}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces zGate alignment with PCI DSS requirements for access control, authentication, and audit logging}}{69}{figure.caption.99}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces zGate alignment with GDPR requirements for data security, access control, audit records, and breach detection}}{70}{figure.caption.100}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
+\contentsline {figure}{\numberline {11.1}{\ignorespaces system components}}{82}{figure.caption.107}%
+\contentsline {figure}{\numberline {11.2}{\ignorespaces connection lifecycle states}}{84}{figure.caption.108}%
+\contentsline {figure}{\numberline {11.3}{\ignorespaces Detailed connection lifecycle flow}}{85}{figure.caption.109}%
+\contentsline {figure}{\numberline {11.4}{\ignorespaces Authentication architecture}}{86}{figure.caption.110}%
+\contentsline {figure}{\numberline {11.5}{\ignorespaces Token refresh flow}}{87}{figure.caption.113}%
+\contentsline {figure}{\numberline {11.6}{\ignorespaces Permission levels: read, write, admin}}{88}{figure.caption.115}%
+\contentsline {figure}{\numberline {11.7}{\ignorespaces Permission enforcement flow}}{89}{figure.caption.117}%
+\contentsline {figure}{\numberline {11.8}{\ignorespaces Temporary user creation flow}}{90}{figure.caption.123}%
+\contentsline {figure}{\numberline {11.9}{\ignorespaces Policy enforcement architecture}}{90}{figure.caption.124}%
+\contentsline {figure}{\numberline {11.10}{\ignorespaces Real-time policy evaluation}}{91}{figure.caption.125}%
+\contentsline {figure}{\numberline {11.11}{\ignorespaces Policy enforcement points in the connection lifecycle}}{91}{figure.caption.126}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

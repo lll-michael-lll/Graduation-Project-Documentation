@@ -2,9 +2,253 @@
 % 11. DETAILED ARCHITECTURE OF THE PROXY
 % ============================================================
 \chapter{Detailed Architecture of the Proxy}
+\subsubsection{Overview}
+
+The zGate proxy is the core component that provides secure, zero-trust database access through dynamic port allocation and temporary user management. It acts as an intelligent intermediary between users and backend databases, enforcing policy, managing credentials, and monitoring all database traffic.
+
+\subsubsection{Key Components}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/key-components.png}
+    \caption{system components}
+    \label{fig:system-components}
+\end{figure}
 \section{Connection Lifecycle}
+
+The connection lifecycle encompasses the complete journey from user authentication to database disconnection, including all intermediate states and transitions.
+
+\subsection{Lifecycle States}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/lifecycle-states.png}
+    \caption{connection lifecycle states}
+    \label{fig:lifecycle-states}
+\end{figure}
+\subsection{Detailed Lifecycle Flow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/detailed-lifecycle-flow.png}
+    \caption{Detailed connection lifecycle flow}
+    \label{fig:lifecycle-flow}
+\end{figure}
 \section{Authentication Flow}
+
+Authentication is a multi-layered process involving credential validation, token generation, and permission resolution.
+
+\subsection{Authentication Architecture}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/auth-arch.png}
+    \caption{Authentication architecture}
+    \label{fig:Authenticateion-architecture}
+\end{figure}
+
+
+\subsection{Token Structure}
+
+\subsubsection{Access Token Claims}
+
+\begin{lstlisting}[language=json,escapechar=\%]
+{
+  %key%"sub"%: %val%"kemo@company.com"%,
+  %key%"username"%: %val%"kemo@company.com"%,
+  %key%"roles"%: [%val%"data\_analyst"%],
+  %key%"permissions"%: [
+    {
+      %key%"database"%: %val%"azure\_mssql\_prod"%,
+      %key%"level"%: %val%"read"%
+    },
+    {
+      %key%"database"%: %val%"local\_mysql\_analytics"%,
+      %key%"level"%: %val%"read"%
+    }
+  ],
+  %key%"iat"%: 1702345678,
+  %key%"exp"%: 1702346578,
+  %key%"type"%: %val%"access"%
+%%}%%
+\end{lstlisting}
+
+\subsubsection{Refresh Token Claims}
+
+\begin{lstlisting}[language=json,escapechar=\%]
+{
+  %key%"sub"%: %val%"kemo@company.com"%,
+  %key%"username"%: %val%"kemo@company.com"%,
+  %key%"iat"%: 1702345678,
+  %key%"exp"%: 1702950478,
+  %key%"type"%: %val%"refresh"%
+%%}%%
+\end{lstlisting}
+
+\subsection{Token Refresh Flow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/token-refresh-flow.png}
+    \caption{Token refresh flow}
+    \label{fig:token-refresh-flow}
+\end{figure}
 \section{Query Filtering Flow}
+
+Query filtering ensures that users can only execute operations within their granted permission levels. While the current implementation relies on database-level permissions, the architecture supports query-level filtering.
+
+\subsubsection{Permission Levels}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/permission-levels.png}
+    \caption{Permission levels: read, write, admin}
+    \label{fig:permission-levels}
+\end{figure}
+\subsubsection{Permission Enforcement Flow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/permission-enforcement.png}
+    \caption{Permission enforcement flow}
+    \label{fig:permission-enforcement-flow}
+\end{figure}
+\subsubsection{Permission Mapping}
+The proxy maps zGate permission levels to database-specific grants:
+
+\subsubsection{MSSQL Permission Mapping}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{zGate Level} & \textbf{MSSQL Grants} \\
+\hline
+read & SELECT, VIEW DEFINITION \\
+\hline
+write & SELECT, INSERT, UPDATE, DELETE \\
+\hline
+admin & CONTROL, ALTER, CREATE TABLE, DROP TABLE \\
+\hline
+\end{tabular}
+\caption{MSSQL permission mapping}
+\label{tab:mssql-permissions}
+\end{table}
+
+\subsubsection{MySQL Permission Mapping}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{zGate Level} & \textbf{MySQL Grants} \\
+\hline
+read & SELECT, SHOW VIEW \\
+\hline
+write & SELECT, INSERT, UPDATE, DELETE \\
+\hline
+admin & ALL PRIVILEGES \\
+\hline
+\end{tabular}
+\caption{MySQL permission mapping}
+\label{tab:mysql-permissions}
+\end{table}
+
+\subsection{Temporary User Creation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/temp-user.png}
+    \caption{Temporary user creation flow}
+    \label{fig:Temporary-user-creation}
+\end{figure}
 \section{Policy Enforcement Flow}
-\section{Session Monitoring Flow}
-\section{User → Gateway → Database Diagram}
+
+Policy enforcement is the critical security layer that determines whether a user can access a specific database based on real-time configuration evaluation.
+
+\subsection{Policy Architecture}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/policy-arch.png}
+    \caption{Policy enforcement architecture}
+    \label{fig:policy-architecture}
+\end{figure}
+\subsection{Real-Time Policy Evaluation}
+
+The policy engine always evaluates permissions using the \textbf{current} configuration, not the permissions embedded in the JWT token. This ensures immediate effect when permissions are changed.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/real-time-policy.png}
+    \caption{Real-time policy evaluation}
+    \label{fig:Real-Time-Policy-Evaluation}
+\end{figure}
+
+
+\subsection{Policy Enforcement Points}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/policy-enforcement-point.png}
+    \caption{Policy enforcement points in the connection lifecycle}
+    \label{fig:Policy-Enforcement-Points}
+\end{figure}
+\subsection{End-to-End Flow Narrative}
+
+\subsubsection{Phase 1: Authentication \& Authorization}
+\begin{enumerate}
+    \item \textbf{User} executes \texttt{zgate login} via \textbf{CLI}
+    \item \textbf{CLI} sends credentials to \textbf{LoginAPI}
+    \item \textbf{Authenticator} validates against \texttt{users.yaml}
+    \item Password verified using bcrypt comparison
+    \item \textbf{Authenticator} resolves permissions from \texttt{roles.yaml}
+    \item JWT tokens generated and returned to \textbf{CLI}
+    \item \textbf{CLI} stores tokens in OS keyring
+\end{enumerate}
+
+\subsubsection{Phase 2: Database Discovery}
+\begin{enumerate}
+    \item \textbf{User} executes \texttt{zgate list} via \textbf{CLI}
+    \item \textbf{CLI} sends request with token to \textbf{ListAPI}
+    \item \textbf{AuthMiddleware} validates JWT token
+    \item \textbf{PolicyEngine} looks up fresh permissions from \texttt{users.yaml} + \texttt{roles.yaml}
+    \item \textbf{PolicyEngine} filters \texttt{databases.yaml} based on permissions
+    \item Accessible databases returned to \textbf{CLI}
+    \item \textbf{CLI} displays formatted list to \textbf{User}
+\end{enumerate}
+
+\subsubsection{Phase 3: Connection Establishment}
+\begin{enumerate}
+    \item \textbf{User} executes \texttt{zgate connect --database prod\_db} via \textbf{CLI}
+    \item \textbf{CLI} sends request to \textbf{ConnectAPI} with token
+    \item \textbf{AuthMiddleware} validates token, extracts claims
+    \item \textbf{PolicyEngine} performs real-time permission check
+    \item \textbf{ConnectAPI} calls \textbf{ProxyManager}.StartSession()
+    \item \textbf{ProxyManager} allocates dynamic port (e.g., 5001)
+    \item \textbf{ProtocolFactory} creates appropriate manager (MSSQL/MySQL)
+    \item \textbf{MSSQLMgr/MySQLMgr} generates temp credentials
+    \item \textbf{Manager} creates temporary user in \textbf{Backend Database}
+    \item \textbf{Manager} grants permissions based on user's level
+    \item \textbf{ProxyManager} creates \textbf{Session} object
+    \item \textbf{Session} starts \textbf{DynamicListener} on allocated port
+    \item Connection details returned to \textbf{CLI}
+    \item \textbf{CLI} displays connection instructions to \textbf{User}
+\end{enumerate}
+
+\subsubsection{Phase 4: Active Database Usage}
+\begin{enumerate}
+    \item \textbf{User} uses \textbf{DBClient} (e.g., \texttt{mysql -h localhost -P 5001 -u zgate\_kemo\_abc123})
+    \item \textbf{DBClient} connects to \textbf{DynamicListener} on port 5001
+    \item \textbf{DynamicListener} accepts connection via \textbf{ConnectionAcceptor}
+    \item \textbf{ProtocolHandler} establishes backend connection to \textbf{MSSQL/MySQL}
+    \item Database traffic proxied bidirectionally
+    \item All queries executed as \textbf{TempUser} with restricted permissions
+    \item \textbf{Backend Database} enforces grants (read/write/admin)
+    \item Results returned through proxy to \textbf{DBClient}
+\end{enumerate}
+
+\subsubsection{Phase 5: Session Termination}
+\begin{enumerate}
+    \item \textbf{User} exits \textbf{DBClient} or executes \texttt{zgate disconnect}
+    \item \textbf{CLI} sends disconnect request to \textbf{DisconnectAPI}
+    \item \textbf{ProxyManager}.StopSession() called
+    \item \textbf{Session} context cancelled
+    \item \textbf{DynamicListener} stops accepting connections
+    \item \textbf{Manager} drops temporary user from \textbf{Backend Database}
+    \item \textbf{Manager} closes database connection
+    \item Port released for reuse
+    \item \textbf{Session} removed from \textbf{ProxyManager} map
+    \item Success response returned to \textbf{CLI}
+\end{enumerate}
+
+
