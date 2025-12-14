@@ -1,302 +1,410 @@
-\contentsline {chapter}{\numberline {1}Team Information}{12}{chapter.1}%
-\contentsline {section}{\numberline {1.1}Team Members}{12}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Roles \& Responsibilities}{12}{section.1.2}%
-\contentsline {chapter}{\numberline {2}Introduction \& Problem Definition}{13}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Introduction}{13}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Problem Statement}{14}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1}The Current State of Database Access Management}{14}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Critical Security Vulnerabilities}{14}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Impact and Consequences}{15}{subsection.2.2.3}%
-\contentsline {subsection}{\numberline {2.2.4}The Need for Zero Trust Database Access}{15}{subsection.2.2.4}%
-\contentsline {section}{\numberline {2.3}Gaps In Existing Solutions}{16}{section.2.3}%
-\contentsline {subsection}{\numberline {2.3.1}Perimeter-Based Security}{16}{subsection.2.3.1}%
-\contentsline {subsection}{\numberline {2.3.2}VPN-Based Access}{16}{subsection.2.3.2}%
-\contentsline {subsection}{\numberline {2.3.3}Bastion Hosts and Jump Servers}{17}{subsection.2.3.3}%
-\contentsline {subsection}{\numberline {2.3.4}Database Native Access Controls}{17}{subsection.2.3.4}%
-\contentsline {subsection}{\numberline {2.3.5}Privileged Access Management (PAM) Solutions}{18}{subsection.2.3.5}%
-\contentsline {subsection}{\numberline {2.3.6}Database Activity Monitoring (DAM)}{18}{subsection.2.3.6}%
-\contentsline {subsection}{\numberline {2.3.7}The Fundamental Gap}{19}{subsection.2.3.7}%
-\contentsline {section}{\numberline {2.4}Why Zero Trust for Databases is Different}{19}{section.2.4}%
-\contentsline {subsection}{\numberline {2.4.1}Core Zero Trust Principles Applied to Databases}{19}{subsection.2.4.1}%
-\contentsline {subsection}{\numberline {2.4.2}The Zero Trust Database Gateway Architecture}{19}{subsection.2.4.2}%
-\contentsline {subsection}{\numberline {2.4.3}Query-Level Data Protection}{20}{subsection.2.4.3}%
-\contentsline {subsection}{\numberline {2.4.4}Complete Auditability and Traceability}{21}{subsection.2.4.4}%
-\contentsline {subsection}{\numberline {2.4.5}What zGate Implements}{21}{subsection.2.4.5}%
-\contentsline {subsection}{\numberline {2.4.6}Operational Advantages}{22}{subsection.2.4.6}%
-\contentsline {subsection}{\numberline {2.4.7}Addressing the Gaps}{22}{subsection.2.4.7}%
-\contentsline {chapter}{\numberline {3}Project Definition}{24}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Project Definition and Scope}{24}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}System Components}{24}{subsection.3.1.1}%
-\contentsline {subsubsection}{Gateway Server (zGate Core)}{24}{subsubsection*.6}%
-\contentsline {subsubsection}{Command-Line Interface (zGate-CLI)}{25}{subsubsection*.7}%
-\contentsline {subsubsection}{Web Administration Dashboard (zGate-WebUI)}{25}{subsubsection*.8}%
-\contentsline {subsection}{\numberline {3.1.2}Scope Boundaries}{26}{subsection.3.1.2}%
-\contentsline {subsubsection}{In Scope:}{26}{subsubsection*.9}%
-\contentsline {subsubsection}{Out of Scope (Current Phase):}{26}{subsubsection*.10}%
-\contentsline {section}{\numberline {3.2}Objectives}{27}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Core Security Objectives}{27}{subsection.3.2.1}%
-\contentsline {subsubsection}{Eliminate Direct Credential Exposure}{27}{subsubsection*.11}%
-\contentsline {subsubsection}{Enforce Identity-Based Access Control}{27}{subsubsection*.12}%
-\contentsline {subsubsection}{Implement Protocol-Level Interception}{28}{subsubsection*.13}%
-\contentsline {subsubsection}{Provide Comprehensive Audit Logging}{28}{subsubsection*.14}%
-\contentsline {subsection}{\numberline {3.2.2}Operational Objectives}{28}{subsection.3.2.2}%
-\contentsline {subsubsection}{Deliver Multi-Component Integration}{28}{subsubsection*.15}%
-\contentsline {subsubsection}{Enable Centralized Administration}{28}{subsubsection*.16}%
-\contentsline {subsubsection}{Support Multi-Database Environments}{29}{subsubsection*.17}%
-\contentsline {subsubsection}{Ensure Production-Ready Stability}{29}{subsubsection*.18}%
-\contentsline {subsection}{\numberline {3.2.3}Academic and Technical Learning Objectives}{29}{subsection.3.2.3}%
-\contentsline {subsubsection}{Demonstrate Applied Security Architecture}{29}{subsubsection*.19}%
-\contentsline {subsubsection}{Develop Full-Stack System Integration Skills}{30}{subsubsection*.20}%
-\contentsline {chapter}{\numberline {4}Requirements Engineering}{31}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Functional Requirements}{31}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}FR-1: User Authentication \& Authorization}{31}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}FR-2: Database Connection Management}{31}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}FR-3: Policy Engine}{31}{subsection.4.1.3}%
-\contentsline {subsection}{\numberline {4.1.4}FR-4: Command Line Interface}{31}{subsection.4.1.4}%
-\contentsline {subsection}{\numberline {4.1.5}FR-5: Web User Interface}{32}{subsection.4.1.5}%
-\contentsline {subsection}{\numberline {4.1.6}FR-6: Protocol Handling}{32}{subsection.4.1.6}%
-\contentsline {subsection}{\numberline {4.1.7}FR-7: Audit \& Logging}{32}{subsection.4.1.7}%
-\contentsline {section}{\numberline {4.2}Non-Functional Requirements}{32}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}NFR-1: Security}{32}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}NFR-2: Performance}{33}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}NFR-3: Scalability Targets}{33}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}NFR-4: Reliability}{33}{subsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.2.5}NFR-5: Usability}{33}{subsection.4.2.5}%
-\contentsline {subsection}{\numberline {4.2.6}NFR-6: Maintainability}{33}{subsection.4.2.6}%
-\contentsline {subsection}{\numberline {4.2.7}NFR-7: Portability}{34}{subsection.4.2.7}%
-\contentsline {subsection}{\numberline {4.2.8}NFR-8: Compatibility}{34}{subsection.4.2.8}%
-\contentsline {section}{\numberline {4.3}Actors \& Use Cases}{34}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}System Actors}{34}{subsection.4.3.1}%
-\contentsline {subsubsection}{Actor descriptions}{34}{subsubsection*.21}%
-\contentsline {subsubsection}{End User / Developer}{35}{subsubsection*.23}%
-\contentsline {subsubsection}{System Administrator}{35}{subsubsection*.24}%
-\contentsline {subsubsection}{Super Administrator}{35}{subsubsection*.25}%
-\contentsline {subsubsection}{zGate Server}{36}{subsubsection*.26}%
-\contentsline {subsubsection}{zGate CLI}{36}{subsubsection*.27}%
-\contentsline {subsubsection}{zGate WebUI}{36}{subsubsection*.28}%
-\contentsline {subsubsection}{Backend Databases}{36}{subsubsection*.29}%
-\contentsline {subsection}{\numberline {4.3.2}Use Case Catalog}{37}{subsection.4.3.2}%
-\contentsline {subsubsection}{UC-1: User Authentication via CLI}{37}{subsubsection*.30}%
-\contentsline {subsubsection}{UC-2: List Available Databases}{37}{subsubsection*.31}%
-\contentsline {subsubsection}{UC-3: Connect to Database}{38}{subsubsection*.32}%
-\contentsline {subsubsection}{UC-4: Auto Disconnect on Session End}{39}{subsubsection*.33}%
-\contentsline {subsubsection}{UC-5: Admin - Add Database Configuration}{39}{subsubsection*.34}%
-\contentsline {subsubsection}{UC-6: Admin - Create User with Roles}{40}{subsubsection*.35}%
-\contentsline {subsubsection}{UC-7: Admin - Define Role with Permissions}{41}{subsubsection*.36}%
-\contentsline {subsubsection}{UC-8: Admin - Monitor Active Sessions}{41}{subsubsection*.37}%
-\contentsline {subsubsection}{UC-9: Admin - Review Audit Logs}{42}{subsubsection*.38}%
-\contentsline {subsubsection}{UC-10: Auto Token Refresh}{43}{subsubsection*.39}%
-\contentsline {subsubsection}{UC-11: Logout and Token Revocation}{43}{subsubsection*.40}%
-\contentsline {subsubsection}{UC-12: Configure Shared Account Pool}{44}{subsubsection*.41}%
-\contentsline {section}{\numberline {4.4}Use Case Diagrams}{45}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}End User Case Diagrams}{45}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Administrator Use Case Diagrams}{45}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}Complete System Use Case Diagrams}{45}{subsection.4.4.3}%
-\contentsline {subsection}{\numberline {4.4.4}System Components Interaction}{46}{subsection.4.4.4}%
-\contentsline {section}{\numberline {4.5}User Stories}{46}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}End User Stories}{46}{subsection.4.5.1}%
-\contentsline {subsubsection}{Epic 1: Secure Database Access}{46}{subsubsection*.46}%
-\contentsline {paragraph}{US-1.1: Login with Credentials}{46}{paragraph*.47}%
-\contentsline {paragraph}{US-1.2: View My Accessible Databases}{47}{paragraph*.48}%
-\contentsline {paragraph}{US-1.3: Connect to a Database}{47}{paragraph*.49}%
-\contentsline {paragraph}{US-1.4: Automatic Session Cleanup}{48}{paragraph*.50}%
-\contentsline {paragraph}{US-1.5: Seamless Token Refresh}{48}{paragraph*.51}%
-\contentsline {paragraph}{US-1.6: Check Session Status}{48}{paragraph*.52}%
-\contentsline {paragraph}{US-1.7: Secure Logout}{49}{paragraph*.53}%
-\contentsline {subsection}{\numberline {4.5.2}Administrator Stories}{49}{subsection.4.5.2}%
-\contentsline {subsubsection}{Epic 2: User \& Access Management}{49}{subsubsection*.54}%
-\contentsline {paragraph}{US-2.1: Create User Accounts}{49}{paragraph*.55}%
-\contentsline {paragraph}{US-2.2: Define Roles with Granular Permissions}{50}{paragraph*.56}%
-\contentsline {paragraph}{US-2.3: Manage User-Role Assignments}{50}{paragraph*.57}%
-\contentsline {subsubsection}{Epic 3: Database Configuration}{51}{subsubsection*.58}%
-\contentsline {paragraph}{US-3.1: Add Database Configurations}{51}{paragraph*.59}%
-\contentsline {paragraph}{US-3.2: Edit Database Settings}{51}{paragraph*.60}%
-\contentsline {paragraph}{US-3.3: Remove Decommissioned Databases}{52}{paragraph*.61}%
-\contentsline {subsubsection}{Epic 4: Monitoring \& Audit}{52}{subsubsection*.62}%
-\contentsline {paragraph}{US-4.1: Monitor Active Sessions}{52}{paragraph*.63}%
-\contentsline {paragraph}{US-4.2: Terminate Suspicious Sessions}{52}{paragraph*.64}%
-\contentsline {paragraph}{US-4.3: Review Comprehensive Audit Logs}{53}{paragraph*.65}%
-\contentsline {paragraph}{US-4.4: Export Audit Logs}{53}{paragraph*.66}%
-\contentsline {subsubsection}{Epic 5: Advanced Access Control}{54}{subsubsection*.67}%
-\contentsline {paragraph}{US-5.1: Configure Shared Account Pools}{54}{paragraph*.68}%
-\contentsline {paragraph}{US-5.2: Assign Personal Database Accounts}{54}{paragraph*.69}%
-\contentsline {paragraph}{US-5.3: Define Custom User Permissions}{55}{paragraph*.70}%
-\contentsline {subsection}{\numberline {4.5.3}Super Administrator Stories}{55}{subsection.4.5.3}%
-\contentsline {subsubsection}{Epic 6: Platform Administration}{55}{subsubsection*.71}%
-\contentsline {paragraph}{US-6.1: Manage Admin Accounts}{55}{paragraph*.72}%
-\contentsline {paragraph}{US-6.2: Configure System Settings}{56}{paragraph*.73}%
-\contentsline {paragraph}{US-6.3: Perform System Health Checks}{56}{paragraph*.74}%
-\contentsline {subsection}{\numberline {4.5.4}System Stories (Non-Interactive)}{56}{subsection.4.5.4}%
-\contentsline {subsubsection}{Epic 7: Automated Operations}{56}{subsubsection*.75}%
-\contentsline {paragraph}{US-7.1: Automatic Resource Cleanup}{56}{paragraph*.76}%
-\contentsline {paragraph}{US-7.2: Real-Time Permission Enforcement}{57}{paragraph*.77}%
-\contentsline {paragraph}{US-7.3: Graceful Error Handling}{57}{paragraph*.78}%
-\contentsline {paragraph}{US-7.4: Comprehensive Audit Logging}{58}{paragraph*.79}%
-\contentsline {chapter}{\numberline {5}Proposed Solution}{59}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Solution Overview}{59}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}The Core Problem}{59}{subsection.5.1.1}%
-\contentsline {subsection}{\numberline {5.1.2}The zGate Solution}{59}{subsection.5.1.2}%
-\contentsline {section}{\numberline {5.2}Core Components}{60}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}zGate Server (Backend)}{60}{subsection.5.2.1}%
-\contentsline {subsubsection}{Backend Layers}{60}{subsubsection*.81}%
-\contentsline {subsubsection}{Key Features}{60}{subsubsection*.83}%
-\contentsline {subsection}{\numberline {5.2.2}zGate CLI (Client)}{61}{subsection.5.2.2}%
-\contentsline {subsubsection}{CLI Workflow}{62}{subsubsection*.84}%
-\contentsline {subsubsection}{CLI Features}{62}{subsubsection*.86}%
-\contentsline {subsection}{\numberline {5.2.3}zGate WebUI (Admin Dashboard)}{63}{subsection.5.2.3}%
-\contentsline {subsubsection}{Dashboard Architecture}{63}{subsubsection*.87}%
-\contentsline {subsubsection}{Admin Features}{63}{subsubsection*.88}%
-\contentsline {section}{\numberline {5.3}Key Technologies \& Design Decisions}{65}{section.5.3}%
-\contentsline {subsubsection}{Technology Stack}{65}{subsubsection*.89}%
-\contentsline {section}{\numberline {5.4}Security Architecture}{65}{section.5.4}%
-\contentsline {subsection}{\numberline {5.4.1}Security Layers}{66}{subsection.5.4.1}%
-\contentsline {subsection}{\numberline {5.4.2}Security Guarantees}{67}{subsection.5.4.2}%
-\contentsline {section}{\numberline {5.5}Advantages of the Proposed Solution}{67}{section.5.5}%
-\contentsline {subsubsection}{Key Benefits}{67}{subsubsection*.93}%
-\contentsline {subsubsection}{Enhanced Security}{67}{subsubsection*.94}%
-\contentsline {subsubsection}{Operational Efficiency}{68}{subsubsection*.95}%
-\contentsline {subsubsection}{Compliance \& Audit}{68}{subsubsection*.96}%
-\contentsline {subsubsection}{Developer Experience}{68}{subsubsection*.97}%
-\contentsline {subsubsection}{Scalability}{68}{subsubsection*.98}%
-\contentsline {chapter}{\numberline {6}Alignment with International Standards}{69}{chapter.6}%
-\contentsline {section}{\numberline {6.1}PCI DSS}{69}{section.6.1}%
-\contentsline {section}{\numberline {6.2}HIPAA}{69}{section.6.2}%
-\contentsline {section}{\numberline {6.3}GDPR}{70}{section.6.3}%
-\contentsline {section}{\numberline {6.4}ISO 27001}{70}{section.6.4}%
-\contentsline {chapter}{\numberline {7}Competitor \& Market Analysis}{71}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Competitor Analysis}{71}{section.7.1}%
-\contentsline {subsection}{\numberline {7.1.1}Comparison Table}{71}{subsection.7.1.1}%
-\contentsline {subsection}{\numberline {7.1.2}What Competitors Lack}{71}{subsection.7.1.2}%
-\contentsline {section}{\numberline {7.2}Market Research}{71}{section.7.2}%
-\contentsline {subsection}{\numberline {7.2.1}Market Overview}{71}{subsection.7.2.1}%
-\contentsline {subsection}{\numberline {7.2.2}Zero Trust Demand}{71}{subsection.7.2.2}%
-\contentsline {subsection}{\numberline {7.2.3}Market Challenges \& Needs}{71}{subsection.7.2.3}%
-\contentsline {subsection}{\numberline {7.2.4}Regulatory Drivers}{71}{subsection.7.2.4}%
-\contentsline {subsection}{\numberline {7.2.5}Trends \& Opportunities}{71}{subsection.7.2.5}%
-\contentsline {subsection}{\numberline {7.2.6}Landscape Summary}{71}{subsection.7.2.6}%
-\contentsline {chapter}{\numberline {8}Scientific Research \& Literature Review}{72}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Generative AI-Enhanced Cybersecurity Framework for Enterprise Data Privacy Management}{72}{section.8.1}%
-\contentsline {subsection}{\numberline {8.1.1}Purpose of the Study}{72}{subsection.8.1.1}%
-\contentsline {subsection}{\numberline {8.1.2}Framework Overview}{72}{subsection.8.1.2}%
-\contentsline {subsection}{\numberline {8.1.3}Implementation \& Experiments}{73}{subsection.8.1.3}%
-\contentsline {subsection}{\numberline {8.1.4}Privacy \& Security Features}{73}{subsection.8.1.4}%
-\contentsline {subsection}{\numberline {8.1.5}Contributions to the Paper}{74}{subsection.8.1.5}%
-\contentsline {subsection}{\numberline {8.1.6}Advantages \& Limitations}{74}{subsection.8.1.6}%
-\contentsline {subsection}{\numberline {8.1.7}Relevance to Our Project}{74}{subsection.8.1.7}%
-\contentsline {section}{\numberline {8.2}The Significance of Artificial Intelligence in Zero Trust Technologies: A Comprehensive Review}{75}{section.8.2}%
-\contentsline {subsection}{\numberline {8.2.1}Problem Addressed}{75}{subsection.8.2.1}%
-\contentsline {subsection}{\numberline {8.2.2}Methodology}{75}{subsection.8.2.2}%
-\contentsline {subsection}{\numberline {8.2.3}Key Contributions of AI to Zero Trust}{75}{subsection.8.2.3}%
-\contentsline {subsubsection}{Identity \& Access Management (IAM)}{75}{subsubsection*.101}%
-\contentsline {subsubsection}{Adaptive Multi-Factor Authentication (AMFA)}{75}{subsubsection*.102}%
-\contentsline {subsubsection}{Endpoint Detection \& Response (EDR)}{76}{subsubsection*.103}%
-\contentsline {subsubsection}{Zero Trust Network Access (ZTNA) \& Secure Access Service Edge (SASE)}{76}{subsubsection*.104}%
-\contentsline {subsection}{\numberline {8.2.4}Findings}{76}{subsection.8.2.4}%
-\contentsline {subsection}{\numberline {8.2.5}Comparison with Traditional Methods}{76}{subsection.8.2.5}%
-\contentsline {subsection}{\numberline {8.2.6}Relevance to Our Project}{76}{subsection.8.2.6}%
-\contentsline {section}{\numberline {8.3}Securing Digital Identity in the Zero Trust Architecture: A Blockchain Approach to Privacy-Focused Multi-Factor Authentication}{77}{section.8.3}%
-\contentsline {subsection}{\numberline {8.3.1}Problem Addressed}{77}{subsection.8.3.1}%
-\contentsline {subsection}{\numberline {8.3.2}Research Goals}{77}{subsection.8.3.2}%
-\contentsline {subsection}{\numberline {8.3.3}Proposed System}{77}{subsection.8.3.3}%
-\contentsline {subsection}{\numberline {8.3.4}Experimental Results}{77}{subsection.8.3.4}%
-\contentsline {subsection}{\numberline {8.3.5}Key Findings and Contributions}{78}{subsection.8.3.5}%
-\contentsline {subsection}{\numberline {8.3.6}Real-World Applications}{78}{subsection.8.3.6}%
-\contentsline {subsection}{\numberline {8.3.7}Relevance to Our Project}{78}{subsection.8.3.7}%
-\contentsline {subsection}{\numberline {8.3.8}Conclusion}{78}{subsection.8.3.8}%
-\contentsline {section}{\numberline {8.4}Paper 4}{79}{section.8.4}%
-\contentsline {section}{\numberline {8.5}Paper 5}{79}{section.8.5}%
-\contentsline {section}{\numberline {8.6}Paper 6}{79}{section.8.6}%
-\contentsline {section}{\numberline {8.7}Paper 7}{79}{section.8.7}%
-\contentsline {section}{\numberline {8.8}Research References}{79}{section.8.8}%
-\contentsline {chapter}{\numberline {9}Technical Background}{80}{chapter.9}%
-\contentsline {chapter}{\numberline {10}System Architecture}{81}{chapter.10}%
-\contentsline {section}{\numberline {10.1}High-Level Architecture Diagram}{81}{section.10.1}%
-\contentsline {section}{\numberline {10.2}Main System Components}{81}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Component Communication Flow}{81}{section.10.3}%
-\contentsline {section}{\numberline {10.4}Tech Stack Summary}{81}{section.10.4}%
-\contentsline {chapter}{\numberline {11}Detailed Architecture of the Proxy}{82}{chapter.11}%
-\contentsline {subsubsection}{Overview}{82}{subsubsection*.105}%
-\contentsline {subsubsection}{Key Components}{82}{subsubsection*.106}%
-\contentsline {section}{\numberline {11.1}Connection Lifecycle}{82}{section.11.1}%
-\contentsline {subsection}{\numberline {11.1.1}Lifecycle States}{84}{subsection.11.1.1}%
-\contentsline {subsection}{\numberline {11.1.2}Detailed Lifecycle Flow}{85}{subsection.11.1.2}%
-\contentsline {section}{\numberline {11.2}Authentication Flow}{85}{section.11.2}%
-\contentsline {subsection}{\numberline {11.2.1}Authentication Architecture}{86}{subsection.11.2.1}%
-\contentsline {subsection}{\numberline {11.2.2}Token Structure}{86}{subsection.11.2.2}%
-\contentsline {subsubsection}{Access Token Claims}{86}{subsubsection*.111}%
-\contentsline {subsubsection}{Refresh Token Claims}{86}{subsubsection*.112}%
-\contentsline {subsection}{\numberline {11.2.3}Token Refresh Flow}{87}{subsection.11.2.3}%
-\contentsline {section}{\numberline {11.3}Query Filtering Flow}{87}{section.11.3}%
-\contentsline {subsubsection}{Permission Levels}{88}{subsubsection*.114}%
-\contentsline {subsubsection}{Permission Enforcement Flow}{89}{subsubsection*.116}%
-\contentsline {subsubsection}{Permission Mapping}{89}{subsubsection*.118}%
-\contentsline {subsubsection}{MSSQL Permission Mapping}{89}{subsubsection*.119}%
-\contentsline {subsubsection}{MySQL Permission Mapping}{89}{subsubsection*.121}%
-\contentsline {subsection}{\numberline {11.3.1}Temporary User Creation}{90}{subsection.11.3.1}%
-\contentsline {section}{\numberline {11.4}Policy Enforcement Flow}{90}{section.11.4}%
-\contentsline {subsection}{\numberline {11.4.1}Policy Architecture}{90}{subsection.11.4.1}%
-\contentsline {subsection}{\numberline {11.4.2}Real-Time Policy Evaluation}{91}{subsection.11.4.2}%
-\contentsline {subsection}{\numberline {11.4.3}Policy Enforcement Points}{91}{subsection.11.4.3}%
-\contentsline {subsection}{\numberline {11.4.4}End-to-End Flow Narrative}{91}{subsection.11.4.4}%
-\contentsline {subsubsection}{Phase 1: Authentication \& Authorization}{91}{subsubsection*.127}%
-\contentsline {subsubsection}{Phase 2: Database Discovery}{92}{subsubsection*.128}%
-\contentsline {subsubsection}{Phase 3: Connection Establishment}{92}{subsubsection*.129}%
-\contentsline {subsubsection}{Phase 4: Active Database Usage}{93}{subsubsection*.130}%
-\contentsline {subsubsection}{Phase 5: Session Termination}{93}{subsubsection*.131}%
-\contentsline {chapter}{\numberline {12}High-Level Data Flow Diagrams}{94}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Authentication Flow Diagram}{94}{section.12.1}%
-\contentsline {section}{\numberline {12.2}Query Filtering Diagram}{94}{section.12.2}%
-\contentsline {section}{\numberline {12.3}Logging \& Auditing Flow Diagram}{94}{section.12.3}%
-\contentsline {chapter}{\numberline {13}Technology Justification}{95}{chapter.13}%
-\contentsline {section}{\numberline {13.1}Why Go}{95}{section.13.1}%
-\contentsline {section}{\numberline {13.2}Why Node.js / TS / React}{95}{section.13.2}%
-\contentsline {section}{\numberline {13.3}Why mTLS (and why TCP is temporary)}{95}{section.13.3}%
-\contentsline {section}{\numberline {13.4}Why SQLite / Internal Storage}{95}{section.13.4}%
-\contentsline {section}{\numberline {13.5}Design Decision Summary}{95}{section.13.5}%
-\contentsline {chapter}{\numberline {14}Prototype – Semester 1}{96}{chapter.14}%
-\contentsline {section}{\numberline {14.1}Implemented Features}{96}{section.14.1}%
-\contentsline {section}{\numberline {14.2}Screenshots (CLI \& Dashboard)}{96}{section.14.2}%
-\contentsline {section}{\numberline {14.3}What Works vs What Doesn't}{96}{section.14.3}%
-\contentsline {section}{\numberline {14.4}Technical Decisions Made}{96}{section.14.4}%
-\contentsline {section}{\numberline {14.5}Implementation Challenges}{96}{section.14.5}%
-\contentsline {chapter}{\numberline {15}Development Methodology}{97}{chapter.15}%
-\contentsline {section}{\numberline {15.1}Agile Scrum Framework}{97}{section.15.1}%
-\contentsline {section}{\numberline {15.2}Meeting Structure}{97}{section.15.2}%
-\contentsline {subsection}{\numberline {15.2.1}Weekly Kick-off Meeting}{97}{subsection.15.2.1}%
-\contentsline {subsection}{\numberline {15.2.2}Daily Stand-up Meeting}{98}{subsection.15.2.2}%
-\contentsline {subsection}{\numberline {15.2.3}Sprint Review (Weekly Supervisor Meeting)}{98}{subsection.15.2.3}%
-\contentsline {section}{\numberline {15.3}Collaboration Tools}{98}{section.15.3}%
-\contentsline {section}{\numberline {15.4}Documentation \& Observability}{99}{section.15.4}%
-\contentsline {chapter}{\numberline {16}Task Tracking}{100}{chapter.16}%
-\contentsline {section}{\numberline {16.1}Team Task Tracking (Actual Examples)}{100}{section.16.1}%
-\contentsline {section}{\numberline {16.2}Supervisor Tracking Logs}{100}{section.16.2}%
-\contentsline {section}{\numberline {16.3}Blockers, Risks \& Resolution Notes}{100}{section.16.3}%
-\contentsline {chapter}{\numberline {17}Milestones}{101}{chapter.17}%
-\contentsline {section}{\numberline {17.1}Term 1 Milestone Roadmap}{101}{section.17.1}%
-\contentsline {subsection}{\numberline {17.1.1}Milestone 1}{101}{subsection.17.1.1}%
-\contentsline {subsection}{\numberline {17.1.2}Milestone 2}{101}{subsection.17.1.2}%
-\contentsline {subsection}{\numberline {17.1.3}Milestone 3}{101}{subsection.17.1.3}%
-\contentsline {subsection}{\numberline {17.1.4}Milestone 4}{101}{subsection.17.1.4}%
-\contentsline {subsection}{\numberline {17.1.5}Milestone 5}{101}{subsection.17.1.5}%
-\contentsline {section}{\numberline {17.2}Timeline Chart (Gantt-like)}{101}{section.17.2}%
-\contentsline {chapter}{\numberline {18}Threat Model \& Security Considerations}{102}{chapter.18}%
-\contentsline {section}{\numberline {18.1}Threat Model}{102}{section.18.1}%
-\contentsline {section}{\numberline {18.2}Risks \& Attack Vectors}{102}{section.18.2}%
-\contentsline {section}{\numberline {18.3}Mitigation Techniques}{102}{section.18.3}%
-\contentsline {section}{\numberline {18.4}Why Zero Trust is Needed}{102}{section.18.4}%
-\contentsline {chapter}{\numberline {19}Roadmap for Term 2}{103}{chapter.19}%
-\contentsline {section}{\numberline {19.1}Remaining Features}{103}{section.19.1}%
-\contentsline {section}{\numberline {19.2}Architecture Improvements}{103}{section.19.2}%
-\contentsline {section}{\numberline {19.3}Performance Goals}{103}{section.19.3}%
-\contentsline {section}{\numberline {19.4}Testing \& Validation Plan}{103}{section.19.4}%
-\contentsline {chapter}{\numberline {20}Team Contribution}{104}{chapter.20}%
-\contentsline {section}{\numberline {20.1}Overview of Contribution Approach}{104}{section.20.1}%
-\contentsline {section}{\numberline {20.2}Individual Contributions}{104}{section.20.2}%
-\contentsline {chapter}{\numberline {21}Expected Outcomes}{105}{chapter.21}%
-\contentsline {chapter}{\numberline {22}Conclusion}{106}{chapter.22}%
-\contentsline {section}{\numberline {22.1}Restated Purpose}{106}{section.22.1}%
-\contentsline {section}{\numberline {22.2}Summary of Achievements}{106}{section.22.2}%
-\contentsline {section}{\numberline {22.3}Importance \& Contribution}{106}{section.22.3}%
-\contentsline {section}{\numberline {22.4}Transition to Next Semester}{106}{section.22.4}%
-\contentsline {chapter}{\numberline {A}Glossary}{109}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Dashboard Mockups}{110}{appendix.B}%
+\contentsline {chapter}{\numberline {1}Team Information}{13}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Team Members}{13}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Roles \& Responsibilities}{13}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Introduction \& Problem Definition}{14}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Introduction}{14}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Problem Statement}{15}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}The Current State of Database Access Management}{15}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Critical Security Vulnerabilities}{15}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Impact and Consequences}{16}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}The Need for Zero Trust Database Access}{16}{subsection.2.2.4}%
+\contentsline {section}{\numberline {2.3}Gaps In Existing Solutions}{17}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Perimeter-Based Security}{17}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}VPN-Based Access}{17}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}Bastion Hosts and Jump Servers}{18}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}Database Native Access Controls}{18}{subsection.2.3.4}%
+\contentsline {subsection}{\numberline {2.3.5}Privileged Access Management (PAM) Solutions}{19}{subsection.2.3.5}%
+\contentsline {subsection}{\numberline {2.3.6}Database Activity Monitoring (DAM)}{19}{subsection.2.3.6}%
+\contentsline {subsection}{\numberline {2.3.7}The Fundamental Gap}{20}{subsection.2.3.7}%
+\contentsline {section}{\numberline {2.4}Why Zero Trust for Databases is Different}{20}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Core Zero Trust Principles Applied to Databases}{20}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}The Zero Trust Database Gateway Architecture}{20}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Query-Level Data Protection}{21}{subsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.4.4}Complete Auditability and Traceability}{22}{subsection.2.4.4}%
+\contentsline {subsection}{\numberline {2.4.5}What zGate Implements}{22}{subsection.2.4.5}%
+\contentsline {subsection}{\numberline {2.4.6}Operational Advantages}{23}{subsection.2.4.6}%
+\contentsline {subsection}{\numberline {2.4.7}Addressing the Gaps}{23}{subsection.2.4.7}%
+\contentsline {chapter}{\numberline {3}Project Definition}{25}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Project Definition and Scope}{25}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}System Components}{25}{subsection.3.1.1}%
+\contentsline {subsubsection}{Gateway Server (zGate Core)}{25}{subsubsection*.6}%
+\contentsline {subsubsection}{Command-Line Interface (zGate-CLI)}{26}{subsubsection*.7}%
+\contentsline {subsubsection}{Web Administration Dashboard (zGate-WebUI)}{26}{subsubsection*.8}%
+\contentsline {subsection}{\numberline {3.1.2}Scope Boundaries}{27}{subsection.3.1.2}%
+\contentsline {subsubsection}{In Scope:}{27}{subsubsection*.9}%
+\contentsline {subsubsection}{Out of Scope (Current Phase):}{27}{subsubsection*.10}%
+\contentsline {section}{\numberline {3.2}Objectives}{28}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Core Security Objectives}{28}{subsection.3.2.1}%
+\contentsline {subsubsection}{Eliminate Direct Credential Exposure}{28}{subsubsection*.11}%
+\contentsline {subsubsection}{Enforce Identity-Based Access Control}{28}{subsubsection*.12}%
+\contentsline {subsubsection}{Implement Protocol-Level Interception}{29}{subsubsection*.13}%
+\contentsline {subsubsection}{Provide Comprehensive Audit Logging}{29}{subsubsection*.14}%
+\contentsline {subsection}{\numberline {3.2.2}Operational Objectives}{29}{subsection.3.2.2}%
+\contentsline {subsubsection}{Deliver Multi-Component Integration}{29}{subsubsection*.15}%
+\contentsline {subsubsection}{Enable Centralized Administration}{29}{subsubsection*.16}%
+\contentsline {subsubsection}{Support Multi-Database Environments}{30}{subsubsection*.17}%
+\contentsline {subsubsection}{Ensure Production-Ready Stability}{30}{subsubsection*.18}%
+\contentsline {subsection}{\numberline {3.2.3}Academic and Technical Learning Objectives}{30}{subsection.3.2.3}%
+\contentsline {subsubsection}{Demonstrate Applied Security Architecture}{30}{subsubsection*.19}%
+\contentsline {subsubsection}{Develop Full-Stack System Integration Skills}{31}{subsubsection*.20}%
+\contentsline {chapter}{\numberline {4}Requirements Engineering}{32}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Functional Requirements}{32}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}FR-1: User Authentication \& Authorization}{32}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}FR-2: Database Connection Management}{32}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}FR-3: Policy Engine}{32}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}FR-4: Command Line Interface}{32}{subsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.1.5}FR-5: Web User Interface}{33}{subsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.1.6}FR-6: Protocol Handling}{33}{subsection.4.1.6}%
+\contentsline {subsection}{\numberline {4.1.7}FR-7: Audit \& Logging}{33}{subsection.4.1.7}%
+\contentsline {section}{\numberline {4.2}Non-Functional Requirements}{33}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}NFR-1: Security}{33}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}NFR-2: Performance}{34}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}NFR-3: Scalability Targets}{34}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}NFR-4: Reliability}{34}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}NFR-5: Usability}{34}{subsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.2.6}NFR-6: Maintainability}{34}{subsection.4.2.6}%
+\contentsline {subsection}{\numberline {4.2.7}NFR-7: Portability}{35}{subsection.4.2.7}%
+\contentsline {subsection}{\numberline {4.2.8}NFR-8: Compatibility}{35}{subsection.4.2.8}%
+\contentsline {section}{\numberline {4.3}Actors \& Use Cases}{35}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}System Actors}{35}{subsection.4.3.1}%
+\contentsline {subsubsection}{Actor descriptions}{35}{subsubsection*.21}%
+\contentsline {subsubsection}{End User / Developer}{36}{subsubsection*.23}%
+\contentsline {subsubsection}{System Administrator}{36}{subsubsection*.24}%
+\contentsline {subsubsection}{Super Administrator}{36}{subsubsection*.25}%
+\contentsline {subsubsection}{zGate Server}{37}{subsubsection*.26}%
+\contentsline {subsubsection}{zGate CLI}{37}{subsubsection*.27}%
+\contentsline {subsubsection}{zGate WebUI}{37}{subsubsection*.28}%
+\contentsline {subsubsection}{Backend Databases}{37}{subsubsection*.29}%
+\contentsline {subsection}{\numberline {4.3.2}Use Case Catalog}{38}{subsection.4.3.2}%
+\contentsline {subsubsection}{UC-1: User Authentication via CLI}{38}{subsubsection*.30}%
+\contentsline {subsubsection}{UC-2: List Available Databases}{38}{subsubsection*.31}%
+\contentsline {subsubsection}{UC-3: Connect to Database}{39}{subsubsection*.32}%
+\contentsline {subsubsection}{UC-4: Auto Disconnect on Session End}{40}{subsubsection*.33}%
+\contentsline {subsubsection}{UC-5: Admin - Add Database Configuration}{40}{subsubsection*.34}%
+\contentsline {subsubsection}{UC-6: Admin - Create User with Roles}{41}{subsubsection*.35}%
+\contentsline {subsubsection}{UC-7: Admin - Define Role with Permissions}{42}{subsubsection*.36}%
+\contentsline {subsubsection}{UC-8: Admin - Monitor Active Sessions}{42}{subsubsection*.37}%
+\contentsline {subsubsection}{UC-9: Admin - Review Audit Logs}{43}{subsubsection*.38}%
+\contentsline {subsubsection}{UC-10: Auto Token Refresh}{44}{subsubsection*.39}%
+\contentsline {subsubsection}{UC-11: Logout and Token Revocation}{44}{subsubsection*.40}%
+\contentsline {subsubsection}{UC-12: Configure Shared Account Pool}{45}{subsubsection*.41}%
+\contentsline {section}{\numberline {4.4}Use Case Diagrams}{46}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}End User Case Diagrams}{46}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Administrator Use Case Diagrams}{46}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Complete System Use Case Diagrams}{46}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}System Components Interaction}{47}{subsection.4.4.4}%
+\contentsline {section}{\numberline {4.5}User Stories}{47}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}End User Stories}{47}{subsection.4.5.1}%
+\contentsline {subsubsection}{Epic 1: Secure Database Access}{47}{subsubsection*.46}%
+\contentsline {paragraph}{US-1.1: Login with Credentials}{47}{paragraph*.47}%
+\contentsline {paragraph}{US-1.2: View My Accessible Databases}{48}{paragraph*.48}%
+\contentsline {paragraph}{US-1.3: Connect to a Database}{48}{paragraph*.49}%
+\contentsline {paragraph}{US-1.4: Automatic Session Cleanup}{49}{paragraph*.50}%
+\contentsline {paragraph}{US-1.5: Seamless Token Refresh}{49}{paragraph*.51}%
+\contentsline {paragraph}{US-1.6: Check Session Status}{49}{paragraph*.52}%
+\contentsline {paragraph}{US-1.7: Secure Logout}{50}{paragraph*.53}%
+\contentsline {subsection}{\numberline {4.5.2}Administrator Stories}{50}{subsection.4.5.2}%
+\contentsline {subsubsection}{Epic 2: User \& Access Management}{50}{subsubsection*.54}%
+\contentsline {paragraph}{US-2.1: Create User Accounts}{50}{paragraph*.55}%
+\contentsline {paragraph}{US-2.2: Define Roles with Granular Permissions}{51}{paragraph*.56}%
+\contentsline {paragraph}{US-2.3: Manage User-Role Assignments}{51}{paragraph*.57}%
+\contentsline {subsubsection}{Epic 3: Database Configuration}{52}{subsubsection*.58}%
+\contentsline {paragraph}{US-3.1: Add Database Configurations}{52}{paragraph*.59}%
+\contentsline {paragraph}{US-3.2: Edit Database Settings}{52}{paragraph*.60}%
+\contentsline {paragraph}{US-3.3: Remove Decommissioned Databases}{53}{paragraph*.61}%
+\contentsline {subsubsection}{Epic 4: Monitoring \& Audit}{53}{subsubsection*.62}%
+\contentsline {paragraph}{US-4.1: Monitor Active Sessions}{53}{paragraph*.63}%
+\contentsline {paragraph}{US-4.2: Terminate Suspicious Sessions}{53}{paragraph*.64}%
+\contentsline {paragraph}{US-4.3: Review Comprehensive Audit Logs}{54}{paragraph*.65}%
+\contentsline {paragraph}{US-4.4: Export Audit Logs}{54}{paragraph*.66}%
+\contentsline {subsubsection}{Epic 5: Advanced Access Control}{55}{subsubsection*.67}%
+\contentsline {paragraph}{US-5.1: Configure Shared Account Pools}{55}{paragraph*.68}%
+\contentsline {paragraph}{US-5.2: Assign Personal Database Accounts}{55}{paragraph*.69}%
+\contentsline {paragraph}{US-5.3: Define Custom User Permissions}{56}{paragraph*.70}%
+\contentsline {subsection}{\numberline {4.5.3}Super Administrator Stories}{56}{subsection.4.5.3}%
+\contentsline {subsubsection}{Epic 6: Platform Administration}{56}{subsubsection*.71}%
+\contentsline {paragraph}{US-6.1: Manage Admin Accounts}{56}{paragraph*.72}%
+\contentsline {paragraph}{US-6.2: Configure System Settings}{57}{paragraph*.73}%
+\contentsline {paragraph}{US-6.3: Perform System Health Checks}{57}{paragraph*.74}%
+\contentsline {subsection}{\numberline {4.5.4}System Stories (Non-Interactive)}{57}{subsection.4.5.4}%
+\contentsline {subsubsection}{Epic 7: Automated Operations}{57}{subsubsection*.75}%
+\contentsline {paragraph}{US-7.1: Automatic Resource Cleanup}{57}{paragraph*.76}%
+\contentsline {paragraph}{US-7.2: Real-Time Permission Enforcement}{58}{paragraph*.77}%
+\contentsline {paragraph}{US-7.3: Graceful Error Handling}{58}{paragraph*.78}%
+\contentsline {paragraph}{US-7.4: Comprehensive Audit Logging}{59}{paragraph*.79}%
+\contentsline {chapter}{\numberline {5}Proposed Solution}{60}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Solution Overview}{60}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}The Core Problem}{60}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}The zGate Solution}{60}{subsection.5.1.2}%
+\contentsline {section}{\numberline {5.2}Core Components}{61}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}zGate Server (Backend)}{61}{subsection.5.2.1}%
+\contentsline {subsubsection}{Backend Layers}{61}{subsubsection*.81}%
+\contentsline {subsubsection}{Key Features}{61}{subsubsection*.83}%
+\contentsline {subsection}{\numberline {5.2.2}zGate CLI (Client)}{62}{subsection.5.2.2}%
+\contentsline {subsubsection}{CLI Workflow}{63}{subsubsection*.84}%
+\contentsline {subsubsection}{CLI Features}{63}{subsubsection*.86}%
+\contentsline {subsection}{\numberline {5.2.3}zGate WebUI (Admin Dashboard)}{64}{subsection.5.2.3}%
+\contentsline {subsubsection}{Dashboard Architecture}{64}{subsubsection*.87}%
+\contentsline {subsubsection}{Admin Features}{64}{subsubsection*.88}%
+\contentsline {section}{\numberline {5.3}Key Technologies \& Design Decisions}{66}{section.5.3}%
+\contentsline {subsubsection}{Technology Stack}{66}{subsubsection*.89}%
+\contentsline {section}{\numberline {5.4}Security Architecture}{66}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Security Layers}{67}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Security Guarantees}{68}{subsection.5.4.2}%
+\contentsline {section}{\numberline {5.5}Advantages of the Proposed Solution}{68}{section.5.5}%
+\contentsline {subsubsection}{Key Benefits}{68}{subsubsection*.93}%
+\contentsline {subsubsection}{Enhanced Security}{68}{subsubsection*.94}%
+\contentsline {subsubsection}{Operational Efficiency}{69}{subsubsection*.95}%
+\contentsline {subsubsection}{Compliance \& Audit}{69}{subsubsection*.96}%
+\contentsline {subsubsection}{Developer Experience}{69}{subsubsection*.97}%
+\contentsline {subsubsection}{Scalability}{69}{subsubsection*.98}%
+\contentsline {chapter}{\numberline {6}Alignment with International Standards}{70}{chapter.6}%
+\contentsline {section}{\numberline {6.1}PCI DSS}{70}{section.6.1}%
+\contentsline {section}{\numberline {6.2}HIPAA}{70}{section.6.2}%
+\contentsline {section}{\numberline {6.3}GDPR}{71}{section.6.3}%
+\contentsline {section}{\numberline {6.4}ISO 27001}{71}{section.6.4}%
+\contentsline {chapter}{\numberline {7}Competitor \& Market Analysis}{72}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Competitor Analysis}{72}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Comparison Table}{72}{subsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.1.2}What Competitors Lack}{72}{subsection.7.1.2}%
+\contentsline {section}{\numberline {7.2}Market Research}{72}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Market Overview}{72}{subsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.2.2}Zero Trust Demand}{72}{subsection.7.2.2}%
+\contentsline {subsection}{\numberline {7.2.3}Market Challenges \& Needs}{72}{subsection.7.2.3}%
+\contentsline {subsection}{\numberline {7.2.4}Regulatory Drivers}{72}{subsection.7.2.4}%
+\contentsline {subsection}{\numberline {7.2.5}Trends \& Opportunities}{72}{subsection.7.2.5}%
+\contentsline {subsection}{\numberline {7.2.6}Landscape Summary}{72}{subsection.7.2.6}%
+\contentsline {chapter}{\numberline {8}Scientific Research \& Literature Review}{73}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Generative AI-Enhanced Cybersecurity Framework for Enterprise Data Privacy Management}{73}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Purpose of the Study}{73}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}Framework Overview}{73}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}Implementation \& Experiments}{74}{subsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.1.4}Privacy \& Security Features}{74}{subsection.8.1.4}%
+\contentsline {subsection}{\numberline {8.1.5}Contributions to the Paper}{75}{subsection.8.1.5}%
+\contentsline {subsection}{\numberline {8.1.6}Advantages \& Limitations}{75}{subsection.8.1.6}%
+\contentsline {subsection}{\numberline {8.1.7}Relevance to Our Project}{75}{subsection.8.1.7}%
+\contentsline {section}{\numberline {8.2}The Significance of Artificial Intelligence in Zero Trust Technologies: A Comprehensive Review}{76}{section.8.2}%
+\contentsline {subsection}{\numberline {8.2.1}Problem Addressed}{76}{subsection.8.2.1}%
+\contentsline {subsection}{\numberline {8.2.2}Methodology}{76}{subsection.8.2.2}%
+\contentsline {subsection}{\numberline {8.2.3}Key Contributions of AI to Zero Trust}{76}{subsection.8.2.3}%
+\contentsline {subsubsection}{Identity \& Access Management (IAM)}{76}{subsubsection*.101}%
+\contentsline {subsubsection}{Adaptive Multi-Factor Authentication (AMFA)}{76}{subsubsection*.102}%
+\contentsline {subsubsection}{Endpoint Detection \& Response (EDR)}{77}{subsubsection*.103}%
+\contentsline {subsubsection}{Zero Trust Network Access (ZTNA) \& Secure Access Service Edge (SASE)}{77}{subsubsection*.104}%
+\contentsline {subsection}{\numberline {8.2.4}Findings}{77}{subsection.8.2.4}%
+\contentsline {subsection}{\numberline {8.2.5}Comparison with Traditional Methods}{77}{subsection.8.2.5}%
+\contentsline {subsection}{\numberline {8.2.6}Relevance to Our Project}{77}{subsection.8.2.6}%
+\contentsline {section}{\numberline {8.3}Securing Digital Identity in the Zero Trust Architecture: A Blockchain Approach to Privacy-Focused Multi-Factor Authentication}{78}{section.8.3}%
+\contentsline {subsection}{\numberline {8.3.1}Problem Addressed}{78}{subsection.8.3.1}%
+\contentsline {subsection}{\numberline {8.3.2}Research Goals}{78}{subsection.8.3.2}%
+\contentsline {subsection}{\numberline {8.3.3}Proposed System}{78}{subsection.8.3.3}%
+\contentsline {subsection}{\numberline {8.3.4}Experimental Results}{78}{subsection.8.3.4}%
+\contentsline {subsection}{\numberline {8.3.5}Key Findings and Contributions}{79}{subsection.8.3.5}%
+\contentsline {subsection}{\numberline {8.3.6}Real-World Applications}{79}{subsection.8.3.6}%
+\contentsline {subsection}{\numberline {8.3.7}Relevance to Our Project}{79}{subsection.8.3.7}%
+\contentsline {subsection}{\numberline {8.3.8}Conclusion}{79}{subsection.8.3.8}%
+\contentsline {section}{\numberline {8.4}Drivolution: Rethinking the Database Driver Lifecycle}{80}{section.8.4}%
+\contentsline {subsection}{\numberline {8.4.1}Problem Addressed}{80}{subsection.8.4.1}%
+\contentsline {subsection}{\numberline {8.4.2}Research Methodology}{80}{subsection.8.4.2}%
+\contentsline {subsection}{\numberline {8.4.3}Drivolution Architecture}{80}{subsection.8.4.3}%
+\contentsline {subsubsection}{Core Components}{81}{subsubsection*.105}%
+\contentsline {subsubsection}{Technical Implementation}{81}{subsubsection*.106}%
+\contentsline {subsection}{\numberline {8.4.4}Key Innovations}{81}{subsection.8.4.4}%
+\contentsline {subsubsection}{Simplified Lifecycle}{81}{subsubsection*.107}%
+\contentsline {subsubsection}{Transparent Updates}{82}{subsubsection*.108}%
+\contentsline {subsubsection}{Security Features}{82}{subsubsection*.109}%
+\contentsline {subsection}{\numberline {8.4.5}Case Studies and Results}{82}{subsection.8.4.5}%
+\contentsline {subsubsection}{Heterogeneous DBMS Administration}{82}{subsubsection*.110}%
+\contentsline {subsubsection}{Master/Slave Failover}{82}{subsubsection*.111}%
+\contentsline {subsubsection}{Sequoia Clustering Middleware}{83}{subsubsection*.112}%
+\contentsline {subsubsection}{Customized Driver Delivery}{83}{subsubsection*.113}%
+\contentsline {subsection}{\numberline {8.4.6}Performance Characteristics}{83}{subsection.8.4.6}%
+\contentsline {subsection}{\numberline {8.4.7}Advantages and Contributions}{83}{subsection.8.4.7}%
+\contentsline {subsection}{\numberline {8.4.8}Limitations and Considerations}{84}{subsection.8.4.8}%
+\contentsline {subsection}{\numberline {8.4.9}Relevance to Our Zero Trust Database Access Project}{84}{subsection.8.4.9}%
+\contentsline {subsubsection}{Zero Trust Alignment}{84}{subsubsection*.114}%
+\contentsline {subsubsection}{Practical Implementation Lessons}{85}{subsubsection*.115}%
+\contentsline {subsubsection}{Architectural Patterns}{85}{subsubsection*.116}%
+\contentsline {subsubsection}{Security Considerations}{85}{subsubsection*.117}%
+\contentsline {subsection}{\numberline {8.4.10}Implications for zGate Proxy Architecture}{86}{subsection.8.4.10}%
+\contentsline {subsection}{\numberline {8.4.11}Conclusion}{87}{subsection.8.4.11}%
+\contentsline {section}{\numberline {8.5}Paper 5}{87}{section.8.5}%
+\contentsline {section}{\numberline {8.6}Paper 6}{87}{section.8.6}%
+\contentsline {section}{\numberline {8.7}Paper 7}{87}{section.8.7}%
+\contentsline {section}{\numberline {8.8}Research References}{87}{section.8.8}%
+\contentsline {chapter}{\numberline {9}Technical Background}{89}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Systems Programming in Go}{89}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Introduction to Go Programming Language}{89}{subsection.9.1.1}%
+\contentsline {paragraph}{Design Philosophy}{89}{paragraph*.118}%
+\contentsline {paragraph}{Memory Safety}{90}{paragraph*.119}%
+\contentsline {paragraph}{Standard Library}{90}{paragraph*.120}%
+\contentsline {subsection}{\numberline {9.1.2}Go Runtime Model}{90}{subsection.9.1.2}%
+\contentsline {paragraph}{The G--M--P Model Explained}{90}{paragraph*.121}%
+\contentsline {paragraph}{Scheduling Mechanism}{91}{paragraph*.123}%
+\contentsline {paragraph}{Why This Matters for zGate}{91}{paragraph*.124}%
+\contentsline {subsection}{\numberline {9.1.3}Concurrency Primitives}{91}{subsection.9.1.3}%
+\contentsline {paragraph}{Goroutines in Detail}{92}{paragraph*.125}%
+\contentsline {paragraph}{Channels in Depth}{92}{paragraph*.126}%
+\contentsline {paragraph}{Mutexes and Atomic Operations}{93}{paragraph*.127}%
+\contentsline {subsection}{\numberline {9.1.4}Low-Level TCP Socket Programming}{93}{subsection.9.1.4}%
+\contentsline {paragraph}{TCP/IP Socket Fundamentals}{94}{paragraph*.128}%
+\contentsline {paragraph}{MySQL Protocol Socket Management}{94}{paragraph*.130}%
+\contentsline {paragraph}{Buffer Management}{95}{paragraph*.131}%
+\contentsline {subsection}{\numberline {9.1.5}Context Propagation}{95}{subsection.9.1.5}%
+\contentsline {paragraph}{Context Fundamentals}{96}{paragraph*.132}%
+\contentsline {paragraph}{Context in zGate}{96}{paragraph*.134}%
+\contentsline {paragraph}{Cancellation Propagation}{97}{paragraph*.135}%
+\contentsline {section}{\numberline {9.2}Database Wire Protocols (MySQL/MariaDB)}{98}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}MySQL Protocol Overview}{98}{subsection.9.2.1}%
+\contentsline {paragraph}{Protocol Characteristics}{98}{paragraph*.137}%
+\contentsline {paragraph}{Protocol Phases}{99}{paragraph*.138}%
+\contentsline {subsection}{\numberline {9.2.2}MySQL Packet Structure}{99}{subsection.9.2.2}%
+\contentsline {paragraph}{Packet Header Format}{100}{paragraph*.140}%
+\contentsline {paragraph}{Large Packet Handling}{101}{paragraph*.142}%
+\contentsline {paragraph}{Packet Validation in zGate}{101}{paragraph*.143}%
+\contentsline {subsection}{\numberline {9.2.3}Command Phase Processing}{101}{subsection.9.2.3}%
+\contentsline {paragraph}{Command Packet Format}{101}{paragraph*.144}%
+\contentsline {paragraph}{Supported Commands in zGate}{102}{paragraph*.146}%
+\contentsline {paragraph}{Command Processing in zGate}{103}{paragraph*.148}%
+\contentsline {subsection}{\numberline {9.2.4}Result Set Encoding}{104}{subsection.9.2.4}%
+\contentsline {paragraph}{Result Set Packet Sequence}{104}{paragraph*.149}%
+\contentsline {paragraph}{Length-Encoded Integers}{105}{paragraph*.150}%
+\contentsline {paragraph}{Text vs Binary Protocol}{105}{paragraph*.151}%
+\contentsline {paragraph}{zGate Row Interception}{105}{paragraph*.152}%
+\contentsline {subsection}{\numberline {9.2.5}SQL Parsing and AST Manipulation}{106}{subsection.9.2.5}%
+\contentsline {paragraph}{SQL Abstract Syntax Trees}{106}{paragraph*.153}%
+\contentsline {paragraph}{Parsing Pipeline}{106}{paragraph*.154}%
+\contentsline {paragraph}{AST Node Types}{107}{paragraph*.155}%
+\contentsline {paragraph}{AST Manipulation in zGate}{108}{paragraph*.156}%
+\contentsline {paragraph}{Safe Rewriting Examples}{109}{paragraph*.157}%
+\contentsline {paragraph}{Security Benefits}{109}{paragraph*.158}%
+\contentsline {section}{\numberline {9.3}Database Wire Protocols (Microsoft SQL Server - TDS)}{109}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}Overview of the TDS Protocol}{110}{subsection.9.3.1}%
+\contentsline {paragraph}{Key Characteristics}{110}{paragraph*.159}%
+\contentsline {paragraph}{Protocol Versions}{110}{paragraph*.160}%
+\contentsline {subsection}{\numberline {9.3.2}TDS Packet Structure}{110}{subsection.9.3.2}%
+\contentsline {paragraph}{TDS Packet Header}{111}{paragraph*.161}%
+\contentsline {paragraph}{Packet Fragmentation}{112}{paragraph*.162}%
+\contentsline {subsection}{\numberline {9.3.3}Pre-Login and Login Process}{112}{subsection.9.3.3}%
+\contentsline {subsubsection}{Pre-Login Phase}{112}{subsubsection*.163}%
+\contentsline {paragraph}{TLS Integration}{112}{paragraph*.164}%
+\contentsline {subsubsection}{Login Phase}{113}{subsubsection*.165}%
+\contentsline {paragraph}{Password Obfuscation}{113}{paragraph*.166}%
+\contentsline {subsection}{\numberline {9.3.4}TDS Message Types}{113}{subsection.9.3.4}%
+\contentsline {subsection}{\numberline {9.3.5}TDS Token-Based Response Model}{114}{subsection.9.3.5}%
+\contentsline {paragraph}{Token Stream Concept}{114}{paragraph*.167}%
+\contentsline {paragraph}{Common TDS Tokens}{114}{paragraph*.168}%
+\contentsline {subsection}{\numberline {9.3.6}Data Type Encoding}{115}{subsection.9.3.6}%
+\contentsline {paragraph}{Fixed-Length Types}{115}{paragraph*.169}%
+\contentsline {paragraph}{Variable-Length Types}{115}{paragraph*.170}%
+\contentsline {paragraph}{NULL Representation}{115}{paragraph*.171}%
+\contentsline {subsection}{\numberline {9.3.7}Implications for Proxy Design}{115}{subsection.9.3.7}%
+\contentsline {paragraph}{Comparison with MySQL}{116}{paragraph*.172}%
+\contentsline {subsection}{\numberline {9.3.8}Challenges of Abstract Syntax Tree (AST) Parsing in TDS}{116}{subsection.9.3.8}%
+\contentsline {subsubsection}{Absence of a Canonical SQL Text Representation}{116}{subsubsection*.173}%
+\contentsline {subsubsection}{Binary Parameter Encoding and Late Binding}{117}{subsubsection*.174}%
+\contentsline {subsubsection}{Multiple Result Sets and Control Flow Semantics}{117}{subsubsection*.175}%
+\contentsline {subsubsection}{Encrypted Sessions and Visibility Loss}{118}{subsubsection*.176}%
+\contentsline {subsubsection}{Lack of Official Grammar Specifications}{118}{subsubsection*.177}%
+\contentsline {subsubsection}{Implications for Security Policy Enforcement}{118}{subsubsection*.178}%
+\contentsline {section}{\numberline {9.4}Cryptography and Security Engineering}{119}{section.9.4}%
+\contentsline {subsection}{\numberline {9.4.1}TLS / SSL Transport Layer Security}{119}{subsection.9.4.1}%
+\contentsline {paragraph}{TLS Protocol Overview}{119}{paragraph*.179}%
+\contentsline {paragraph}{TLS Handshake Process}{120}{paragraph*.180}%
+\contentsline {paragraph}{TLS in zGate}{120}{paragraph*.181}%
+\contentsline {paragraph}{Technical Implementation Details}{121}{paragraph*.182}%
+\contentsline {subsection}{\numberline {9.4.2}Symmetric Encryption (AES-256)}{122}{subsection.9.4.2}%
+\contentsline {paragraph}{AES Fundamentals}{122}{paragraph*.183}%
+\contentsline {paragraph}{AES Modes of Operation}{122}{paragraph*.184}%
+\contentsline {paragraph}{AES-256-GCM in zGate}{123}{paragraph*.185}%
+\contentsline {chapter}{\numberline {10}System Architecture}{125}{chapter.10}%
+\contentsline {section}{\numberline {10.1}High-Level Architecture Diagram}{125}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Main System Components}{125}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Component Communication Flow}{125}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Tech Stack Summary}{125}{section.10.4}%
+\contentsline {chapter}{\numberline {11}Detailed Architecture of the Proxy}{126}{chapter.11}%
+\contentsline {subsubsection}{Overview}{126}{subsubsection*.186}%
+\contentsline {subsubsection}{Key Components}{126}{subsubsection*.187}%
+\contentsline {section}{\numberline {11.1}Connection Lifecycle}{126}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Lifecycle States}{128}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}Detailed Lifecycle Flow}{129}{subsection.11.1.2}%
+\contentsline {section}{\numberline {11.2}Authentication Flow}{129}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}Authentication Architecture}{130}{subsection.11.2.1}%
+\contentsline {subsection}{\numberline {11.2.2}Token Structure}{130}{subsection.11.2.2}%
+\contentsline {subsubsection}{Access Token Claims}{130}{subsubsection*.192}%
+\contentsline {subsubsection}{Refresh Token Claims}{130}{subsubsection*.193}%
+\contentsline {subsection}{\numberline {11.2.3}Token Refresh Flow}{131}{subsection.11.2.3}%
+\contentsline {section}{\numberline {11.3}Query Filtering Flow}{131}{section.11.3}%
+\contentsline {subsubsection}{Permission Levels}{132}{subsubsection*.195}%
+\contentsline {subsubsection}{Permission Enforcement Flow}{133}{subsubsection*.197}%
+\contentsline {subsubsection}{Permission Mapping}{133}{subsubsection*.199}%
+\contentsline {subsubsection}{MSSQL Permission Mapping}{133}{subsubsection*.200}%
+\contentsline {subsubsection}{MySQL Permission Mapping}{133}{subsubsection*.202}%
+\contentsline {subsection}{\numberline {11.3.1}Temporary User Creation}{134}{subsection.11.3.1}%
+\contentsline {section}{\numberline {11.4}Policy Enforcement Flow}{134}{section.11.4}%
+\contentsline {subsection}{\numberline {11.4.1}Policy Architecture}{134}{subsection.11.4.1}%
+\contentsline {subsection}{\numberline {11.4.2}Real-Time Policy Evaluation}{135}{subsection.11.4.2}%
+\contentsline {subsection}{\numberline {11.4.3}Policy Enforcement Points}{135}{subsection.11.4.3}%
+\contentsline {subsection}{\numberline {11.4.4}End-to-End Flow Narrative}{135}{subsection.11.4.4}%
+\contentsline {subsubsection}{Phase 1: Authentication \& Authorization}{135}{subsubsection*.208}%
+\contentsline {subsubsection}{Phase 2: Database Discovery}{136}{subsubsection*.209}%
+\contentsline {subsubsection}{Phase 3: Connection Establishment}{136}{subsubsection*.210}%
+\contentsline {subsubsection}{Phase 4: Active Database Usage}{137}{subsubsection*.211}%
+\contentsline {subsubsection}{Phase 5: Session Termination}{137}{subsubsection*.212}%
+\contentsline {chapter}{\numberline {12}High-Level Data Flow Diagrams}{138}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Authentication Flow Diagram}{138}{section.12.1}%
+\contentsline {section}{\numberline {12.2}Query Filtering Diagram}{138}{section.12.2}%
+\contentsline {section}{\numberline {12.3}Logging \& Auditing Flow Diagram}{138}{section.12.3}%
+\contentsline {chapter}{\numberline {13}Technology Justification}{139}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Why Go}{139}{section.13.1}%
+\contentsline {section}{\numberline {13.2}Why Node.js / TS / React}{139}{section.13.2}%
+\contentsline {section}{\numberline {13.3}Why mTLS (and why TCP is temporary)}{139}{section.13.3}%
+\contentsline {section}{\numberline {13.4}Why SQLite / Internal Storage}{139}{section.13.4}%
+\contentsline {section}{\numberline {13.5}Design Decision Summary}{139}{section.13.5}%
+\contentsline {chapter}{\numberline {14}Prototype – Semester 1}{140}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Implemented Features}{140}{section.14.1}%
+\contentsline {section}{\numberline {14.2}Screenshots (CLI \& Dashboard)}{140}{section.14.2}%
+\contentsline {section}{\numberline {14.3}What Works vs What Doesn't}{140}{section.14.3}%
+\contentsline {section}{\numberline {14.4}Technical Decisions Made}{140}{section.14.4}%
+\contentsline {section}{\numberline {14.5}Implementation Challenges}{140}{section.14.5}%
+\contentsline {chapter}{\numberline {15}Development Methodology}{141}{chapter.15}%
+\contentsline {section}{\numberline {15.1}Agile Scrum Framework}{141}{section.15.1}%
+\contentsline {section}{\numberline {15.2}Meeting Structure}{141}{section.15.2}%
+\contentsline {subsection}{\numberline {15.2.1}Weekly Kick-off Meeting}{141}{subsection.15.2.1}%
+\contentsline {subsection}{\numberline {15.2.2}Daily Stand-up Meeting}{142}{subsection.15.2.2}%
+\contentsline {subsection}{\numberline {15.2.3}Sprint Review (Weekly Supervisor Meeting)}{142}{subsection.15.2.3}%
+\contentsline {section}{\numberline {15.3}Collaboration Tools}{142}{section.15.3}%
+\contentsline {section}{\numberline {15.4}Documentation \& Observability}{143}{section.15.4}%
+\contentsline {chapter}{\numberline {16}Task Tracking}{144}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Team Task Tracking (Actual Examples)}{144}{section.16.1}%
+\contentsline {section}{\numberline {16.2}Supervisor Tracking Logs}{144}{section.16.2}%
+\contentsline {section}{\numberline {16.3}Blockers, Risks \& Resolution Notes}{144}{section.16.3}%
+\contentsline {chapter}{\numberline {17}Milestones}{145}{chapter.17}%
+\contentsline {section}{\numberline {17.1}Term 1 Milestone Roadmap}{145}{section.17.1}%
+\contentsline {subsection}{\numberline {17.1.1}Milestone 1}{145}{subsection.17.1.1}%
+\contentsline {subsection}{\numberline {17.1.2}Milestone 2}{145}{subsection.17.1.2}%
+\contentsline {subsection}{\numberline {17.1.3}Milestone 3}{145}{subsection.17.1.3}%
+\contentsline {subsection}{\numberline {17.1.4}Milestone 4}{145}{subsection.17.1.4}%
+\contentsline {subsection}{\numberline {17.1.5}Milestone 5}{145}{subsection.17.1.5}%
+\contentsline {section}{\numberline {17.2}Timeline Chart (Gantt-like)}{145}{section.17.2}%
+\contentsline {chapter}{\numberline {18}Threat Model \& Security Considerations}{146}{chapter.18}%
+\contentsline {section}{\numberline {18.1}Threat Model}{146}{section.18.1}%
+\contentsline {section}{\numberline {18.2}Risks \& Attack Vectors}{146}{section.18.2}%
+\contentsline {section}{\numberline {18.3}Mitigation Techniques}{146}{section.18.3}%
+\contentsline {section}{\numberline {18.4}Why Zero Trust is Needed}{146}{section.18.4}%
+\contentsline {chapter}{\numberline {19}Roadmap for Term 2}{147}{chapter.19}%
+\contentsline {section}{\numberline {19.1}Remaining Features}{147}{section.19.1}%
+\contentsline {section}{\numberline {19.2}Architecture Improvements}{147}{section.19.2}%
+\contentsline {section}{\numberline {19.3}Performance Goals}{147}{section.19.3}%
+\contentsline {section}{\numberline {19.4}Testing \& Validation Plan}{147}{section.19.4}%
+\contentsline {chapter}{\numberline {20}Team Contribution}{148}{chapter.20}%
+\contentsline {section}{\numberline {20.1}Overview of Contribution Approach}{148}{section.20.1}%
+\contentsline {section}{\numberline {20.2}Individual Contributions}{148}{section.20.2}%
+\contentsline {chapter}{\numberline {21}Expected Outcomes}{149}{chapter.21}%
+\contentsline {chapter}{\numberline {22}Conclusion}{150}{chapter.22}%
+\contentsline {section}{\numberline {22.1}Restated Purpose}{150}{section.22.1}%
+\contentsline {section}{\numberline {22.2}Summary of Achievements}{150}{section.22.2}%
+\contentsline {section}{\numberline {22.3}Importance \& Contribution}{150}{section.22.3}%
+\contentsline {section}{\numberline {22.4}Transition to Next Semester}{150}{section.22.4}%
+\contentsline {chapter}{\numberline {A}Glossary}{153}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Dashboard Mockups}{154}{appendix.B}%

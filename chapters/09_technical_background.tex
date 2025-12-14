@@ -2,3 +2,1464 @@
 % 9. TECHNICAL BACKGROUND
 % ============================================================
 \chapter{Technical Background}
+
+This chapter provides an in-depth technical overview of all technologies, protocols, and architectural concepts forming the foundation of the zGate Zero Trust Database Access Proxy. The discussion is intentionally extensive to support academic rigor and enable future researchers or developers to extend the project.
+
+% ------------------------------------------------------------
+% 1. Systems Programming (Go Language)
+% ------------------------------------------------------------
+\section{Systems Programming in Go}
+
+The zGate gateway is implemented entirely in Go (Golang) version 1.25.4. Go is selected due to its strong concurrency model, built-in memory safety guarantees, and first-class support for networked systems.
+
+\subsection{Introduction to Go Programming Language}
+
+Go, also known as Golang, is a statically typed, compiled programming language designed at Google in 2007 by Robert Griesemer, Rob Pike, and Ken Thompson. First released publicly in 2009, Go was created to address shortcomings in other languages used for systems programming, particularly in the context of multicore processors, networked systems, and large codebases.
+
+\paragraph{Design Philosophy}
+Go emphasizes simplicity, readability, and pragmatism. Key design principles include:
+\begin{itemize}
+    \item \textbf{Simplicity}: Minimalist syntax with only 25 keywords
+    \item \textbf{Explicit over implicit}: No hidden control flow or magic behaviors
+    \item \textbf{Composition over inheritance}: Interfaces and struct embedding instead of class hierarchies
+    \item \textbf{Fast compilation}: Designed for rapid build times even in large projects
+    \item \textbf{Built-in concurrency}: First-class language support for concurrent programming
+\end{itemize}
+
+\paragraph{Memory Safety}
+Go provides automatic memory management through garbage collection, eliminating entire classes of vulnerabilities:
+\begin{itemize}
+    \item \textbf{No manual memory management}: Prevents use-after-free and double-free errors
+    \item \textbf{Bounds checking}: Array and slice accesses are automatically validated
+    \item \textbf{No pointer arithmetic}: Prevents buffer overflows and memory corruption
+    \item \textbf{Type safety}: Strong static typing prevents type confusion attacks
+\end{itemize}
+
+\paragraph{Standard Library}
+Go's extensive standard library includes production-ready packages for:
+\begin{itemize}
+    \item Network programming (\texttt{net}, \texttt{net/http})
+    \item Cryptography (\texttt{crypto/*})
+    \item Encoding/decoding (\texttt{encoding/json}, \texttt{encoding/xml})
+    \item Testing and benchmarking (\texttt{testing})
+    \item Concurrent programming (\texttt{sync}, \texttt{context})
+\end{itemize}
+
+\subsection{Go Runtime Model}
+
+Go employs a sophisticated user-space thread management architecture based on the G--M--P scheduling model, which enables efficient concurrency without the overhead of traditional OS threads.
+
+\paragraph{The G--M--P Model Explained}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/gmp_architecture.png}
+    \caption{Go concurrency execution model illustrating goroutines, OS threads, the Go scheduler (G-M-P model).}
+    \label{fig:go-concurrency-model}
+\end{figure}
+
+
+\begin{itemize}
+    \item \textbf{G (Goroutine)}: A goroutine is a lightweight cooperative thread with a dynamically-sized stack that starts at 2KB and can grow to several megabytes. Unlike OS threads, goroutines are managed entirely in user space by the Go runtime. Goroutines use cooperative scheduling, meaning they yield control at specific points (channel operations, system calls, function calls) rather than being preemptively interrupted.
+    
+    \item \textbf{M (Machine)}: An M represents an OS thread managed by the operating system kernel. The Go runtime creates a pool of Ms (typically matching the number of CPU cores) that execute goroutines. When a goroutine performs a blocking system call, the M is detached and a new M may be created to continue executing other goroutines.
+    
+    \item \textbf{P (Processor)}: A P is a scheduling context that maintains a local run queue of goroutines. The number of Ps is typically set to the number of available CPU cores (controlled by GOMAXPROCS). Each M must be associated with a P to execute goroutines. When a goroutine blocks, the P can be handed off to another M, allowing other goroutines to continue execution.
+\end{itemize}
+
+\paragraph{Scheduling Mechanism}
+The scheduler implements work-stealing to balance load:
+\begin{enumerate}
+    \item Each P maintains a local queue of runnable goroutines
+    \item When a P's queue is empty, it attempts to steal work from other Ps
+    \item A global run queue handles goroutines that don't fit in local queues
+    \item Network poller integration enables efficient I/O multiplexing
+\end{enumerate}
+
+\paragraph{Why This Matters for zGate}
+This model enables thousands of goroutines to execute concurrently with negligible overhead. zGate relies on this feature because each client session, backend connection, interceptor callback, and logging pipeline runs as its own goroutine. A typical deployment might handle 10,000+ concurrent database connections, each requiring multiple goroutines, which would be impossible with traditional thread-per-connection models.
+
+\subsection{Concurrency Primitives}
+
+Go provides several built-in primitives for concurrent programming that form the foundation of zGate's concurrent architecture.
+
+\paragraph{Goroutines in Detail}
+
+Goroutines are created using the \texttt{go} keyword followed by a function call. They provide several advantages:
+
+\begin{itemize}
+    \item \textbf{Low memory overhead}: Each goroutine starts with only 2KB stack space vs 1-2MB for OS threads
+    \item \textbf{Fast creation}: Creating a goroutine takes microseconds vs milliseconds for threads
+    \item \textbf{Efficient scheduling}: Context switching between goroutines is faster than kernel thread switches
+    \item \textbf{Scalability}: Applications can easily spawn millions of goroutines
+\end{itemize}
+
+In zGate, goroutines are used for:
+\begin{itemize}
+    \item \textbf{Frontend packet reader}: Continuously reads MySQL packets from client connections
+    \item \textbf{Backend packet writer}: Forwards packets to the database server
+    \item \textbf{Audit logger}: Asynchronously writes audit entries without blocking query processing
+    \item \textbf{TLS handshake worker}: Handles cryptographic handshakes in parallel
+    \item \textbf{Interceptor orchestrators}: Executes policy enforcement logic concurrently
+\end{itemize}
+
+\paragraph{Channels in Depth}
+
+Channels are Go's primary mechanism for communication between goroutines, implementing the CSP (Communicating Sequential Processes) model. Channels are typed, thread-safe queues that can be buffered or unbuffered.
+
+\textbf{Channel Types:}
+\begin{itemize}
+    \item \textbf{Unbuffered channels}: Synchronous - sender blocks until receiver is ready
+    \item \textbf{Buffered channels}: Asynchronous up to buffer size - sender blocks only when buffer is full
+    \item \textbf{Directional channels}: Can be send-only (\texttt{chan<-}) or receive-only (\texttt{<-chan})
+\end{itemize}
+
+\textbf{Channel Operations:}
+\begin{itemize}
+    \item \textbf{Send}: \texttt{ch <- value}
+    \item \textbf{Receive}: \texttt{value := <-ch}
+    \item \textbf{Close}: \texttt{close(ch)}
+    \item \textbf{Select}: Multiplexing over multiple channel operations
+\end{itemize}
+
+In zGate, channels provide synchronization for:
+\begin{itemize}
+    \item \textbf{Session-level error propagation}: When a critical error occurs in any goroutine handling a session
+    \item \textbf{Asynchronous event forwarding}: Audit events, metrics, and alerts
+    \item \textbf{Administrative operation coordination}: Graceful shutdown, configuration reloads
+    \item \textbf{Work distribution}: Distributing query processing tasks across worker pools
+\end{itemize}
+
+\paragraph{Mutexes and Atomic Operations}
+
+\textbf{Mutex (Mutual Exclusion):}
+A mutex is a synchronization primitive that protects shared data from concurrent access:
+
+\begin{itemize}
+    \item \textbf{sync.Mutex}: Provides exclusive locking - only one goroutine can hold the lock
+    \item \textbf{sync.RWMutex}: Reader-writer mutex - allows multiple readers OR one writer
+    \item \textbf{Lock/Unlock pattern}: Must be paired, typically using \texttt{defer} to ensure unlock
+\end{itemize}
+
+\textbf{Atomic Operations:}
+The \texttt{sync/atomic} package provides lock-free operations for simple data types:
+
+\begin{itemize}
+    \item \textbf{Atomic integers}: Add, Load, Store, Swap, CompareAndSwap operations
+    \item \textbf{Performance}: Much faster than mutex-based protection for simple counters
+    \item \textbf{Memory ordering}: Provides happens-before guarantees
+\end{itemize}
+
+Critical shared resources in zGate use:
+\begin{itemize}
+    \item \textbf{sync.Mutex / sync.RWMutex}: For metadata caches (user sessions, prepared statements)
+    \item \textbf{sync.Once}: For one-time initialization of secrets, certificates, and database connections
+    \item \textbf{sync/atomic}: For high-throughput metrics (query counts, error rates, latency tracking)
+\end{itemize}
+
+\subsection{Low-Level TCP Socket Programming}
+
+Unlike typical database clients that rely on high-level drivers, zGate communicates directly using the MySQL wire protocol over raw TCP sockets. This low-level approach provides complete control over the communication pipeline.
+
+\paragraph{TCP/IP Socket Fundamentals}
+
+\textbf{TCP (Transmission Control Protocol):}
+\begin{itemize}
+    \item \textbf{Connection-oriented}: Requires handshake (SYN, SYN-ACK, ACK) before data transfer
+    \item \textbf{Reliable}: Guarantees in-order delivery with automatic retransmission
+    \item \textbf{Flow control}: Prevents sender from overwhelming receiver
+    \item \textbf{Congestion control}: Adapts sending rate based on network conditions
+\end{itemize}
+
+\textbf{Socket Operations in Go:}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/tcp_in_goroutines.jpg}
+    \caption{Lifecycle of a TCP connection in a Go-based server, showing connection acceptance, goroutine spawning, bidirectional data flow, and graceful shutdown via context cancellation.}
+    \label{fig:tcp-connection-lifecycle}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{net.Dial()}: Establishes outbound TCP connection
+    \item \textbf{net.Listen()}: Creates listening socket for inbound connections
+    \item \textbf{Accept()}: Accepts incoming connection, returns new socket
+    \item \textbf{Read()/Write()}: Transfer data over established connection
+    \item \textbf{Close()}: Terminates connection gracefully
+\end{itemize}
+
+\paragraph{MySQL Protocol Socket Management}
+
+Important responsibilities in zGate include:
+
+\begin{itemize}
+    \item \textbf{Manual packet header reading}: Every MySQL packet begins with a 4-byte header:
+    \begin{itemize}
+        \item Bytes 0-2: Payload length (24-bit little-endian integer, max 16MB)
+        \item Byte 3: Sequence ID (increments with each packet, wraps at 255)
+    \end{itemize}
+    
+    \item \textbf{Deadline management}: Network timeouts prevent hung connections:
+    \begin{itemize}
+        \item \texttt{SetReadDeadline(time.Now().Add(timeout))}: Aborts read if no data arrives
+        \item \texttt{SetWriteDeadline(time.Now().Add(timeout))}: Aborts write if socket buffer is full
+        \item Deadlines are per-operation, not absolute timeouts
+    \end{itemize}
+    
+    \item \textbf{Zero-copy packet forwarding}: When packets don't require inspection or modification:
+    \begin{itemize}
+        \item Direct buffer passing between client and server sockets
+        \item Avoids serialization/deserialization overhead
+        \item Reduces memory allocations and GC pressure
+        \item Uses \texttt{io.Copy()} or \texttt{io.CopyN()} for efficient transfer
+    \end{itemize}
+    
+    \item \textbf{Full connection lifecycle handling}:
+    \begin{itemize}
+        \item \textbf{Handshake phase}: Initial authentication and capability negotiation
+        \item \textbf{Command phase}: Processing client commands (queries, prepared statements)
+        \item \textbf{Result phase}: Streaming result sets back to client
+        \item \textbf{Cleanup}: Proper resource release on connection termination
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Buffer Management}
+
+Efficient buffer handling is critical for performance:
+
+\begin{itemize}
+    \item \textbf{Buffer pools}: Pre-allocated buffers using \texttt{sync.Pool} to reduce GC
+    \item \textbf{Slice capacity management}: Careful pre-allocation to avoid repeated resizing
+    \item \textbf{Memory reuse}: Buffers are reset and returned to pool after use
+    \item \textbf{Large packet handling}: Special handling for packets exceeding 16MB (split across multiple packets)
+\end{itemize}
+
+\subsection{Context Propagation}
+
+The \texttt{context.Context} package provides a standardized way to carry deadlines, cancellation signals, and request-scoped values across API boundaries and between goroutines.
+
+\paragraph{Context Fundamentals}
+
+\textbf{Context Interface:}
+\begin{verbatim}
+type Context interface {
+    Deadline() (deadline time.Time, ok bool)
+    Done() <-chan struct{}
+    Err() error
+    Value(key interface{}) interface{}
+}
+\end{verbatim}
+
+\textbf{Context Creation Functions:}
+\begin{itemize}
+    \item \textbf{context.Background()}: Root context, never cancelled
+    \item \textbf{context.TODO()}: Placeholder when context is unclear
+    \item \textbf{context.WithCancel()}: Returns context with cancel function
+    \item \textbf{context.WithDeadline()}: Cancels at specific time
+    \item \textbf{context.WithTimeout()}: Cancels after duration
+    \item \textbf{context.WithValue()}: Carries request-scoped data
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/context_propagation_in_golang.jpg}
+    \caption{Hierarchical propagation of \texttt{context.Context} objects across goroutines, demonstrating timeout enforcement and cancellation signaling.}
+    \label{fig:context-propagation}
+\end{figure}
+
+\paragraph{Context in zGate}
+
+The proxy uses \texttt{context.Context} to ensure bounded execution and clean cancellation. Each incoming query obtains a context with:
+
+\begin{itemize}
+    \item \textbf{Query ID}: Unique identifier for request tracing and correlation
+    \item \textbf{Deadline and timeout settings}: 
+    \begin{itemize}
+        \item Default query timeout (e.g., 30 seconds)
+        \item User-specific timeout overrides
+        \item Inherited from client connection timeout if shorter
+    \end{itemize}
+    \item \textbf{User identity and role information}:
+    \begin{itemize}
+        \item Authenticated username
+        \item Active role assignments
+        \item Permission set
+        \item Session token information
+    \end{itemize}
+    \item \textbf{Logging metadata}:
+    \begin{itemize}
+        \item Source IP address
+        \item Client application identifier
+        \item Connection ID
+        \item Request timestamp
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Cancellation Propagation}
+
+Context cancellation terminates goroutines cleanly, avoiding resource leakage:
+
+\begin{enumerate}
+    \item Client disconnects → context cancelled → all related goroutines notified
+    \item Query timeout exceeded → context cancelled → database connection interrupted
+    \item Admin kills session → context cancelled → graceful cleanup initiated
+    \item Shutdown signal received → root context cancelled → all sessions terminated
+\end{enumerate}
+
+\textbf{Best Practices in zGate:}
+\begin{itemize}
+    \item Always pass context as first parameter to functions
+    \item Check \texttt{ctx.Done()} in long-running loops
+    \item Use \texttt{select} to multiplex context cancellation with other operations
+    \item Never store contexts in structs (pass explicitly)
+    \item Defer cancellation function calls to prevent leaks
+\end{itemize}
+
+% ------------------------------------------------------------
+% 2. Database Wire Protocols (MySQL / MariaDB)
+% ------------------------------------------------------------
+\section{Database Wire Protocols (MySQL/MariaDB)}
+
+A distinguishing feature of zGate is its ability to "speak" the MySQL protocol directly, acting as a full proxy rather than a driver or middleware within the application layer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/generic_DB_protocol_stack.jpg}
+    \caption{Layered view of database communication showing SQL semantics encapsulated within protocol-specific frames over optional TLS and TCP/IP.}
+    \label{fig:db-protocol-stack}
+\end{figure}
+
+\subsection{MySQL Protocol Overview}
+
+The MySQL Client/Server Protocol is a binary protocol used for communication between MySQL clients and servers. It was originally designed in the 1990s and has evolved through multiple versions while maintaining backward compatibility.
+
+\paragraph{Protocol Characteristics}
+
+\begin{itemize}
+    \item \textbf{Binary protocol}: Data is transmitted in compact binary format, not ASCII
+    \item \textbf{Stateful}: Server and client maintain session state across multiple packets
+    \item \textbf{Packet-oriented}: All communication happens in discrete packets
+    \item \textbf{Sequential}: Packets within a command are numbered sequentially
+    \item \textbf{Bidirectional}: Both client and server can initiate certain communications
+\end{itemize}
+
+\paragraph{Protocol Phases}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/mysql_handshake.png}
+    \caption{Connection and command phases of the MySQL protocol.}
+    \label{fig:db-MySQL-protocol-stack}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Connection Phase}: 
+    \begin{itemize}
+        \item Server sends initial handshake packet with capabilities and auth challenge
+        \item Client responds with handshake response containing credentials
+        \item Server sends OK or ERR packet
+    \end{itemize}
+    
+    \item \textbf{Command Phase}:
+    \begin{itemize}
+        \item Client sends command packets (queries, prepared statements, etc.)
+        \item Server responds with result sets, OK, or ERR packets
+        \item Multiple commands can be sent over same connection
+    \end{itemize}
+    
+    \item \textbf{Termination Phase}:
+    \begin{itemize}
+        \item Client sends COM\_QUIT or closes connection
+        \item Server releases resources and closes socket
+    \end{itemize}
+\end{enumerate}
+
+\subsection{MySQL Packet Structure}
+
+Each MySQL packet contains a precisely defined structure that must be correctly parsed and reconstructed by zGate.
+
+\paragraph{Packet Header Format}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/mysql_packet.jpg}
+    \caption{Structure of a MySQL protocol packet including payload length, sequence identifier, and payload data.}
+    \label{fig:mysql-packet-structure}
+\end{figure}
+
+
+\begin{itemize}
+    \item \textbf{3-byte payload length} (little-endian):
+    \begin{itemize}
+        \item Represents length of packet payload in bytes
+        \item Maximum value: 0xFFFFFF (16,777,215 bytes = 16MB - 1)
+        \item Length does NOT include the 4-byte header itself
+        \item Packets exceeding 16MB-1 are split into multiple packets
+    \end{itemize}
+    
+    \item \textbf{1-byte sequence ID}:
+    \begin{itemize}
+        \item Starts at 0 for each new command
+        \item Increments by 1 for each packet in the sequence
+        \item Wraps around after 255 (rare in practice)
+        \item Used to detect packet loss or out-of-order delivery
+        \item Server and client must maintain synchronized counters
+    \end{itemize}
+    
+    \item \textbf{N-byte payload}:
+    \begin{itemize}
+        \item Actual packet content (commands, result data, etc.)
+        \item Format depends on packet type
+        \item Can contain binary or text data
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Large Packet Handling}
+
+When payload exceeds 16MB-1 bytes:
+\begin{enumerate}
+    \item First packet contains maximum payload (0xFFFFFF bytes)
+    \item Sequence ID increments for continuation packet(s)
+    \item Last packet contains remaining data (length < 0xFFFFFF)
+    \item Empty packet (length=0) sent if payload is exact multiple of 16MB-1
+\end{enumerate}
+
+\paragraph{Packet Validation in zGate}
+
+The gateway must validate and reconstruct packets precisely:
+
+\begin{itemize}
+    \item \textbf{Length validation}: Ensure payload length matches actual bytes read
+    \item \textbf{Sequence synchronization}: Track and validate sequence IDs on both sides
+    \item \textbf{Buffer management}: Allocate appropriate buffers based on payload length
+    \item \textbf{Error detection}: Identify corrupted or malformed packets
+    \item \textbf{Large packet assembly}: Correctly reassemble multi-packet messages
+\end{itemize}
+
+\subsection{Command Phase Processing}
+
+The MySQL protocol defines numerous command types that clients can send to servers. zGate must understand and properly handle each command type.
+
+\paragraph{Command Packet Format}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/mysql_command_packet.jpg}
+    \caption{Logical structure of a MySQL result set including column count, column metadata packets, row packets, and termination packets.}
+    \label{fig:mysql-result-encoding}
+\end{figure}
+
+
+\paragraph{Supported Commands in zGate}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/mysql_command_lifecycle.jpg}
+    \caption{Lifecycle of a MySQL prepared statement showing SQL transmission during preparation and binary parameter binding during execution.}
+    \label{fig:mysql-prepared-statement}
+\end{figure}
+
+The proxy supports various MySQL commands:
+
+\begin{itemize}
+    \item \textbf{COM\_QUERY (0x03)}: Execute textual SQL statement
+    \begin{itemize}
+        \item Payload: SQL string (NOT null-terminated)
+        \item Most common command type
+        \item Response: Result set, OK, or ERR packet
+        \item Example: \texttt{SELECT * FROM users WHERE id=1}
+    \end{itemize}
+    
+    \item \textbf{COM\_INIT\_DB (0x02)}: Change default database
+    \begin{itemize}
+        \item Payload: Database name string
+        \item Similar to SQL: \texttt{USE database\_name}
+        \item Response: OK or ERR packet
+        \item Updates session state in both client and server
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_PREPARE (0x16)}: Prepare SQL statement
+    \begin{itemize}
+        \item Payload: SQL statement with ? placeholders
+        \item Server parses and returns statement ID and parameter metadata
+        \item Enables binary protocol for faster execution
+        \item Statement cached on server until explicitly closed
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_EXECUTE (0x17)}: Execute prepared statement
+    \begin{itemize}
+        \item Payload: Statement ID + flags + parameter values (binary encoded)
+        \item Uses efficient binary protocol instead of text
+        \item Parameters sent as native types (integers, dates, etc.)
+        \item Response: Result set in text or binary protocol
+    \end{itemize}
+    
+    \item \textbf{COM\_STMT\_CLOSE (0x19)}: Deallocate prepared statement
+    \begin{itemize}
+        \item Payload: Statement ID (4 bytes)
+        \item No response packet (fire-and-forget)
+        \item Frees server resources
+    \end{itemize}
+    
+    \item \textbf{COM\_QUIT (0x01)}: Close connection
+    \begin{itemize}
+        \item No payload
+        \item No response from server
+        \item Graceful connection termination
+    \end{itemize}
+    
+    \item \textbf{COM\_PING (0x0E)}: Test connection liveness
+    \begin{itemize}
+        \item No payload
+        \item Response: OK packet
+        \item Used for keepalive and health checks
+    \end{itemize}
+    
+    \item \textbf{COM\_FIELD\_LIST (0x04)}: List table columns (deprecated)
+    
+    \item \textbf{COM\_STMT\_RESET (0x1A)}: Reset prepared statement
+    
+    \item \textbf{COM\_SET\_OPTION (0x1B)}: Set connection options
+\end{itemize}
+
+\paragraph{Command Processing in zGate}
+
+Each command type has unique processing requirements:
+
+\begin{enumerate}
+    \item \textbf{Parse command byte}: Identify command type from first payload byte
+    \item \textbf{Extract command payload}: Read remaining packet data
+    \item \textbf{Policy enforcement}: Check RBAC permissions for this command
+    \item \textbf{SQL rewriting}: Modify query if needed (COM\_QUERY only)
+    \item \textbf{Forward to backend}: Send modified or original packet to database
+    \item \textbf{Process response}: Intercept and potentially modify result
+    \item \textbf{Audit logging}: Record command execution details
+\end{enumerate}
+
+\subsection{Result Set Encoding}
+
+Result sets in MySQL protocol follow a specific multi-packet format that zGate must parse to enable data masking and filtering.
+
+\paragraph{Result Set Packet Sequence}
+
+A typical result set consists of:
+
+\begin{enumerate}
+    \item \textbf{Column count packet}:
+    \begin{itemize}
+        \item Length-encoded integer indicating number of columns
+        \item Example: 0x03 indicates 3 columns in result
+    \end{itemize}
+    
+    \item \textbf{Column definition packets} (one per column):
+    \begin{itemize}
+        \item Catalog name (usually "def")
+        \item Schema (database) name
+        \item Table alias and original table name
+        \item Column alias and original column name
+        \item Character set encoding
+        \item Column display width
+        \item Column type (INT, VARCHAR, DATE, etc.)
+        \item Column flags (NOT NULL, PRIMARY KEY, etc.)
+        \item Decimal precision (for numeric types)
+    \end{itemize}
+    
+    \item \textbf{EOF packet} (if CLIENT\_DEPRECATE\_EOF not set):
+    \begin{itemize}
+        \item Marks end of column definitions
+        \item Contains server status flags and warning count
+    \end{itemize}
+    
+    \item \textbf{Row data packets}:
+    \begin{itemize}
+        \item One packet per row
+        \item Values encoded as length-encoded strings (text protocol) or native types (binary protocol)
+        \item NULL represented as 0xFB byte in text protocol
+    \end{itemize}
+    
+    \item \textbf{EOF or OK packet}:
+    \begin{itemize}
+        \item Marks end of result set
+        \item Contains affected rows, last insert ID, status flags, warnings
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Length-Encoded Integers}
+
+MySQL uses a variable-length encoding for integers:
+
+\begin{itemize}
+    \item \textbf{Value < 251}: Single byte containing the value
+    \item \textbf{Value = 251 (0xFB)}: NULL value marker
+    \item \textbf{Value = 252 (0xFC)}: Next 2 bytes contain value (little-endian)
+    \item \textbf{Value = 253 (0xFD)}: Next 3 bytes contain value (little-endian)
+    \item \textbf{Value = 254 (0xFE)}: Next 8 bytes contain value (little-endian)
+\end{itemize}
+
+\paragraph{Text vs Binary Protocol}
+
+\textbf{Text Protocol (COM\_QUERY):}
+\begin{itemize}
+    \item All values encoded as strings
+    \item Dates, numbers, etc. formatted as text
+    \item Less efficient but human-readable
+\end{itemize}
+
+\textbf{Binary Protocol (COM\_STMT\_EXECUTE):}
+\begin{itemize}
+    \item Values in native binary format
+    \item NULL bitmap at start of row
+    \item Type-specific encoding (4-byte int, 8-byte double, etc.)
+    \item More efficient, less parsing overhead
+\end{itemize}
+
+\paragraph{zGate Row Interception}
+
+zGate intercepts row-level data for masking and policy enforcement, requiring:
+
+\begin{itemize}
+    \item \textbf{Parsing length-encoded integers}: To determine string/value lengths
+    \item \textbf{Reconstructing text and binary rows}: After applying masking rules
+    \item \textbf{Preserving column metadata}: To understand data types for correct parsing
+    \item \textbf{Maintaining packet integrity}: Recalculating payload lengths and sequence IDs
+    \item \textbf{Streaming processing}: Handling large result sets without buffering all rows
+\end{itemize}
+
+\textbf{Example Masking Scenario:}
+\begin{enumerate}
+    \item Client queries: \texttt{SELECT ssn, name FROM employees}
+    \item zGate parses column definitions, identifies "ssn" column
+    \item For each row packet:
+    \begin{itemize}
+        \item Parse length-encoded string for ssn value
+        \item Apply masking: "123-45-6789" → "XXX-XX-6789"
+        \item Reconstruct row packet with masked value
+        \item Recalculate payload length
+        \item Forward modified packet to client
+    \end{itemize}
+\end{enumerate}
+
+\subsection{SQL Parsing and AST Manipulation}
+
+To safely inject or modify SQL logic, zGate uses an SQL Abstract Syntax Tree (AST) approach rather than string manipulation.
+
+\paragraph{SQL Abstract Syntax Trees}
+
+An Abstract Syntax Tree is a tree representation of the syntactic structure of SQL code. Each node in the tree represents a construct in the SQL grammar.
+
+\textbf{Why AST vs String Manipulation:}
+\begin{itemize}
+    \item \textbf{Semantic understanding}: Parser understands SQL structure, not just text
+    \item \textbf{Safe modification}: Changes preserve syntax validity
+    \item \textbf{SQL injection prevention}: Prevents introduction of new SQL commands
+    \item \textbf{Context awareness}: Distinguishes between identifiers, literals, keywords
+    \item \textbf{Complexity handling}: Correctly processes nested queries, subqueries, CTEs
+\end{itemize}
+
+\paragraph{Parsing Pipeline}
+
+\begin{enumerate}
+    \item \textbf{Lexical Analysis (Tokenization)}:
+    \begin{itemize}
+        \item Input: Raw SQL string
+        \item Process: Break into tokens (keywords, identifiers, operators, literals)
+        \item Output: Token stream
+        \item Example: \texttt{SELECT name FROM users} → [SELECT][name][FROM][users]
+    \end{itemize}
+    
+    \item \textbf{Syntax Analysis (Parsing)}:
+    \begin{itemize}
+        \item Input: Token stream
+        \item Process: Apply grammar rules to build AST
+        \item Output: AST root node
+        \item Detects syntax errors
+    \end{itemize}
+    
+    \item \textbf{AST Manipulation}:
+    \begin{itemize}
+        \item Traverse tree using visitor pattern
+        \item Inspect and modify nodes
+        \item Add new nodes (e.g., WHERE clauses)
+        \item Remove or replace nodes
+    \end{itemize}
+    
+    \item \textbf{Code Generation (Serialization)}:
+    \begin{itemize}
+        \item Input: Modified AST
+        \item Process: Traverse tree and generate SQL text
+        \item Output: Valid SQL string
+        \item Preserves formatting where possible
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{AST Node Types}
+
+Common node types in SQL AST:
+
+\begin{itemize}
+    \item \textbf{SelectStmt}: SELECT query root
+    \item \textbf{SelectExprList}: Target list (columns to return)
+    \item \textbf{FromClause}: Table references
+    \item \textbf{WhereClause}: Filter conditions
+    \item \textbf{JoinExpr}: JOIN operations
+    \item \textbf{BinaryExpr}: Binary operations (AND, OR, =, <, etc.)
+    \item \textbf{FuncCall}: Function calls (COUNT, MAX, etc.)
+    \item \textbf{Identifier}: Table and column names
+    \item \textbf{Literal}: String, numeric, date literals
+    \item \textbf{Subquery}: Nested SELECT statement
+\end{itemize}
+
+\paragraph{AST Manipulation in zGate}
+
+zGate performs node-by-node inspection for:
+
+\begin{itemize}
+    \item \textbf{Target list modification}:
+    \begin{itemize}
+        \item Removing restricted columns from SELECT list
+        \item Adding computed columns for audit purposes
+        \item Replacing sensitive columns with masked expressions
+        \item Example: \texttt{SELECT ssn} → \texttt{SELECT CONCAT('XXX-XX-', SUBSTR(ssn, 8)) AS ssn}
+    \end{itemize}
+    
+    \item \textbf{WHERE clause enforcement}:
+    \begin{itemize}
+        \item Injecting row-level security predicates
+        \item Adding tenant isolation filters
+        \item Enforcing time-based access controls
+        \item Example: User can only see their own records
+        \item Original: \texttt{SELECT * FROM orders}
+        \item Modified: \texttt{SELECT * FROM orders WHERE user\_id = 'alice'}
+    \end{itemize}
+    
+    \item \textbf{Table-level permission checks}:
+    \begin{itemize}
+        \item Identify all referenced tables
+        \item Verify user has access to each table
+        \item Check for column-level permissions
+        \item Reject queries accessing forbidden tables
+    \end{itemize}
+    
+    \item \textbf{Subquery processing}:
+    \begin{itemize}
+        \item Recursively process nested queries
+        \item Apply same policies to subqueries
+        \item Handle correlated subqueries correctly
+    \end{itemize}
+    
+    \item \textbf{JOIN analysis}:
+    \begin{itemize}
+        \item Check permissions on all joined tables
+        \item Inject filters on joined tables if needed
+        \item Prevent information leakage through joins
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Safe Rewriting Examples}
+
+\textbf{Example 1: Column Masking}
+\begin{verbatim}
+Original SQL: SELECT ssn, name, salary FROM employees
+AST Modification:
+  - Locate "ssn" in SelectExprList
+  - Replace with FuncCall node: mask_ssn(ssn)
+Generated SQL: SELECT mask_ssn(ssn), name, mask_salary(salary) 
+               FROM employees
+\end{verbatim}
+
+\textbf{Example 2: Row Filtering}
+\begin{verbatim}
+Original SQL: SELECT * FROM medical_records
+AST Modification:
+  - Navigate to WhereClause (or create if absent)
+  - Add BinaryExpr: department = 'cardiology'
+Generated SQL: SELECT * FROM medical_records 
+               WHERE department = 'cardiology'
+\end{verbatim}
+
+\textbf{Example 3: Table Access Control}
+\begin{verbatim}
+Original SQL: SELECT * FROM hr.salaries
+AST Modification:
+  - Traverse tree, find table reference "hr.salaries"
+  - Check user's table permissions
+  - If denied: Return error before forwarding to database
+  - If allowed: Forward unmodified or with row filters
+\end{verbatim}
+
+\paragraph{Security Benefits}
+
+This AST approach avoids string-based manipulation, preventing:
+
+\begin{itemize}
+    \item \textbf{SQL injection vulnerabilities}: Cannot introduce new SQL commands
+    \item \textbf{Malformed query errors}: Generated SQL is always syntactically valid
+    \item \textbf{Escaping issues}: No need to manually escape quotes and special characters
+    \item \textbf{Context confusion}: Parser understands string literals vs identifiers
+    \item \textbf{Logic errors}: Changes preserve query semantics
+\end{itemize}
+% ------------------------------------------------------------
+% 2.2 Database Wire Protocols (Microsoft SQL Server - TDS)
+% ------------------------------------------------------------
+\section{Database Wire Protocols (Microsoft SQL Server - TDS)}
+
+In addition to MySQL and MariaDB, modern enterprise environments frequently rely on Microsoft SQL Server. SQL Server communicates using the Tabular Data Stream (TDS) protocol, a proprietary, binary, application-layer protocol designed by Microsoft. Understanding TDS is essential for building protocol-aware proxies, intrusion detection systems, or database firewalls that operate transparently at the network level.
+
+Unlike MySQL, which exposes relatively straightforward packet structures, TDS is more complex, stateful, and tightly coupled with SQL Server’s execution engine.
+
+\subsection{Overview of the TDS Protocol}
+
+Tabular Data Stream (TDS) is a message-oriented protocol layered directly on top of TCP. It defines how SQL Server clients and servers exchange authentication data, SQL batches, procedure calls, metadata, and result sets.
+
+\paragraph{Key Characteristics}
+
+\begin{itemize}
+    \item \textbf{Binary protocol}: All messages are encoded in binary, not text
+    \item \textbf{Token-based}: Responses consist of a stream of typed tokens
+    \item \textbf{Stateful}: Session context persists across requests
+    \item \textbf{Versioned}: Multiple protocol versions (TDS 4.2 – 7.4+)
+    \item \textbf{Tightly integrated}: Closely coupled to SQL Server execution semantics
+\end{itemize}
+
+\paragraph{Protocol Versions}
+
+Common TDS versions include:
+\begin{itemize}
+    \item \textbf{TDS 4.2}: Legacy Sybase / early SQL Server
+    \item \textbf{TDS 7.0}: SQL Server 7.0
+    \item \textbf{TDS 7.1}: SQL Server 2000
+    \item \textbf{TDS 7.2}: SQL Server 2005
+    \item \textbf{TDS 7.3}: SQL Server 2008 / 2012
+    \item \textbf{TDS 7.4+}: SQL Server 2014+
+\end{itemize}
+
+Modern SQL Server installations primarily use TDS 7.4.
+
+\subsection{TDS Packet Structure}
+
+All TDS communication occurs as a sequence of packets, each with a fixed-size header followed by a variable-length payload.
+
+\paragraph{TDS Packet Header}
+
+\begin{verbatim}
++--------+--------+--------+--------+--------+--------+--------+--------+
+| Type   | Status | Length          | SPID           | Packet | Window |
+| (1B)   | (1B)   | (2B)             | (2B)           | (1B)   | (1B)   |
++--------+--------+--------+--------+--------+--------+--------+--------+
+\end{verbatim}
+
+\begin{itemize}
+    \item \textbf{Type (1 byte)}:
+    \begin{itemize}
+        \item Identifies message category
+        \item Examples:
+        \begin{itemize}
+            \item 0x01 – SQL Batch
+            \item 0x02 – Pre-login
+            \item 0x04 – RPC
+            \item 0x10 – Login
+            \item 0x12 – Response
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Status (1 byte)}:
+    \begin{itemize}
+        \item Bit flags indicating packet role
+        \item End-of-message (EOM) flag
+        \item Indicates whether more packets follow
+    \end{itemize}
+    
+    \item \textbf{Length (2 bytes)}:
+    \begin{itemize}
+        \item Total packet length including header
+        \item Big-endian integer
+        \item Max size typically 4KB or 8KB (configurable)
+    \end{itemize}
+    
+    \item \textbf{SPID (2 bytes)}:
+    \begin{itemize}
+        \item Server Process ID
+        \item Identifies server-side session
+    \end{itemize}
+    
+    \item \textbf{Packet ID (1 byte)}:
+    \begin{itemize}
+        \item Sequence number for packet ordering
+    \end{itemize}
+    
+    \item \textbf{Window (1 byte)}:
+    \begin{itemize}
+        \item Legacy field (unused in modern TDS)
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Packet Fragmentation}
+
+If a message exceeds the negotiated packet size:
+\begin{itemize}
+    \item The message is split across multiple TDS packets
+    \item Status byte marks continuation or end-of-message
+    \item Receiver must reassemble payload before processing
+\end{itemize}
+
+\subsection{Pre-Login and Login Process}
+
+Before authentication, TDS performs a pre-login negotiation phase.
+
+\subsubsection{Pre-Login Phase}
+
+The pre-login packet negotiates session parameters:
+
+\begin{itemize}
+    \item Encryption support (required, optional, disabled)
+    \item TDS protocol version
+    \item Packet size
+    \item Instance name
+    \item Thread ID
+\end{itemize}
+
+The server responds with its supported options. If encryption is required or requested, TLS negotiation begins immediately after pre-login.
+
+\paragraph{TLS Integration}
+
+Unlike MySQL, SQL Server embeds TLS negotiation inside the TDS flow:
+\begin{itemize}
+    \item TLS handshake occurs after pre-login
+    \item All subsequent TDS packets are encrypted
+    \item Proxy must detect transition from plaintext to TLS
+    \item Requires full TLS interception or passthrough
+\end{itemize}
+
+\subsubsection{Login Phase}
+
+The LOGIN7 packet contains authentication information:
+
+\begin{itemize}
+    \item Username
+    \item Password (obfuscated, not encrypted unless TLS active)
+    \item Database name
+    \item Client hostname
+    \item Application name
+    \item Language and collation
+\end{itemize}
+
+\paragraph{Password Obfuscation}
+
+Without TLS:
+\begin{itemize}
+    \item Password bytes are XOR-obfuscated
+    \item Each byte rotated and XORed with 0xA5
+    \item This is \textbf{not encryption} and offers no real security
+\end{itemize}
+
+Therefore, TLS is mandatory in secure deployments.
+
+\subsection{TDS Message Types}
+
+TDS supports multiple message categories:
+
+\begin{itemize}
+    \item \textbf{SQL Batch}:
+    \begin{itemize}
+        \item Contains raw SQL text
+        \item Similar to MySQL COM\_QUERY
+        \item Executed as a single batch
+    \end{itemize}
+    
+    \item \textbf{RPC (Remote Procedure Call)}:
+    \begin{itemize}
+        \item Used for stored procedure execution
+        \item Includes procedure name or ID
+        \item Parameters encoded in binary
+    \end{itemize}
+    
+    \item \textbf{Attention}:
+    \begin{itemize}
+        \item Cancels currently executing query
+    \end{itemize}
+    
+    \item \textbf{Bulk Load}:
+    \begin{itemize}
+        \item High-speed data import
+        \item Streams row data efficiently
+    \end{itemize}
+\end{itemize}
+
+\subsection{TDS Token-Based Response Model}
+
+Unlike MySQL’s fixed result-set structure, TDS responses consist of a stream of typed tokens.
+
+\paragraph{Token Stream Concept}
+
+A server response is a sequence of tokens:
+\begin{itemize}
+    \item Each token begins with a 1-byte token type
+    \item Followed by token-specific payload
+    \item Tokens are processed sequentially
+\end{itemize}
+
+\paragraph{Common TDS Tokens}
+
+\begin{itemize}
+    \item \textbf{COLMETADATA}:
+    \begin{itemize}
+        \item Column count
+        \item Column names
+        \item Data types
+        \item Precision, scale, collation
+    \end{itemize}
+    
+    \item \textbf{ROW}:
+    \begin{itemize}
+        \item Row data in binary format
+        \item Values encoded according to column metadata
+    \end{itemize}
+    
+    \item \textbf{DONE / DONEPROC / DONEINPROC}:
+    \begin{itemize}
+        \item Indicates completion of batch or procedure
+        \item Includes affected row count
+        \item Includes status flags
+    \end{itemize}
+    
+    \item \textbf{ERROR}:
+    \begin{itemize}
+        \item Error number
+        \item Severity
+        \item Message text
+        \item Line number
+    \end{itemize}
+    
+    \item \textbf{INFO}:
+    \begin{itemize}
+        \item Informational messages
+        \item PRINT output
+        \item Warnings
+    \end{itemize}
+\end{itemize}
+
+\subsection{Data Type Encoding}
+
+SQL Server uses strongly typed binary encodings.
+
+\paragraph{Fixed-Length Types}
+
+\begin{itemize}
+    \item INT: 4 bytes
+    \item BIGINT: 8 bytes
+    \item FLOAT: 8 bytes
+    \item BIT: 1 byte
+\end{itemize}
+
+\paragraph{Variable-Length Types}
+
+\begin{itemize}
+    \item VARCHAR / NVARCHAR:
+    \begin{itemize}
+        \item Length prefix
+        \item UTF-16LE encoding for NVARCHAR
+    \end{itemize}
+    
+    \item VARBINARY:
+    \begin{itemize}
+        \item Length-prefixed byte array
+    \end{itemize}
+\end{itemize}
+
+\paragraph{NULL Representation}
+
+\begin{itemize}
+    \item NULL values represented by length = 0xFFFF or special markers
+    \item Requires metadata awareness to parse correctly
+\end{itemize}
+
+\subsection{Implications for Proxy Design}
+
+Building a TDS-aware proxy introduces significant complexity:
+
+\begin{itemize}
+    \item Stateful token stream parsing
+    \item Precise metadata tracking
+    \item Binary data manipulation
+    \item TLS-in-band protocol switching
+    \item Procedure call interception
+    \item Multi-result-set handling
+\end{itemize}
+
+\paragraph{Comparison with MySQL}
+
+\begin{itemize}
+    \item MySQL: Command-based, simpler framing
+    \item TDS: Token-stream-based, execution-aware
+    \item MySQL: Text-heavy protocol
+    \item TDS: Fully binary and metadata-driven
+\end{itemize}
+
+This complexity makes TDS significantly harder to intercept, modify, or rewrite safely, and explains why many database security solutions operate only at the SQL Server driver or API layer rather than at the wire protocol level.
+
+\subsection{Challenges of Abstract Syntax Tree (AST) Parsing in TDS}
+
+While parsing raw TDS packets enables visibility into SQL Server traffic, constructing an Abstract Syntax Tree (AST) from intercepted queries presents a significantly deeper technical challenge. AST parsing is required for fine-grained policy enforcement, such as restricting specific SQL operations, table access, or predicate-level filtering.
+
+Unlike traditional SQL parsing from application logs, TDS introduces several protocol-level obstacles that complicate AST construction.
+
+\subsubsection{Absence of a Canonical SQL Text Representation}
+
+In TDS, SQL commands may be transmitted in different forms:
+
+\begin{itemize}
+    \item Raw SQL batches (SQL Batch packets)
+    \item Remote Procedure Calls (RPCs)
+    \item Parameterized prepared statements
+\end{itemize}
+
+In the case of RPC execution:
+\begin{itemize}
+    \item SQL text may not be present at all
+    \item Only a procedure identifier and binary-encoded parameters are transmitted
+    \item Logical intent must be inferred from metadata and procedure definitions
+\end{itemize}
+
+This breaks the assumption that a proxy always has access to a full SQL string suitable for lexical analysis.
+
+\subsubsection{Binary Parameter Encoding and Late Binding}
+
+TDS encodes parameters in binary form according to their SQL Server data types. Unlike text-based SQL where literals appear inline, TDS separates query structure from values.
+
+Consequences include:
+\begin{itemize}
+    \item Parameters are position-based, not name-based
+    \item Parameter types are defined by metadata tokens
+    \item Values are resolved only at execution time
+\end{itemize}
+
+As a result, an AST parser must:
+\begin{itemize}
+    \item Reconstruct the query template
+    \item Bind parameters to placeholders
+    \item Track type information across token boundaries
+\end{itemize}
+
+This is closer to compiler intermediate representation reconstruction than traditional SQL parsing.
+
+\subsubsection{Multiple Result Sets and Control Flow Semantics}
+
+SQL Server allows complex batches containing:
+\begin{itemize}
+    \item Multiple SELECT statements
+    \item Conditional logic (IF, WHILE)
+    \item Temporary tables
+    \item Stored procedure calls returning nested result sets
+\end{itemize}
+
+In TDS, these constructs produce:
+\begin{itemize}
+    \item Interleaved COLMETADATA and ROW tokens
+    \item DONE, DONEPROC, and DONEINPROC tokens signaling execution stages
+\end{itemize}
+
+From an AST perspective:
+\begin{itemize}
+    \item Execution flow is non-linear
+    \item Query boundaries are not explicitly marked
+    \item Semantic meaning emerges only after full token stream analysis
+\end{itemize}
+
+This requires stateful parsing and execution-context tracking.
+
+\subsubsection{Encrypted Sessions and Visibility Loss}
+
+Once TLS is negotiated:
+\begin{itemize}
+    \item All TDS payloads are encrypted
+    \item AST parsing becomes impossible without TLS termination
+\end{itemize}
+
+This introduces architectural trade-offs:
+\begin{itemize}
+    \item TLS passthrough preserves security but eliminates visibility
+    \item TLS interception enables parsing but expands the trusted computing base
+\end{itemize}
+
+From a technical standpoint, AST parsing in TDS is inseparable from cryptographic session management.
+
+\subsubsection{Lack of Official Grammar Specifications}
+
+Microsoft does not provide a complete, formal SQL grammar aligned with TDS execution semantics.
+
+Challenges include:
+\begin{itemize}
+    \item SQL Server-specific extensions (TOP, MERGE, APPLY)
+    \item Version-dependent behavior
+    \item Undocumented token combinations
+\end{itemize}
+
+Therefore, AST parsers must rely on:
+\begin{itemize}
+    \item Reverse engineering
+    \item Empirical testing
+    \item Partial grammars adapted from T-SQL documentation
+\end{itemize}
+
+This increases maintenance complexity and version fragility.
+
+\subsubsection{Implications for Security Policy Enforcement}
+
+Due to the challenges above, enforcing policies at the AST level in TDS requires:
+
+\begin{itemize}
+    \item Hybrid parsing strategies (syntax + metadata)
+    \item Conservative fallbacks (deny on ambiguity)
+    \item Awareness of false positives and negatives
+\end{itemize}
+
+This explains why many commercial database security products:
+\begin{itemize}
+    \item Operate at the driver level
+    \item Rely on SQL Server auditing APIs
+    \item Avoid full wire-level AST parsing
+\end{itemize}
+
+% ------------------------------------------------------------
+% 3. Cryptography & Security Engineering
+% ------------------------------------------------------------
+\section{Cryptography and Security Engineering}
+
+Security is the cornerstone of the system. The implementation combines modern cryptographic standards with secure design principles to protect data in transit, at rest, and during processing.
+
+\subsection{TLS / SSL Transport Layer Security}
+
+Transport Layer Security (TLS) and its predecessor Secure Sockets Layer (SSL) are cryptographic protocols designed to provide secure communication over a computer network.
+
+\paragraph{TLS Protocol Overview}
+
+\textbf{Historical Context:}
+\begin{itemize}
+    \item \textbf{SSL 1.0}: Never publicly released (Netscape, 1994)
+    \item \textbf{SSL 2.0}: Released 1995, deprecated 2011 (security flaws)
+    \item \textbf{SSL 3.0}: Released 1996, deprecated 2015 (POODLE attack)
+    \item \textbf{TLS 1.0}: Released 1999, deprecated 2020
+    \item \textbf{TLS 1.1}: Released 2006, deprecated 2020
+    \item \textbf{TLS 1.2}: Released 2008, still widely used
+    \item \textbf{TLS 1.3}: Released 2018, current standard
+\end{itemize}
+
+\textbf{Security Properties:}
+\begin{itemize}
+    \item \textbf{Confidentiality}: Data encrypted using symmetric cipher
+    \item \textbf{Integrity}: MAC (Message Authentication Code) prevents tampering
+    \item \textbf{Authentication}: X.509 certificates verify server/client identity
+    \item \textbf{Forward secrecy}: Session keys not derivable from long-term keys
+\end{itemize}
+
+\paragraph{TLS Handshake Process}
+
+The TLS handshake establishes a secure session:
+
+\begin{enumerate}
+    \item \textbf{Client Hello}:
+    \begin{itemize}
+        \item Supported TLS versions
+        \item Cipher suites (encryption algorithms)
+        \item Random nonce
+        \item Supported extensions
+    \end{itemize}
+    
+    \item \textbf{Server Hello}:
+    \begin{itemize}
+        \item Selected TLS version
+        \item Selected cipher suite
+        \item Server random nonce
+        \item Server certificate (X.509)
+    \end{itemize}
+    
+    \item \textbf{Key Exchange}:
+    \begin{itemize}
+        \item Client verifies server certificate
+        \item Ephemeral Diffie-Hellman key exchange (TLS 1.3)
+        \item Or RSA key exchange (TLS 1.2)
+        \item Derive master secret
+    \end{itemize}
+    
+    \item \textbf{Finished Messages}:
+    \begin{itemize}
+        \item Both sides send encrypted "Finished" message
+        \item Proves they derived same keys
+        \item Handshake complete, application data can flow
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{TLS in zGate}
+
+TLS is used to secure:
+
+\begin{itemize}
+    \item \textbf{Client–Gateway communication}:
+    \begin{itemize}
+        \item MySQL clients connect via TLS-encrypted connections
+        \item Optional mutual TLS (mTLS) for client authentication
+        \item Certificate-based authentication instead of passwords
+    \end{itemize}
+    
+    \item \textbf{Gateway–Database communication}:
+    \begin{itemize}
+        \item Backend connections always use TLS
+        \item Verifies database server certificate
+        \item Protects credentials and query data in transit
+    \end{itemize}
+    
+    \item \textbf{Administrative API (HTTPS)}:
+    \begin{itemize}
+        \item REST API served over HTTPS
+        \item Admin credentials encrypted in transit
+        \item API tokens protected from network sniffing
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Technical Implementation Details}
+
+Technical aspects in zGate include:
+
+\begin{itemize}
+    \item \textbf{Loading X.509 certificates from PEM}:
+    \begin{itemize}
+        \item PEM (Privacy Enhanced Mail) format: Base64-encoded DER certificates
+        \item Private keys protected with passphrase encryption
+        \item Certificate chain loading (intermediate + root CAs)
+        \item Key pair validation (public key matches private key)
+    \end{itemize}
+    
+    \item \textbf{Enforcing TLS 1.2+}:
+    \begin{itemize}
+        \item Minimum version set in \texttt{tls.Config}
+        \item Rejects connections using SSL 3.0, TLS 1.0, TLS 1.1
+        \item Prevents downgrade attacks
+    \end{itemize}
+    
+    \item \textbf{Certificate chain validation}:
+    \begin{itemize}
+        \item Using Go's \texttt{crypto/x509} package
+        \item Verifies certificate signature chain to trusted root CA
+        \item Checks expiration dates
+        \item Validates hostname/IP against certificate SAN (Subject Alternative Names)
+        \item Checks certificate revocation status (OCSP or CRL)
+    \end{itemize}
+    
+    \item \textbf{Cipher suite selection}:
+    \begin{itemize}
+        \item Prefer AEAD ciphers (AES-GCM, ChaCha20-Poly1305)
+        \item Disable weak ciphers (RC4, 3DES, export ciphers)
+        \item Enable perfect forward secrecy (ECDHE key exchange)
+        \item Example strong cipher: TLS\_ECDHE\_RSA\_WITH\_AES\_256\_GCM\_SHA384
+    \end{itemize}
+    
+    \item \textbf{Optional client certificate verification (mTLS)}:
+    \begin{itemize}
+        \item Server requests client certificate during handshake
+        \item Client presents certificate signed by trusted CA
+        \item Server validates certificate and extracts identity (CN or SAN)
+        \item Used for passwordless authentication
+        \item Common in service-to-service authentication
+    \end{itemize}
+\end{itemize}
+
+\subsection{Symmetric Encryption (AES-256)}
+
+Advanced Encryption Standard (AES) is a symmetric block cipher adopted as a standard by NIST in 2001, replacing the older DES algorithm.
+
+\paragraph{AES Fundamentals}
+
+\textbf{Algorithm Properties:}
+\begin{itemize}
+    \item \textbf{Block cipher}: Encrypts fixed-size blocks (128 bits)
+    \item \textbf{Symmetric}: Same key for encryption and decryption
+    \item \textbf{Key sizes}: 128, 192, or 256 bits
+    \item \textbf{Rounds}: 10 (AES-128), 12 (AES-192), 14 (AES-256)
+    \item \textbf{Speed}: Hardware-accelerated on modern CPUs (AES-NI instructions)
+\end{itemize}
+
+\textbf{AES Operations:}
+\begin{enumerate}
+    \item \textbf{SubBytes}: Substitute each byte using S-box
+    \item \textbf{ShiftRows}: Rotate rows of state array
+    \item \textbf{MixColumns}: Linear transformation of columns
+    \item \textbf{AddRoundKey}: XOR with round key
+\end{enumerate}
+
+\paragraph{AES Modes of Operation}
+
+Block ciphers require a "mode" to encrypt data longer than one block:
+
+\begin{itemize}
+    \item \textbf{ECB (Electronic Codebook)}: INSECURE, never use
+    \begin{itemize}
+        \item Each block encrypted independently
+        \item Identical plaintexts produce identical ciphertexts
+        \item Reveals patterns in data
+    \end{itemize}
+    
+    \item \textbf{CBC (Cipher Block Chaining)}: Legacy, requires padding
+    \begin{itemize}
+        \item Each block XORed with previous ciphertext
+        \item Requires padding to block boundary
+        \item Vulnerable to padding oracle attacks if not careful
+        \item Needs separate MAC for authentication
+    \end{itemize}
+    
+    \item \textbf{GCM (Galois/Counter Mode)}: Recommended
+    \begin{itemize}
+        \item AEAD (Authenticated Encryption with Associated Data)
+        \item Provides both confidentiality and authenticity
+        \item No padding required
+        \item Parallelizable (fast)
+        \item Includes authentication tag to detect tampering
+    \end{itemize}
+    
+    \item \textbf{CCM, EAX, OCB}: Alternative AEAD modes
+\end{itemize}
+
+\paragraph{AES-256-GCM in zGate}
+
+The internal SQLite datastore is encrypted using AES-256-GCM. The system uses:
+
+\begin{itemize}
+    \item \textbf{32-byte (256-bit) encryption keys}:
+    \begin{itemize}
+        \item Derived from master password using key derivation function
+        \item Or generated randomly for data-at-rest encryption
+        \item Stored in secure key management system or HSM
+        \item Never logged or exposed in API responses
+    \end{itemize}
+    
+    \item \textbf{CSPRNG-generated nonces}:
+    \begin{itemize}
+        \item Nonce (Number Used Once) = Initialization Vector (IV)
+        \item 12 bytes (96 bits) for GCM mode
+        \item Must be unique for every encryption operation with same key
+        \item Generated using cryptographically secure random number generator
+        \item Stored alongside ciphertext (not secret)
+        \item Nonce reuse catastrophically breaks GCM security
+    \end{itemize}
+    
+    \item \textbf{Authentication tag}:
+    \begin{itemize}
+        \item 16-byte tag appended to ciphertext
+        \item Verifies data integrity and authenticity
+        \item Prevents tampering and bit-flipping attacks
+        \item Decryption fails if tag doesn't match
+    \end{itemize}
+    
+    \item \textbf{Associated Data (AD)}:
+    \begin{itemize}
+        \item Additional authenticated but unencrypted data
+        \item Example: database record ID, timestamp, version
+        \item Binds ciphertext to specific context
+        \item Prevents ciphertext from being moved/reused elsewhere
+    \end{itemize}
+    
+    \item \textbf{Key rotation support}:
+    \begin{itemize}
+        \item Periodic key changes (e.g., quarterly)
+        \item Re-encrypt data with new keys
+        \item Multiple active keys during transition period
+        \item Track which key version encrypted each record
+        \item Old keys archived securely for decryption of historical data
+    \end{itemize}
+\end{itemize}
