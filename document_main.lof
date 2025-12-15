@@ -1,14 +1,46 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces what zGate offers }}{24}{figure.caption.4}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Overview of system actors: End Users, System Administrators, Super Administrators, and Backend Databases}}{36}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces End user workflows: authentication, database listing, connection, session management, and logout}}{47}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Administrator functions: database configuration, user and role management, session monitoring, and audit review}}{47}{figure.caption.43}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Complete system use case diagram showing all actor interactions within the zGate Gateway}}{47}{figure.caption.44}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces System component interactions showing data flow between CLI, Gateway Server, Web Dashboard, Policy Engine, and Backend Databases}}{48}{figure.caption.45}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces zgate proposed solution architecture}}{62}{figure.caption.80}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces zGate backend architecture showing authentication, policy engine, and proxy layers}}{62}{figure.caption.82}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces zGate CLI workflow illustrating token management and database access process}}{64}{figure.caption.85}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces zGate technology stack}}{67}{figure.caption.90}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Multi-layered security architecture in zGate platform}}{68}{figure.caption.91}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces zGate alignment with PCI DSS requirements for access control, authentication, and audit logging}}{71}{figure.caption.99}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces zGate alignment with GDPR requirements for data security, access control, audit records, and breach detection}}{72}{figure.caption.100}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {9.1}{\ignorespaces Go concurrency execution model illustrating goroutines, OS threads, the Go scheduler (G-M-P model).}}{91}{figure.caption.122}%
+\contentsline {figure}{\numberline {9.2}{\ignorespaces Lifecycle of a TCP connection in a Go-based server, showing connection acceptance, goroutine spawning, bidirectional data flow, and graceful shutdown via context cancellation.}}{95}{figure.caption.129}%
+\contentsline {figure}{\numberline {9.3}{\ignorespaces Hierarchical propagation of \texttt {context.Context} objects across goroutines, demonstrating timeout enforcement and cancellation signaling.}}{97}{figure.caption.133}%
+\contentsline {figure}{\numberline {9.4}{\ignorespaces Layered view of database communication showing SQL semantics encapsulated within protocol-specific frames over optional TLS and TCP/IP.}}{99}{figure.caption.136}%
+\contentsline {figure}{\numberline {9.5}{\ignorespaces Connection and command phases of the MySQL protocol.}}{100}{figure.caption.139}%
+\contentsline {figure}{\numberline {9.6}{\ignorespaces Structure of a MySQL protocol packet including payload length, sequence identifier, and payload data.}}{101}{figure.caption.141}%
+\contentsline {figure}{\numberline {9.7}{\ignorespaces Logical structure of a MySQL result set including column count, column metadata packets, row packets, and termination packets.}}{102}{figure.caption.145}%
+\contentsline {figure}{\numberline {9.8}{\ignorespaces Lifecycle of a MySQL prepared statement showing SQL transmission during preparation and binary parameter binding during execution.}}{103}{figure.caption.147}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
+\contentsline {figure}{\numberline {11.1}{\ignorespaces system components}}{127}{figure.caption.188}%
+\contentsline {figure}{\numberline {11.2}{\ignorespaces connection lifecycle states}}{129}{figure.caption.189}%
+\contentsline {figure}{\numberline {11.3}{\ignorespaces Detailed connection lifecycle flow}}{130}{figure.caption.190}%
+\contentsline {figure}{\numberline {11.4}{\ignorespaces Authentication architecture}}{131}{figure.caption.191}%
+\contentsline {figure}{\numberline {11.5}{\ignorespaces Token refresh flow}}{132}{figure.caption.194}%
+\contentsline {figure}{\numberline {11.6}{\ignorespaces Permission levels: read, write, admin}}{133}{figure.caption.196}%
+\contentsline {figure}{\numberline {11.7}{\ignorespaces Permission enforcement flow}}{134}{figure.caption.198}%
+\contentsline {figure}{\numberline {11.8}{\ignorespaces Temporary user creation flow}}{135}{figure.caption.204}%
+\contentsline {figure}{\numberline {11.9}{\ignorespaces Policy enforcement architecture}}{135}{figure.caption.205}%
+\contentsline {figure}{\numberline {11.10}{\ignorespaces Real-time policy evaluation}}{136}{figure.caption.206}%
+\contentsline {figure}{\numberline {11.11}{\ignorespaces Policy enforcement points in the connection lifecycle}}{136}{figure.caption.207}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

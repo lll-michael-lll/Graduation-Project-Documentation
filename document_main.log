@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023/Debian) (preloaded format=xelatex 2025.12.9)  13 DEC 2025 19:36
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023/Debian) (preloaded format=xelatex 2025.12.9)  15 DEC 2025 16:25
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -353,50 +353,87 @@ Package caption Info: New subtype `subfigure' on input line 238.
 \c@subfigure=\count298
 Package caption Info: New subtype `subtable' on input line 238.
 \c@subtable=\count299
-)
-Package hyperref Info: Option `colorlinks' set `true' on input line 30.
- (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
-File: l3backend-xetex.def 2024-01-04 L3 backend support: XeTeX
-\g__graphics_track_int=\count300
-\l__pdf_internal_box=\box64
-\g__pdf_backend_object_int=\count301
-\g__pdf_backend_annotation_int=\count302
-\g__pdf_backend_link_int=\count303
-) (./document_main.aux)
-\openout1 = `document_main.aux'.
-
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 38.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 38.
- (/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmr.fd
-File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-)
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 38.
-LaTeX Font Info:    ... okay on input line 38.
- (/usr/share/texlive/texmf-dist/tex/latex/graphics/color.sty
-Package: color 2022/01/06 v1.3d Standard LaTeX Color (DPC)
+) (/usr/share/texlive/texmf-dist/tex/latex/enumitem/enumitem.sty
+Package: enumitem 2019/06/20 v3.9 Customized lists
+\labelindent=\skip98
+\enit@outerparindent=\dimen181
+\enit@toks=\toks29
+\enit@inbox=\box64
+\enit@count@id=\count300
+\enitdp@description=\count301
+) (/usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2023/11/15 v3.01 LaTeX color extensions (UK)
  (/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
-Package color Info: Driver file: xetex.def on input line 149.
- (/usr/share/texlive/texmf-dist/tex/latex/graphics/mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 38.
+Package xcolor Info: Driver file: xetex.def on input line 274.
+ (/usr/share/texlive/texmf-dist/tex/latex/graphics/mathcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1350.
+Package xcolor Info: Model `RGB' extended on input line 1366.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1368.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1371.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1372.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1373.
+) (/usr/share/texlive/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count302
+\lst@gtempboxa=\box65
+\lst@token=\toks30
+\lst@length=\count303
+\lst@currlwidth=\dimen182
+\lst@column=\count304
+\lst@pos=\count305
+\lst@lostspace=\dimen183
+\lst@width=\dimen184
+\lst@newlines=\count306
+\lst@lineno=\count307
+\lst@maxwidth=\dimen185
+ (/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2023/02/27 1.9 (Carsten Heinz)
+\c@lstnumber=\count308
+\lst@skipnumbers=\count309
+\lst@framebox=\box66
+) (/usr/share/texlive/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2023/02/27 1.9 listings configuration
+))
+Package: listings 2023/02/27 1.9 (Carsten Heinz)
+Package hyperref Info: Option `colorlinks' set `true' on input line 66.
+ (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
+File: l3backend-xetex.def 2024-01-04 L3 backend support: XeTeX
+\g__graphics_track_int=\count310
+\l__pdf_internal_box=\box67
+\g__pdf_backend_object_int=\count311
+\g__pdf_backend_annotation_int=\count312
+\g__pdf_backend_link_int=\count313
+) (./document_main.aux)
+\openout1 = `document_main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 74.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 74.
+ (/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+Package hyperref Info: Link coloring ON on input line 74.
  (./document_main.out) (./document_main.out)
 \@outlinefile=\write3
 \openout3 = `document_main.out'.
@@ -437,134 +474,498 @@ Package hyperref Info: Link coloring ON on input line 38.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
+\c@lstlisting=\count314
 [1
 
 ] [1
 
 ] [2
 
-] (./document_main.toc [3] [4] [5])
+] (./document_main.toc [3] [4] [5] [6] [7] [8] [9])
 \tf@toc=\write4
 \openout4 = `document_main.toc'.
 
- (./document_main.lof)
+ [10] (./document_main.lof [11])
 \tf@lof=\write5
 \openout5 = `document_main.lof'.
 
- [6] (./document_main.lot)
+ [12] (./document_main.lot)
 \tf@lot=\write6
 \openout6 = `document_main.lot'.
 
- [7] (./chapters/01_team_information.tex
+ [13] (./chapters/01_team_information.tex
 Chapter 1.
-) (./chapters/02_introduction.tex [8
+) (./chapters/02_introduction.tex [14
 
 ]
 Chapter 2.
-) (./chapters/03_project_definition.tex [9
+[15
 
-]
+] [16] [17] [18]
+Overfull \hbox (5.16814pt too wide) in paragraph at lines 96--97
+[]\TU/lmr/bx/n/12 Complex Management: \TU/lmr/m/n/12 Managing granular permissions across multiple databases
+ []
+
+[19] [20]
+Overfull \hbox (0.18791pt too wide) in paragraph at lines 131--132
+\TU/lmr/m/n/12 lem. Whether stored in password vaults, configuration files, or manually entered, database
+ []
+
+[21]
+Overfull \hbox (8.08414pt too wide) in paragraph at lines 150--152
+[]\TU/lmr/bx/n/12 Protocol-Aware Interception: \TU/lmr/m/n/12 By implementing native database protocols (MySQL,
+ []
+
+[22] [23]
+File: images/what-zgate-implements.png Graphic file (type bmp)
+<images/what-zgate-implements.png>
+
+Overfull \hbox (22.00012pt too wide) in paragraph at lines 214--215
+[]\TU/lmr/bx/n/12 Developer Experience: \TU/lmr/m/n/12 Legitimate users experience minimal friction—authentication
+ []
+
+
+Underfull \hbox (badness 2126) in paragraph at lines 228--229
+[]|\TU/lmr/m/n/12 Access is scoped per-database, per-
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+) (./chapters/03_project_definition.tex [24] [25]
 Chapter 3.
-) (./chapters/04_requirements.tex [10
 
-]
+Overfull \hbox (12.20815pt too wide) in paragraph at lines 18--19
+[]\TU/lmr/bx/n/12 Temporary Credential System: \TU/lmr/m/n/12 Automated generation of session-specific database
+ []
+
+
+Overfull \hbox (4.84093pt too wide) in paragraph at lines 18--19
+\TU/lmr/m/n/12 users with unique, cryptographically secure credentials that are automatically purged
+ []
+
+
+Overfull \hbox (5.94897pt too wide) in paragraph at lines 19--20
+[]\TU/lmr/bx/n/12 Session Management: \TU/lmr/m/n/12 Per-user, per-database session tracking with context preser-
+ []
+
+[26
+
+] [27] [28] [29] [30] [31]) (./chapters/04_requirements.tex [32]
 Chapter 4.
-) (./chapters/05_proposed_solution.tex [11
+[33
 
-]
+] [34] [35]
+File: images/actor-diagram.png Graphic file (type bmp)
+<images/actor-diagram.png>
+ [36] [37] [38] [39] [40] [41] [42] [43] [44] [45]
+File: images/enduser-use-cases.png Graphic file (type bmp)
+<images/enduser-use-cases.png>
+ [46]
+File: images/administrator-use-cases.png Graphic file (type bmp)
+<images/administrator-use-cases.png>
+File: images/complete-system-use-case.png Graphic file (type bmp)
+<images/complete-system-use-case.png>
+File: images/system-component-interaction.png Graphic file (type bmp)
+<images/system-component-interaction.png>
+ [47]
+Underfull \hbox (badness 10000) in paragraph at lines 561--562
+
+ []
+
+[48]
+Underfull \hbox (badness 10000) in paragraph at lines 579--580
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 597--598
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 617--618
+
+ []
+
+[49]
+Underfull \hbox (badness 10000) in paragraph at lines 634--635
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 651--652
+
+ []
+
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 667--668
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 688--689
+
+ []
+
+[51]
+Underfull \hbox (badness 10000) in paragraph at lines 707--708
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 725--726
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 745--746
+
+ []
+
+[52]
+Underfull \hbox (badness 10000) in paragraph at lines 764--765
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 782--783
+
+ []
+
+[53]
+Underfull \hbox (badness 10000) in paragraph at lines 801--802
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 818--819
+
+ []
+
+[54]
+Underfull \hbox (badness 10000) in paragraph at lines 837--838
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 856--857
+
+ []
+
+[55]
+Underfull \hbox (badness 10000) in paragraph at lines 874--875
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 893--894
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 911--912
+
+ []
+
+[56]
+Underfull \hbox (badness 10000) in paragraph at lines 932--933
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 950--951
+
+ []
+
+[57]
+Underfull \hbox (badness 10000) in paragraph at lines 968--969
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 989--990
+
+ []
+
+[58]
+Underfull \hbox (badness 10000) in paragraph at lines 1008--1009
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1026--1027
+
+ []
+
+[59]
+Underfull \hbox (badness 10000) in paragraph at lines 1044--1045
+
+ []
+
+) (./chapters/05_proposed_solution.tex [60]
 Chapter 5.
-) (./chapters/06_standards.tex [12
+File: images/zgate-sol.png Graphic file (type bmp)
+<images/zgate-sol.png>
+[61
 
 ]
+File: images/backend.png Graphic file (type bmp)
+<images/backend.png>
+ [62]
+File: images/CLI-workflow.png Graphic file (type bmp)
+<images/CLI-workflow.png>
+ [63] [64] [65]
+File: images/tech-stack.png Graphic file (type bmp)
+<images/tech-stack.png>
+ [66]
+File: images/security-layers.png Graphic file (type bmp)
+<images/security-layers.png>
+ [67]
+Underfull \hbox (badness 2781) in paragraph at lines 206--206
+[]|\TU/lmr/m/n/12 No static credentials ex-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 208--208
+[]|\TU/lmr/m/n/12 Database-level permission
+ []
+
+
+Underfull \hbox (badness 3482) in paragraph at lines 210--211
+[]|\TU/lmr/m/n/12 Every connection request
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 218--219
+[]|\TU/lmr/m/n/12 Temporary users deleted
+ []
+
+
+Underfull \hbox (badness 1112) in paragraph at lines 220--221
+[]|\TU/lmr/m/n/12 TLS support for backend
+ []
+
+[68] [69]) (./chapters/06_standards.tex [70]
 Chapter 6.
-) (./chapters/07_competitor_analysis.tex [13
+File: images/PCI-DSS.png Graphic file (type bmp)
+<images/PCI-DSS.png>
+[71
 
 ]
+File: images/GDPR.png Graphic file (type bmp)
+<images/GDPR.png>
+) (./chapters/07_competitor_analysis.tex [72]
 Chapter 7.
-) (./chapters/08_literature_review.tex [14
+) (./chapters/08_literature_review.tex [73
 
 ]
 Chapter 8.
-) (./chapters/09_technical_background.tex [15
 
-]
+Overfull \hbox (18.58978pt too wide) in paragraph at lines 24--25
+[]\TU/lmr/bx/n/12 Data ingestion: \TU/lmr/m/n/12 Collect logs (network, system, application) via tools like Splunk/ELK 
+ []
+
+[74
+
+] [75] [76] [77] [78] [79]
+Overfull \hbox (9.55724pt too wide) in paragraph at lines 233--233
+|[]\TU/lmr/bx/n/17.28 Drivolution: Rethinking the Database Driver Life-
+ []
+
+[80] [81] [82] [83] [84]
+Overfull \hbox (0.22417pt too wide) in paragraph at lines 383--384
+[]\TU/lmr/bx/n/12 Testing discipline: \TU/lmr/m/n/12 Ease of updates might tempt skipping rigorous testing (though
+ []
+
+
+Overfull \hbox (6.96094pt too wide) in paragraph at lines 395--396
+[]\TU/lmr/bx/n/12 Continuous verification: \TU/lmr/m/n/12 The lease system embodies ”never trust, always verify”—
+ []
+
+
+Overfull \hbox (56.73616pt too wide) in paragraph at lines 403--404
+[]\TU/lmr/bx/n/12 Centralized policy enforcement: \TU/lmr/m/n/12 Storing access policies in the database (driver_permission
+ []
+
+[85] [86] [87]
+Overfull \hbox (28.14758pt too wide) in paragraph at lines 467--469
+[][]$[][][][][] [] [] [] [][][] [] [][][][][][][][][][][][] [] [][][] [] [][][][][][][][][][][] [] [][][][][][][][] [] [][][][][][][][][][][] [] [][][][][][][][][][] []
+ []
+
+[88]) (./chapters/09_technical_background.tex [89]
 Chapter 9.
-) (./chapters/10_system_architecture.tex [16
+[90
 
 ]
+File: images/gmp_architecture.png Graphic file (type bmp)
+<images/gmp_architecture.png>
+ [91]
+Overfull \hbox (6.05739pt too wide) in paragraph at lines 63--64
+[]\TU/lmr/bx/n/12 G (Goroutine)\TU/lmr/m/n/12 : A goroutine is a lightweight cooperative thread with a dynamically-
+ []
+
+[92] [93]
+Overfull \hbox (16.28096pt too wide) in paragraph at lines 129--130
+[]\TU/lmr/bx/n/12 Administrative operation coordination\TU/lmr/m/n/12 : Graceful shutdown, configuration reloads 
+ []
+
+[94]
+File: images/tcp_in_goroutines.jpg Graphic file (type bmp)
+<images/tcp_in_goroutines.jpg>
+ [95]
+Overfull \hbox (4.45612pt too wide) in paragraph at lines 204--205
+[]\TU/lmtt/m/n/12 SetWriteDeadline(time.Now().Add(timeout))\TU/lmr/m/n/12 : Aborts write if socket buffer
+ []
+
+[96]
+File: images/context_propagation_in_golang.jpg Graphic file (type bmp)
+<images/context_propagation_in_golang.jpg>
+ [97]
+File: images/generic_DB_protocol_stack.jpg Graphic file (type bmp)
+<images/generic_DB_protocol_stack.jpg>
+ [98]
+File: images/mysql_handshake.png Graphic file (type bmp)
+<images/mysql_handshake.png>
+ [99]
+File: images/mysql_packet.jpg Graphic file (type bmp)
+<images/mysql_packet.jpg>
+ [100] [101]
+File: images/mysql_command_packet.jpg Graphic file (type bmp)
+<images/mysql_command_packet.jpg>
+File: images/mysql_command_lifecycle.jpg Graphic file (type bmp)
+<images/mysql_command_lifecycle.jpg>
+ [102] [103] [104] [105] [106] [107]
+Overfull \hbox (0.64407pt too wide) in paragraph at lines 719--720
+[]\TU/lmr/m/n/12 Example: \TU/lmtt/m/n/12 SELECT ssn \TU/lmr/m/n/12 → \TU/lmtt/m/n/12 SELECT CONCAT('XXX-XX-', SUBSTR(ssn, 8)) AS
+ []
+
+[108] [109] [110] [111] [112] [113] [114] [115] [116] [117] [118] [119] [120] [121]
+Overfull \hbox (19.82008pt too wide) in paragraph at lines 1350--1351
+[]\TU/lmr/m/n/12 Example strong cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 
+ []
+
+[122] [123] [124]) (./chapters/10_system_architecture.tex [125]
 Chapter 10.
-) (./chapters/11_proxy_architecture.tex [17
+) (./chapters/11_proxy_architecture.tex [126
 
 ]
 Chapter 11.
-) (./chapters/12_data_flow.tex [18
+File: images/key-components.png Graphic file (type bmp)
+<images/key-components.png>
+File: images/lifecycle-states.png Graphic file (type bmp)
+<images/lifecycle-states.png>
+[127
 
-]
+] [128]
+Overfull \vbox (54.32689pt too high) has occurred while \output is active []
+
+ [129]
+File: images/detailed-lifecycle-flow.png Graphic file (type bmp)
+<images/detailed-lifecycle-flow.png>
+File: images/auth-arch.png Graphic file (type bmp)
+<images/auth-arch.png>
+ [130]
+File: images/token-refresh-flow.png Graphic file (type bmp)
+<images/token-refresh-flow.png>
+ [131]
+File: images/permission-levels.png Graphic file (type bmp)
+<images/permission-levels.png>
+ [132]
+File: images/permission-enforcement.png Graphic file (type bmp)
+<images/permission-enforcement.png>
+ [133]
+File: images/temp-user.png Graphic file (type bmp)
+<images/temp-user.png>
+ [134]
+File: images/policy-arch.png Graphic file (type bmp)
+<images/policy-arch.png>
+File: images/real-time-policy.png Graphic file (type bmp)
+<images/real-time-policy.png>
+ [135]
+File: images/policy-enforcement-point.png Graphic file (type bmp)
+<images/policy-enforcement-point.png>
+ [136] [137]
+Overfull \hbox (12.36887pt too wide) in paragraph at lines 230--231
+[]\TU/lmr/bx/n/12 User \TU/lmr/m/n/12 uses \TU/lmr/bx/n/12 DBClient \TU/lmr/m/n/12 (e.g., \TU/lmtt/m/n/12 mysql -h localhost -P 5001 -u zgate_kemo_abc123\TU/lmr/m/n/12 ) 
+ []
+
+) (./chapters/12_data_flow.tex [138]
 Chapter 12.
-) (./chapters/13_technology_justification.tex [19
+) (./chapters/13_technology_justification.tex [139
 
 ]
 Chapter 13.
-[20
+[140
 
-] [21] [22]
-Overfull \hbox (2.67459pt too wide) in paragraph at lines 59--60
+] [141] [142] [143]
+Overfull \hbox (8.22096pt too wide) in paragraph at lines 83--84
+\TU/lmr/m/n/12 Node.js powers the build pipeline through tools like Vite, which provides near-instantaneous
+ []
+
+[144] [145]
+Overfull \hbox (2.67459pt too wide) in paragraph at lines 113--114
 \TU/lmr/m/n/12 Modern administrative interfaces require comprehensive Create, Read, Update, and Delete
  []
 
-[23]) (./chapters/14_prototype.tex [24]
+[146]) (./chapters/14_prototype.tex [147]
 Chapter 14.
-) (./chapters/15_methodology.tex [25
+) (./chapters/15_methodology.tex [148
 
 ]
 Chapter 15.
-[26
+[149
 
 ]
 Overfull \hbox (3.40414pt too wide) in paragraph at lines 38--39
 []\TU/lmr/m/n/12 Serves as the single source of truth for the project
  []
 
-[27]) (./chapters/16_task_tracking.tex [28]
+[150]) (./chapters/16_task_tracking.tex [151]
 Chapter 16.
-) (./chapters/17_milestones.tex [29
+) (./chapters/17_milestones.tex [152
 
 ]
 Chapter 17.
-) (./chapters/18_threat_model.tex [30
+) (./chapters/18_threat_model.tex [153
 
 ]
 Chapter 18.
-) (./chapters/19_roadmap_term2.tex [31
+) (./chapters/19_roadmap_term2.tex [154
 
 ]
 Chapter 19.
-) (./chapters/20_team_contribution.tex [32
+) (./chapters/20_team_contribution.tex [155
 
 ]
 Chapter 20.
-) (./chapters/21_expected_outcomes.tex [33
+) (./chapters/21_expected_outcomes.tex [156
 
 ]
 Chapter 21.
-) (./chapters/22_conclusion.tex [34
+) (./chapters/22_conclusion.tex [157
 
 ]
 Chapter 22.
-) [35
+) [158
+
+] (./document_main.bbl [159
 
 ]
-No file document_main.bbl.
-(./chapters/appendices.tex [36
+
+LaTeX Warning: Empty `thebibliography' environment on input line 3.
+
+) (./chapters/appendices.tex [160
 
 ]
 Appendix A.
-[37
+[161
 
 ]
 Appendix B.
-) [38
+) [162
 
 ] (./document_main.aux)
  ***********
@@ -572,15 +973,15 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `document_main.out' has not changed.
-(rerunfilecheck)             Checksum: 83A88A3F1B3A915786962C702C3835ED;22458.
+(rerunfilecheck)             Checksum: 26C6227F87CA2F8A26966AEFE4F7B907;48185.
  ) 
 Here is how much of TeX's memory you used:
- 12002 strings out of 474878
- 194878 string characters out of 5762516
- 1931627 words of memory out of 5000000
- 33827 multiletter control sequences out of 15000+600000
- 561919 words of font info for 59 fonts, out of 8000000 for 9000
+ 14334 strings out of 474878
+ 235288 string characters out of 5762516
+ 1964627 words of memory out of 5000000
+ 36104 multiletter control sequences out of 15000+600000
+ 561927 words of font info for 60 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 72i,6n,79p,689b,401s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,10n,79p,827b,1047s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on document_main.pdf (39 pages).
+Output written on document_main.pdf (163 pages).
