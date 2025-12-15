@@ -2,7 +2,45 @@
 % 6. Alignment with International Standards
 % ============================================================
 \chapter{Alignment with International Standards}
+
 \section{PCI DSS}
+\begin{itemize}
+    \item \textbf{Access Control (Req. 7):} Role-based access with least privilege per database
+    \item \textbf{Authentication (Req. 8):} Unique user identification, no shared credentials, time-limited sessions
+    \item \textbf{Audit Logging (Req. 10):} Complete tracking of all database access with user identity, timestamp, and session details
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/PCI-DSS.png}
+    \caption{zGate alignment with PCI DSS requirements for access control, authentication, and audit logging}
+    \label{fig:pci-dss-compliance}
+\end{figure}
 \section{HIPAA}
+\begin{itemize}
+    \item \textbf{Access Control:} Unique user authentication and role-based database access to ePHI
+    \item \textbf{Audit Controls:} Comprehensive logs of who accessed what database and when
+    \item \textbf{Authentication:} JWT-based identity verification before database access
+    \item \textbf{Automatic Log-off:} Session expiration and token timeout mechanisms
+\end{itemize}
+
 \section{GDPR}
+\begin{itemize}
+    \item \textbf{Data Security (Art. 32):} Identity-based authentication, authorization, and encrypted credentials
+    \item \textbf{Access Control (Art. 5):} Role-based permissions limiting data access scope
+    \item \textbf{Audit Records (Art. 30):} Complete logging of processing activities with user context
+    \item \textbf{Breach Detection (Art. 33):} Real-time monitoring and immediate session termination capabilities
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/GDPR.png}
+    \caption{zGate alignment with GDPR requirements for data security, access control, audit records, and breach detection}
+    \label{fig:gdpr-compliance}
+\end{figure}
 \section{ISO 27001}
+\begin{itemize}
+    \item \textbf{User Access Management (A.9.2):} Formal registration, role assignment, and access revocation
+    \item \textbf{Access Control (A.9.4):} Secure authentication, temporary credentials, session timeouts
+    \item \textbf{Logging \& Monitoring (A.12.4):} Event logging for all activities with protected audit trails
+    \item \textbf{Compliance Reviews (A.18):} Audit logs and monitoring dashboard for compliance verification
+\end{itemize}
+

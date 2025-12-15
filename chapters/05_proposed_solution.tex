@@ -2,12 +2,274 @@
 % 5. PROPOSED SOLUTION
 % ============================================================
 \chapter{Proposed Solution}
-\section{Overview of the Proposed Solution}
-\section{Solution Architecture Layers}
-\subsection{Authentication Layer}
-\subsection{Proxy Layer}
-\subsection{Policy Engine Layer}
-\subsection{Data Protection Layer}
-\subsection{Observability Layer}
-\section{Term 1 vs Term 2 Features}
-\section{Feature List}
+
+\section{Solution Overview}
+
+The proposed solution is \textbf{zGate}, a comprehensive Zero-Trust Database Access Platform that fundamentally changes how organizations manage database security and access control. Rather than relying on shared credentials and static permissions, zGate introduces a dynamic, policy-driven approach where temporary credentials are created for each user session, eliminating the risks associated with credential sprawl and unauthorized access.
+
+\subsection{The Core Problem}
+
+Traditional database access models suffer from several critical security and operational challenges:
+
+\begin{enumerate}
+    \item \textbf{Shared Credentials:} Multiple users share common database accounts, making it impossible to audit who performed which actions
+    \item \textbf{Static Permissions:} Once granted, permissions remain indefinitely, increasing the attack surface
+    \item \textbf{Credential Sprawl:} Database passwords stored in configuration files, wikis, and password managers
+    \item \textbf{Lack of Visibility:} No centralized view of who has access to which databases
+    \item \textbf{Manual Overhead:} Granting and revoking access requires manual database administration
+    \item \textbf{Compliance Gaps:} Difficult to prove least-privilege access and maintain audit trails
+\end{enumerate}
+
+\subsection{The zGate Solution}
+
+zGate addresses these challenges through a multi-layered architecture built on three core principles:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/zgate-sol.png}
+    \caption{zgate proposed solution architecture}
+    \label{fig:zgate-solution}
+\end{figure}
+\section{Core Components}
+
+\subsection{zGate Server (Backend)}
+
+The server is the heart of the platform, handling all security, policy enforcement, and proxy operations.
+
+\subsubsection{Backend Layers}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/backend.png}
+    \caption{zGate backend architecture showing authentication, policy engine, and proxy layers}
+    \label{fig:zgate-backend-architecture}
+\end{figure}
+\subsubsection{Key Features}
+
+\textbf{1. JWT-Based Authentication}
+\begin{itemize}
+    \item Access tokens (15-minute TTL) for API requests
+    \item Refresh tokens (7-day TTL) for session persistence
+    \item Secure token generation with HMAC-SHA256 signatures
+    \item Automatic token refresh in CLI
+\end{itemize}
+
+\textbf{2. Real-Time Policy Enforcement}
+\begin{itemize}
+    \item Permissions evaluated from current configuration on every request
+    \item Role-based access control (RBAC) with support for multiple roles per user
+    \item Custom permissions at user level for exceptions
+    \item Immediate effect when permissions are changed (no cache invalidation needed)
+\end{itemize}
+
+\textbf{3. Dynamic Proxy Management}
+\begin{itemize}
+    \item On-demand creation of proxy sessions
+    \item Automatic port allocation from ephemeral range
+    \item Temporary database user creation with appropriate grants
+    \item Automatic cleanup on disconnect or crash recovery
+\end{itemize}
+
+\textbf{4. Protocol Abstraction}
+\begin{itemize}
+    \item Pluggable architecture for database types
+    \item Current support: MSSQL, MySQL
+    \item Easy extensibility for PostgreSQL, Oracle, etc.
+    \item Database-specific SQL for user management
+\end{itemize}
+
+\textbf{5. Comprehensive Logging}
+\begin{itemize}
+    \item Structured logging with key-value pairs
+    \item Every security event logged with user context
+    \item Support for JSON output for log aggregation
+    \item Configurable log levels (DEBUG, INFO, WARN, ERROR)
+\end{itemize}
+
+\subsection{zGate CLI (Client)}
+
+The command-line interface provides developers with a simple, secure way to access databases.
+
+\subsubsection{CLI Workflow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/CLI-workflow.png}
+    \caption{zGate CLI workflow illustrating token management and database access process}
+    \label{fig:CLI-workflow}
+\end{figure}
+\subsubsection{CLI Features}
+
+\textbf{1. Secure Token Storage}
+\begin{itemize}
+    \item OS-native keyring integration (Keychain on macOS, Credential Manager on Windows, Secret Service on Linux)
+    \item Encrypted file fallback for headless environments
+    \item Never stores plaintext credentials
+\end{itemize}
+
+\textbf{2. Automatic Token Refresh}
+\begin{itemize}
+    \item Detects token expiry proactively
+    \item Refreshes access token using refresh token
+    \item Seamless user experience without re-authentication
+\end{itemize}
+
+\textbf{3. User-Friendly Interface}
+\begin{itemize}
+    \item Simple, intuitive commands following Unix conventions
+    \item Colored output for better readability
+    \item Helpful error messages with troubleshooting hints
+    \item Progress indicators for long operations
+\end{itemize}
+
+\textbf{4. Cross-Platform Support}
+\begin{itemize}
+    \item Single binary for Windows, macOS, Linux
+    \item No runtime dependencies
+    \item Portable and lightweight (\textasciitilde10MB)
+\end{itemize}
+
+\subsection{zGate WebUI (Admin Dashboard)}
+
+The web interface provides administrators with a comprehensive control panel for managing the entire platform.
+
+\subsubsection{Dashboard Architecture}
+
+\subsubsection{Admin Features}
+
+\textbf{1. Database Management}
+\begin{itemize}
+    \item Add/edit/delete database configurations
+    \item Test database connectivity before saving
+    \item View all configured databases with status
+    \item Manage available permissions per database
+\end{itemize}
+
+\textbf{2. User \& Role Management}
+\begin{itemize}
+    \item Create users with bcrypt-hashed passwords
+    \item Assign multiple roles to users
+    \item Define roles with database-specific permissions
+    \item Add custom permissions to individual users
+\end{itemize}
+
+\textbf{3. Session Monitoring}
+\begin{itemize}
+    \item Real-time view of active database connections
+    \item See: user, database, port, temporary username, duration
+    \item Terminate sessions if needed (security incidents)
+    \item Filter and search sessions
+\end{itemize}
+
+\textbf{4. Audit Trail}
+\begin{itemize}
+    \item Comprehensive logs of all user activities
+    \item Filter by user, date range, action type
+    \item Search within log entries
+    \item Export for compliance reporting
+\end{itemize}
+
+\textbf{5. Advanced Features}
+\begin{itemize}
+    \item Shared account pools for efficient credential management
+    \item Personal database accounts for specific users
+    \item Query execution interface (future)
+    \item Connected databases view
+\end{itemize}
+
+\section{Key Technologies \& Design Decisions}
+
+\subsubsection{Technology Stack}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/tech-stack.png}
+    \caption{zGate technology stack}
+    \label{fig:technology-stack}
+\end{figure}
+
+\section{Security Architecture}
+
+Security is woven into every layer of the zGate platform through multiple defense mechanisms.
+
+\subsection{Security Layers}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/security-layers.png}
+    \caption{Multi-layered security architecture in zGate platform}
+    \label{fig:security-layers}
+\end{figure}
+\subsection{Security Guarantees}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Threat} & \textbf{Mitigation} & \textbf{Implementation} \\
+\hline
+Credential Theft & No static credentials exposed to users & Temporary users with auto-generated passwords \\
+\hline
+Privilege Escalation & Database-level permission enforcement & Grants limited to user's role (read/write/admin) \\
+\hline
+Unauthorized Access & Real-time policy evaluation & Every connection request checked against current config \\
+\hline
+Session Hijacking & Short-lived JWT tokens & 15-minute access token expiry \\
+\hline
+Password Cracking & Strong password hashing & bcrypt with work factor 10 \\
+\hline
+Audit Evasion & Mandatory logging & Every API call, connection, disconnect logged \\
+\hline
+Resource Exhaustion & Automatic cleanup & Temporary users deleted within 30 seconds of disconnect \\
+\hline
+Man-in-the-Middle & Encrypted connections & TLS support for backend database connections \\
+\hline
+\end{tabular}
+\caption{Security threats and their mitigations in zGate}
+\label{tab:security-guarantees}
+\end{table}
+
+\section{Advantages of the Proposed Solution}
+
+\subsubsection{Key Benefits}
+
+\subsubsection{Enhanced Security}
+\begin{itemize}
+    \item Eliminates shared credentials
+    \item Temporary users auto-deleted
+    \item No credential sprawl
+    \item Cryptographically secure random passwords
+    \item Short-lived JWT tokens
+    \item Database-level permission enforcement
+\end{itemize}
+
+\subsubsection{Operational Efficiency}
+\begin{itemize}
+    \item Automated user provisioning
+    \item Self-service for developers (via CLI)
+    \item Centralized access management
+    \item No manual database administration
+    \item Quick onboarding/offboarding
+\end{itemize}
+
+\subsubsection{Compliance \& Audit}
+\begin{itemize}
+    \item Complete audit trail
+    \item User-attributed actions
+    \item Provable least-privilege
+    \item Real-time access reporting
+    \item Exportable logs
+\end{itemize}
+
+\subsubsection{Developer Experience}
+\begin{itemize}
+    \item Simple CLI commands
+    \item Works with existing tools
+    \item No VPN/bastion required
+    \item Automatic token refresh
+    \item Cross-platform support
+\end{itemize}
+
+\subsubsection{Scalability}
+\begin{itemize}
+    \item Handles thousands of concurrent sessions
+    \item Stateless API (horizontal scaling)
+    \item Lightweight memory footprint
+    \item Dynamic resource allocation
+\end{itemize}
+

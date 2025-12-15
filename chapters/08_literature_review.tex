@@ -2,10 +2,469 @@
 % 8. SCIENTIFIC RESEARCH & LITERATURE REVIEW
 % ============================================================
 \chapter{Scientific Research \& Literature Review}
-\section{Paper 1}
-\section{Paper 2}
-\section{Paper 3}
-\section{Paper 4}
+
+\section{Generative AI-Enhanced Cybersecurity Framework for Enterprise Data Privacy Management}
+
+\subsection{Purpose of the Study}
+
+The paper addresses the growing need for organizations to secure sensitive enterprise data (e.g., financial transactions, patient records, IoT data) while still enabling advanced detection of cyber threats. Traditional security controls and anomaly detection methods often:
+
+\begin{itemize}
+    \item Miss new/unknown attack patterns
+    \item Require direct use of real sensitive data, creating privacy and compliance risks
+\end{itemize}
+
+\textbf{Goal:} The authors propose a Generative AI-enhanced framework that combines Generative Adversarial Networks (GANs), Variational Autoencoders (VAEs), and traditional machine learning (ML/DL) anomaly detection with strong privacy-preserving methods (Differential Privacy, encryption, masking). The aim is to balance data privacy, detection accuracy, and computational efficiency.
+
+\subsection{Framework Overview}
+
+The proposed framework works as an end-to-end pipeline with the following main components:
+
+\begin{itemize}
+    \item \textbf{Data ingestion:} Collect logs (network, system, application) via tools like Splunk/ELK
+    \item \textbf{Generative AI layer (GANs \& VAEs):} Create synthetic, privacy-safe data that mimic real-world patterns without exposing identities
+    \item \textbf{Privacy layer:} Apply Differential Privacy ($\varepsilon=0.1$ for highly sensitive data), AES-256 encryption, TLS 1.3, and masking
+    \item \textbf{Anomaly detection engine:} Train models like Random Forest, SVM, and LSTM on synthetic + sanitized data to detect unusual activity
+    \item \textbf{Monitoring \& alerting:} Real-time detection with dashboards and alert systems
+\end{itemize}
+
+\textbf{Analogy:} Instead of training guards with real customer data (which is risky), the system uses highly realistic "actors" (synthetic data) to train them — ensuring the guards learn effectively without ever seeing the real people.
+
+\subsection{Implementation \& Experiments}
+
+The framework was tested in three simulated enterprise domains:
+
+\begin{itemize}
+    \item \textbf{Finance (transaction logs):} 94\% accuracy, 95\% recall, $\sim$1.2–1.5 seconds per transaction
+    \item \textbf{Healthcare (EHR access logs):} 96\% accuracy, 93\% precision, $\sim$1.5 seconds per event
+    \item \textbf{Smart City/IoT (sensor data):} 91\% accuracy, F1 $\approx$ 90\%, latency <100 ms at the edge
+\end{itemize}
+
+\textbf{Performance trade-offs:}
+
+\begin{itemize}
+    \item GAN framework: $\sim$96\% accuracy, moderate compute (4GB GPU, 2.5h training)
+    \item LSTM: $\sim$97\% accuracy but higher GPU needs (6GB)
+    \item Traditional ML (RF/SVM): lower accuracy ($\sim$92–94\%) but lighter
+    \item Very high-accuracy CNN (>99\%): impractical resource usage
+\end{itemize}
+
+\subsection{Privacy \& Security Features}
+
+\begin{itemize}
+    \item \textbf{Differential Privacy:} Adds noise to hide individual user data, ensuring compliance with GDPR/HIPAA
+    \item \textbf{Encryption:} AES-256 for data at rest, TLS 1.3 for data in transit
+    \item \textbf{Access control:} Role-based restrictions
+    \item \textbf{Data masking:} Obscures identifiers in logs
+\end{itemize}
+
+\subsection{Contributions to the Paper}
+
+\begin{itemize}
+    \item First comprehensive framework integrating Generative AI + privacy techniques + anomaly detection
+    \item Provides balanced performance: strong accuracy without extreme computational demands
+    \item Applicable across finance, healthcare, and IoT
+    \item Offers implementation guidance with practical tools (TensorFlow, PyTorch, Scikit-learn, PySyft)
+\end{itemize}
+
+\subsection{Advantages \& Limitations}
+
+\textbf{Advantages:}
+
+\begin{itemize}
+    \item Protects privacy while enabling effective training
+    \item Can detect novel/rare attacks better by augmenting datasets with synthetic samples
+    \item Works across domains, modular and adaptable
+    \item More resource-efficient than some deep CNN methods
+\end{itemize}
+
+\textbf{Limitations:}
+
+\begin{itemize}
+    \item Results are simulated, not from live production environments
+    \item Quality of synthetic data can affect detection accuracy
+    \item Managing GANs, VAEs, DP, and anomaly detectors is operationally complex
+    \item Differential Privacy trade-off: stronger privacy (smaller $\varepsilon$) may reduce model accuracy
+\end{itemize}
+
+\subsection{Relevance to Our Project}
+
+This study is directly relevant because:
+
+\begin{itemize}
+    \item Our project focuses on secure access and monitoring of sensitive databases
+    \item The paper's synthetic-data + anomaly detection pipeline is a practical approach to train models without exposing real database queries/records
+    \item Techniques like Differential Privacy, RBAC, AES-256 encryption overlap with Zero Trust principles (least privilege, continuous monitoring, encryption everywhere)
+    \item Their results show that real-time detection with privacy is feasible, which strengthens the foundation for our Zero Trust access model
+\end{itemize}
+
+\section{The Significance of Artificial Intelligence in Zero Trust Technologies: A Comprehensive Review}
+
+\subsection{Problem Addressed}
+
+Traditional security models assume anything inside a company's network can be trusted. With today's cloud, remote work, and hybrid environments, this assumption no longer holds. Attackers exploit cloud resources, lateral movement inside networks, and slow manual controls. The study addresses how Artificial Intelligence (AI) can enhance the Zero Trust (ZT) model to meet these modern challenges.
+
+\subsection{Methodology}
+
+\begin{itemize}
+    \item Literature review (20+ studies examined)
+    \item Synthesized how AI is applied across ZT building blocks (IAM, MFA, EDR, ZTNA, SASE, Network Analytics)
+\end{itemize}
+
+\subsection{Key Contributions of AI to Zero Trust}
+
+\subsubsection{Identity \& Access Management (IAM)}
+
+\begin{itemize}
+    \item \textbf{Authentication:} Adaptive and continuous (AI monitors typing, device, location; flags anomalies)
+    \item \textbf{Authorization:} Intelligent Role-Based Access Control (AI suggests roles, prevents "over-privilege")
+    \item \textbf{Administration:} Automated onboarding/offboarding, policy adjustments
+    \item \textbf{Audit/Compliance:} AI generates audit trails, suggests policies, detects compliance gaps
+\end{itemize}
+
+\subsubsection{Adaptive Multi-Factor Authentication (AMFA)}
+
+\begin{itemize}
+    \item AI adjusts authentication strength based on risk (low $\rightarrow$ password; medium $\rightarrow$ OTP; high $\rightarrow$ biometrics)
+    \item Balances usability with security
+\end{itemize}
+
+\subsubsection{Endpoint Detection \& Response (EDR)}
+
+\begin{itemize}
+    \item AI baselines device behavior, detects anomalies, reduces false positives
+    \item Automates containment (isolate compromised laptops)
+\end{itemize}
+
+\subsubsection{Zero Trust Network Access (ZTNA) \& Secure Access Service Edge (SASE)}
+
+\begin{itemize}
+    \item ZTNA grants application-level access (not full network like VPN)
+    \item SASE combines SD-WAN + ZTNA + CASB + FWaaS; AI analyzes telemetry, recommends segmentation
+    \item AI enables dynamic microsegmentation and automated policy creation
+\end{itemize}
+
+\subsection{Findings}
+
+\begin{itemize}
+    \item AI strengthens Zero Trust by making it continuous, adaptive, and automated
+    \item AI reduces human error, speeds up detection, and scales across large organizations
+    \item AI integration is critical for modern cloud and hybrid infrastructures
+\end{itemize}
+
+\subsection{Comparison with Traditional Methods}
+
+\begin{itemize}
+    \item Traditional perimeter security = trust anyone inside
+    \item Zero Trust with AI = checkpoint at every request making context-based decisions in real time
+\end{itemize}
+
+\subsection{Relevance to Our Project}
+
+\begin{itemize}
+    \item IAM insights $\rightarrow$ directly applicable for database user role mining \& continuous verification
+    \item Adaptive MFA $\rightarrow$ useful for database login protection
+    \item EDR concepts $\rightarrow$ extend to database clients/endpoints
+    \item ZTNA \& SASE $\rightarrow$ inspire database-level microsegmentation (grant per-query or per-app access)
+    \item Network analytics $\rightarrow$ parallels database traffic analysis for anomaly detection
+\end{itemize}
+
+\section{Securing Digital Identity in the Zero Trust Architecture: A Blockchain Approach to Privacy-Focused Multi-Factor Authentication}
+
+\subsection{Problem Addressed}
+
+\begin{itemize}
+    \item Traditional MFA depends on centralized servers, which are vulnerable to outages and breaches
+    \item Zero Trust architectures require continuous, strong identity verification, but current MFA approaches are limited in resilience and privacy
+\end{itemize}
+
+The study addresses these issues by designing a decentralized, privacy-focused MFA mechanism that eliminates single points of failure and ensures secrets remain private.
+
+\subsection{Research Goals}
+
+\begin{itemize}
+    \item Build a decentralized authentication system aligned with Zero Trust principles
+    \item Ensure privacy-preserving verification so users never expose OTPs
+    \item Provide auditability and traceability of authentication events
+    \item Deliver a realistic proof-of-concept that demonstrates feasibility and performance
+\end{itemize}
+
+\subsection{Proposed System}
+
+\begin{itemize}
+    \item \textbf{Distributed Authentication Mechanism (DAM):} validator nodes collectively handle authentication
+    \item \textbf{Distributed OTP Generation:} each validator contributes a random partial secret; combined into full OTP
+    \item \textbf{Privacy via zk-SNARKs:} users prove they know the OTP without revealing it
+    \item \textbf{Authentication Token:} successful proof leads to issuance of a non-transferable NFT (digital badge) valid for a period
+\end{itemize}
+
+\subsection{Experimental Results}
+
+\begin{itemize}
+    \item \textbf{Performance:} comparable to real-world MFA timings ($\sim$20 seconds average)
+    \item \textbf{Security:} analysis shows probability of attack success is negligible due to distribution, cryptographic verification, and non-transferability
+\end{itemize}
+
+\subsection{Key Findings and Contributions}
+
+\begin{itemize}
+    \item Decentralized authentication reduces single points of failure
+    \item OTP secrets are never exposed; verification occurs through zk-SNARK proofs
+    \item Immutable, auditable on-chain logs improve accountability
+    \item Non-transferable NFTs prevent token theft or resale
+\end{itemize}
+
+\subsection{Real-World Applications}
+
+\begin{itemize}
+    \item \textbf{Banking \& Fintech:} customers receive distributed OTPs and prove knowledge via zk-SNARK, receiving session tokens for access
+    \item \textbf{Corporate IT (Zero Trust):} employees authenticate and receive short-lived NFTs, ensuring continuous verification without exposing passwords
+    \item \textbf{Developer Platforms:} integration with existing blockchain and web authentication frameworks for higher resilience
+\end{itemize}
+
+\subsection{Relevance to Our Project}
+
+This research is directly relevant because it shows how decentralized, privacy-preserving multi-factor authentication can be integrated into a Zero Trust architecture; a blueprint for secure identity verification that we can adapt for controlling database access in our Zero Trust Gateway.
+
+\subsection{Conclusion}
+
+This research provides a comprehensive, innovative, and feasible approach to MFA in Zero Trust environments. By using distributed OTP generation, zk-SNARK verification, and non-transferable authentication tokens, it resolves critical weaknesses in traditional MFA. While some limitations exist (cost, setup trust, validator reputation), the overall contribution strongly supports the feasibility of implementing privacy-focused, decentralized identity verification in real-world systems.
+
+\section{Drivolution: Rethinking the Database Driver Lifecycle}
+
+\subsection{Problem Addressed}
+
+Traditional database driver management creates significant operational burdens in large production environments. The study identifies four major challenges:
+
+\begin{itemize}
+    \item \textbf{Distribution complexity:} Drivers are distributed separately from database engines, leading to version mismatches and incompatibilities
+    \item \textbf{Manual deployment:} Driver installation requires manual operations on each client machine, which doesn't scale well
+    \item \textbf{Disruptive upgrades:} Updating drivers requires stopping applications, reconfiguring them, and restarting—causing downtime
+    \item \textbf{Security vulnerabilities:} Malicious applications can exploit outdated drivers or use crafted drivers to attack database servers
+\end{itemize}
+
+These issues are amplified in heterogeneous environments where multiple database versions, platforms (63+ for MySQL alone), and client applications coexist. The problem becomes even more acute in replicated database environments where upgrades must account for the Cartesian product of drivers and databases.
+
+\subsection{Research Methodology}
+
+The authors propose and implement Drivolution, an alternative architecture for database driver management. The methodology includes:
+
+\begin{itemize}
+    \item Design of a new driver lifecycle model inspired by OS bootloaders and DHCP protocols
+    \item Implementation for JDBC API integrated with Sequoia database clustering middleware
+    \item Multiple case studies demonstrating real-world applicability
+    \item Performance evaluation in simulated production environments
+\end{itemize}
+
+\subsection{Drivolution Architecture}
+
+The proposed system fundamentally reimagines driver management through several key innovations:
+
+\subsubsection{Core Components}
+
+\begin{itemize}
+    \item \textbf{Driver Storage:} Drivers are stored in the database itself (in regular tables) or in standalone Drivolution servers, treating them as integral parts of the database schema
+    \item \textbf{Bootloader:} A small, stable client-side component that rarely needs updating—it downloads and executes driver code from the database
+    \item \textbf{Drivolution Protocol:} A DHCP-inspired protocol with three messages (REQUEST, OFFER, ERROR) for driver negotiation
+    \item \textbf{Lease System:} Time-limited driver validity periods that enable automatic updates
+\end{itemize}
+
+\subsubsection{Technical Implementation}
+
+The system uses two key database tables in the information schema:
+
+\begin{itemize}
+    \item \textbf{Drivers table:} Stores driver binaries (as BLOBs), API versions, platform specifications, and version information
+    \item \textbf{Driver\_permission table:} Defines access rights, update policies, lease times, and expiration policies per user/client/database combination
+\end{itemize}
+
+The bootloader intercepts API connection calls, contacts the Drivolution server, downloads appropriate drivers based on client platform and requirements, and dynamically loads them into application memory—all transparently to the application.
+
+\subsection{Key Innovations}
+
+\subsubsection{Simplified Lifecycle}
+
+Traditional approach (10 steps for upgrade per client):
+\begin{enumerate}
+    \item Stop application
+    \item Uninstall old driver
+    \item Download new driver package
+    \item Install driver
+    \item Configure application
+    \item Restart application
+    \item (Plus 4 more verification steps)
+\end{enumerate}
+
+Drivolution approach (1 step for all clients):
+\begin{enumerate}
+    \item Insert new driver into Drivolution server database
+\end{enumerate}
+
+\subsubsection{Transparent Updates}
+
+Three update policies accommodate different operational needs:
+\begin{itemize}
+    \item \textbf{AFTER\_CLOSE:} Wait for application to close connections naturally
+    \item \textbf{AFTER\_COMMIT:} Close connections after current transactions complete
+    \item \textbf{IMMEDIATE:} Force immediate termination and upgrade
+\end{itemize}
+
+\subsubsection{Security Features}
+
+\begin{itemize}
+    \item SSL-encrypted, authenticated transfer channels prevent man-in-the-middle attacks
+    \item Digital signature verification ensures driver authenticity
+    \item Standard database access controls limit who can retrieve which drivers
+    \item Centralized management reduces risk of outdated, vulnerable drivers
+\end{itemize}
+
+\subsection{Case Studies and Results}
+
+\subsubsection{Heterogeneous DBMS Administration}
+
+For DBAs managing multiple database versions, Drivolution reduced:
+\begin{itemize}
+    \item Accessing new database: from 6 manual steps to 1 automatic connection
+    \item Driver upgrade: from 6 steps per DBA workstation to 2 centralized operations
+\end{itemize}
+
+\subsubsection{Master/Slave Failover}
+
+Drivolution enables transparent client reconfiguration during failover:
+\begin{itemize}
+    \item Pre-configured drivers (DB\_master, DB\_slave) distributed based on current topology
+    \item Failover accomplished by marking old driver expired and offering new one
+    \item All clients automatically reconfigure without manual intervention
+\end{itemize}
+
+\subsubsection{Sequoia Clustering Middleware}
+
+Multiple deployment configurations demonstrated:
+\begin{itemize}
+    \item \textbf{Standalone server:} Centralized control with hot-standby replication for availability
+    \item \textbf{Embedded in controllers:} Drivolution servers replicated across cluster nodes, eliminating single point of failure
+    \item Seamless upgrades of both Sequoia drivers and backend database drivers
+\end{itemize}
+
+\subsubsection{Customized Driver Delivery}
+
+\begin{itemize}
+    \item \textbf{On-demand assembly:} Delivers only required components (e.g., NLS packages for specific languages, GIS extensions only to geographic applications)
+    \item \textbf{License management:} Dynamic distribution of per-user licenses (e.g., IBM DB2 licensing model)
+\end{itemize}
+
+\subsection{Performance Characteristics}
+
+\begin{itemize}
+    \item Bootloader overhead: minimal (simple connection interception)
+    \item One-time download per lease period (hours to days)
+    \item No performance impact on queries after driver loaded
+    \item Drivolution server can be replicated for availability without complex consistency requirements (infrequent updates)
+\end{itemize}
+
+\subsection{Advantages and Contributions}
+
+\begin{itemize}
+    \item \textbf{Operational simplicity:} Centralized management reduces complexity exponentially in large deployments
+    \item \textbf{Zero downtime:} Applications continue running during driver upgrades
+    \item \textbf{Version consistency:} Guaranteed compatibility between drivers and databases
+    \item \textbf{Security improvement:} Faster deployment of security patches, elimination of forgotten/outdated drivers
+    \item \textbf{Legacy compatibility:} Works with existing databases and applications without modifications
+    \item \textbf{Platform neutrality:} Single bootloader implementation per API works across all databases
+    \item \textbf{Flexibility:} Supports multiple deployment models (in-database, external, standalone service)
+\end{itemize}
+
+\subsection{Limitations and Considerations}
+
+\begin{itemize}
+    \item \textbf{Bootloader dependency:} Initial bootloader installation still required (though this is one-time per API/platform)
+    \item \textbf{Dynamic loading requirement:} Not all languages/platforms support secure dynamic code loading
+    \item \textbf{API stability:} Bootloaders are API-specific; major API changes require new bootloaders
+    \item \textbf{Testing discipline:} Ease of updates might tempt skipping rigorous testing (though the paper notes testing is actually easier with short leases for staged rollouts)
+    \item \textbf{Drivolution server availability:} Becomes a dependency, though this is mitigated through replication
+    \item \textbf{Trust requirements:} Initial bootloader and SSL certificates must be established securely
+\end{itemize}
+
+\subsection{Relevance to Our Zero Trust Database Access Project}
+
+This research provides several valuable insights for our project:
+
+\subsubsection{Zero Trust Alignment}
+
+\begin{itemize}
+    \item \textbf{Continuous verification:} The lease system embodies "never trust, always verify"—clients must regularly re-authenticate to receive driver updates
+    \item \textbf{Least privilege:} The driver\_permission table enables fine-grained control over which clients access which databases with which drivers
+    \item \textbf{Explicit trust zones:} Each client-database interaction is mediated through the Drivolution server, creating an explicit trust boundary
+\end{itemize}
+
+\subsubsection{Practical Implementation Lessons}
+
+\begin{itemize}
+    \item \textbf{Centralized policy enforcement:} Storing access policies in the database (driver\_permission table) parallels our need for centralized Zero Trust policy management
+    \item \textbf{Transparent security:} The bootloader approach shows how security enhancements can be added without modifying applications—applicable to our gateway design
+    \item \textbf{Gradual rollout:} Short initial leases with gradual expansion demonstrate safe deployment of security updates—relevant for our anomaly detection model updates
+    \item \textbf{Backward compatibility:} Supporting both Drivolution and legacy connections shows how to introduce Zero Trust incrementally
+\end{itemize}
+
+\subsubsection{Architectural Patterns}
+
+\begin{itemize}
+    \item \textbf{Interception layer:} The bootloader pattern (intercept, verify, mediate) directly parallels our Zero Trust gateway architecture
+    \item \textbf{Dynamic configuration:} Delivering pre-configured drivers is analogous to delivering context-aware access policies
+    \item \textbf{Lease-based validity:} Time-limited driver validity maps to session tokens with expiration in Zero Trust
+    \item \textbf{Distributed servers:} Replicating Drivolution servers across cluster nodes provides a model for high-availability Zero Trust policy enforcement
+\end{itemize}
+
+\subsubsection{Security Considerations}
+
+\begin{itemize}
+    \item \textbf{Encrypted channels:} SSL/TLS requirements reinforce the importance of encrypting all database traffic in Zero Trust
+    \item \textbf{Signature verification:} Driver signing parallels the need to verify integrity of all components in our system
+    \item \textbf{Audit trails:} The ability to track which drivers were distributed to which clients informs our logging and compliance requirements
+    \item \textbf{Attack surface reduction:} Preventing outdated drivers parallels preventing outdated/vulnerable access patterns in Zero Trust
+\end{itemize}
+
+\subsection{Implications for zGate Proxy Architecture}
+
+While Drivolution addresses driver lifecycle management through client-side bootloaders and centralized driver distribution, our Zero Trust gateway requires a fundamentally different architectural approach. The Drivolution model operates as a transparent intermediary that facilitates driver delivery but does not actively mediate database communication protocols.
+
+For zGate proxy to effectively implement Zero Trust principles—including continuous authentication, fine-grained access control, query-level authorization, and real-time anomaly detection—we must adopt a protocol translation architecture. This necessitates implementing native database protocol handlers for each supported database technology (PostgreSQL, MySQL, Oracle, SQL Server, etc.), enabling zGate to function as a bidirectional protocol mediator.
+
+In this architecture, zGate presents itself as a database server to client applications, accepting connections through database-native protocols and performing authentication, authorization, and security checks. Simultaneously, zGate maintains authenticated connection pools to backend database servers, acting as a client that forwards validated queries and returns results. This dual-role architecture provides several critical capabilities:
+
+\begin{itemize}
+    \item \textbf{Deep packet inspection:} Full visibility into query content enables semantic analysis and policy enforcement at the query level
+    \item \textbf{Protocol-level security:} Independent verification of authentication credentials without relying on client-provided drivers
+    \item \textbf{Centralized policy enforcement:} All database traffic traverses zGate, ensuring no requests bypass security controls
+    \item \textbf{Connection pooling and optimization:} Backend connection management independent of client connection lifecycle
+    \item \textbf{Multi-database support:} Protocol handlers for different database technologies enable consistent security across heterogeneous environments
+    \item \textbf{Audit and compliance:} Complete transaction logs captured at the protocol level with full context
+\end{itemize}
+
+The implementation of database-specific protocol handlers represents significant engineering complexity, as each database vendor implements proprietary wire protocols with distinct authentication mechanisms, query formats, and result set encodings. However, this approach is essential for achieving the granular control and visibility required in a Zero Trust architecture, where trust must be continuously verified and access decisions made based on comprehensive contextual analysis.
+
+\subsection{Conclusion}
+
+Drivolution demonstrates that fundamental database infrastructure components can be redesigned to reduce operational complexity, improve security, and enable zero-downtime operations. The architecture's emphasis on centralized management, transparent operation, and compatibility with legacy systems provides a valuable blueprint for introducing Zero Trust principles into database access patterns. The successful implementation in production middleware (Sequoia) validates that such architectural changes are not merely theoretical but practically achievable in real-world systems.
+
+However, the requirements of Zero Trust security demand more than transparent driver management—they necessitate active protocol mediation. This insight directly motivates the zGate proxy architecture, where implementing backend drivers and connection handlers for each database technology enables the system to serve as an intelligent intermediary, presenting a server interface to clients while maintaining authenticated client connections to database backends. This bidirectional translation capability forms the foundation upon which comprehensive Zero Trust security controls can be built.
 \section{Paper 5}
 \section{Paper 6}
 \section{Paper 7}
+
+\section{Research References}
+
+\begin{itemize}
+    \item \textbf{Paper 1:} Generative AI-Enhanced Cybersecurity Framework for Enterprise Data Privacy Management \\
+    \url{https://www.mdpi.com/2073-431X/14/2/55}
+    
+    \item \textbf{Paper 2:} The Significance of Artificial Intelligence in Zero Trust Technologies: A Comprehensive Review \\
+    \url{https://link.springer.com/article/10.1186/s43067-024-00155-z}
+    
+    \item \textbf{Paper 3:} Securing Digital Identity in the Zero Trust Architecture: A Blockchain Approach to Privacy-Focused Multi-Factor Authentication \\
+    \url{https://ieeexplore.ieee.org/abstract/document/10505915}
+
+    \item \textbf{Paper 4:} Drivolution: Rethinking the Database Driver Lifecycle \\
+    \url{https://www.researchgate.net/publication/43651762_Drivolution_Rethinking_the_Database_Driver_Lifecycle}
+\end{itemize}
+

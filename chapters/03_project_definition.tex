@@ -2,6 +2,167 @@
 % 3. PROJECT DEFINITION
 % ============================================================
 \chapter{Project Definition}
-\section{Project Definition \& Scope}
+
+\section{Project Definition and Scope}
+zGate is a comprehensive Zero Trust database access gateway platform designed to eliminate credential exposure, enforce identity-based access control, and provide complete auditability for database operations in enterprise environments. The project encompasses the design, implementation, and deployment of a three-tier architecture that intercepts, authenticates, authorizes, and audits all database access in real-time.
+
+\subsection{System Components}
+The platform consists of three integrated components working in concert:
+
+\subsubsection{Gateway Server (zGate Core)}
+\begin{itemize}
+    \item \textbf{Protocol Handlers:} Native implementation of MySQL and MSSQL wire protocols, enabling transparent protocol-level interception and inspection of database traffic
+    \item \textbf{Authentication System:} JWT-based authentication with configurable token expiration, eliminating the need for users to possess database credentials
+    \item \textbf{Policy Engine:} Real-time policy evaluation engine that performs fresh permission lookups for every database operation, supporting role-based and custom permission models
+    \item \textbf{Dynamic Proxy Manager:} On-demand creation and management of database proxies with automatic port allocation, eliminating static listener configurations
+    \item \textbf{Temporary Credential System:} Automated generation of session-specific database users with unique, cryptographically secure credentials that are automatically purged upon session termination
+    \item \textbf{Session Management:} Per-user, per-database session tracking with context preservation and graceful cleanup mechanisms
+    \item \textbf{API Server:} RESTful API exposing authentication, database listing, connection management, and session control endpoints
+\end{itemize}
+
+\subsubsection{Command-Line Interface (zGate-CLI)}
+\begin{itemize}
+    \item \textbf{Secure Authentication Flow:} Interactive login process with secure credential input and token management
+    \item \textbf{Token Storage \& Management:} Cross-platform secure token storage using OS keyring with encrypted file fallback, automatic token refresh before expiration
+    \item \textbf{Database Discovery:} List all databases accessible to the authenticated user based on their assigned roles
+    \item \textbf{Connection Management:} Establish database connections through the gateway with automatic credential handling
+    \item \textbf{Session Status:} Real-time visibility into active sessions, token expiration, and authentication state
+    \item \textbf{Logout \& Cleanup:} Proper session termination with server-side revocation and local credential cleanup
+\end{itemize}
+
+\subsubsection{Web Administration Dashboard (zGate-WebUI)}
+Built with Next.js 16, React 19, and Radix UI, the dashboard provides comprehensive management capabilities:
+\begin{itemize}
+    \item \textbf{Overview Dashboard:} Real-time system metrics, active sessions, and access patterns visualization
+    \item \textbf{Database Management:} Configure database connections, credentials, and connection pooling parameters
+    \item \textbf{User Management:} Create, modify, and deactivate user accounts with role assignments
+    \item \textbf{Administrator Management:} Dedicated administrative user management with elevated privileges
+    \item \textbf{Access Control:} Define and manage roles with granular permission specifications including database scoping and privilege levels (read-only, read-write, admin)
+    \item \textbf{Active Sessions Monitoring:} View all active database sessions with user context, connection duration, and query activity
+    \item \textbf{Query Execution:} Direct query interface with policy enforcement and audit logging
+    \item \textbf{Shared Account Pools:} Manage reusable database account credentials for backend systems
+    \item \textbf{Per-User Database Accounts:} Personal database account management for individual user needs
+    \item \textbf{Activity Audit:} Comprehensive audit log viewer with filtering, search, and export capabilities
+    \item \textbf{Connected Databases:} Real-time status of database connectivity and health
+\end{itemize}
+
+\subsection{Scope Boundaries}
+
+\subsubsection{In Scope:}
+\begin{itemize}
+    \item MySQL, Postgres and MSSQL protocol support with complete authentication and query interception
+    \item Role-based access control with hierarchical permission models
+    \item Temporary database user lifecycle management
+    \item JWT-based authentication with automatic token refresh
+    \item Dynamic proxy allocation and connection pooling
+    \item Comprehensive audit logging of all database operations
+    \item RESTful API for programmatic access
+    \item Cross-platform CLI with secure credential storage
+    \item Web-based administration interface
+    \item Configuration-driven deployment (YAML-based)
+    \item Session-level access control and monitoring
+\end{itemize}
+
+\subsubsection{Out of Scope (Current Phase):}
+\begin{itemize}
+    \item Oracle, and other database protocol support (planned for future phases)
+    \item Real-time query analysis and threat detection algorithms
+    \item Integration with external identity providers (SAML, LDAP, Active Directory)
+    \item Multi-factor authentication (MFA) enforcement
+    \item Database activity replay and forensic analysis tools
+    \item High-availability and clustering capabilities
+    \item Advanced query rewriting and optimization
+    \item Automated compliance reporting generation
+\end{itemize}
+
 \section{Objectives}
-\section{Expected Academic Contribution}
+The zGate project aims to achieve the following measurable technical and security objectives:
+
+\subsection{Core Security Objectives}
+
+\subsubsection{Eliminate Direct Credential Exposure}
+\begin{itemize}
+    \item Implement JWT-based authentication system where users never handle production database passwords
+    \item Develop automatic temporary database user creation with session-specific, cryptographically secure credentials
+    \item Ensure temporary credentials are purged immediately upon session termination, preventing credential accumulation
+    \item Achieve zero instances of production credentials appearing in user configuration files, environment variables, or CLI history
+\end{itemize}
+
+\subsubsection{Enforce Identity-Based Access Control}
+\begin{itemize}
+    \item Build a role-based access control (RBAC) engine supporting hierarchical roles and custom permissions
+    \item Implement real-time permission evaluation that reflects role changes immediately without requiring user re-authentication
+    \item Support per-database, per-user authorization with multiple privilege levels (read-only, read-write, admin)
+    \item Enable policy decisions based on fresh configuration lookups rather than stale token claims
+\end{itemize}
+
+\subsubsection{Implement Protocol-Level Interception}
+\begin{itemize}
+    \item Develop native protocol handlers for MySQL and MSSQL wire protocols
+    \item Enable transparent database proxy functionality allowing standard client tools (MySQL Workbench, SSMS) to function without modification
+    \item Intercept and route all database traffic through the gateway with sub-100ms latency overhead for typical operations
+    \item Maintain protocol compatibility ensuring 100\% of standard database operations work through the proxy
+\end{itemize}
+
+\subsubsection{Provide Comprehensive Audit Logging}
+\begin{itemize}
+    \item Log all authentication attempts with user identity, timestamp, success/failure status, and failure reasons
+    \item Record complete session lifecycle: establishment, duration, database target, and termination circumstances
+    \item Capture connection metadata sufficient for forensic investigation and compliance verification
+    \item Generate structured logs compatible with standard log aggregation and SIEM tools
+\end{itemize}
+
+\subsection{Operational Objectives}
+
+\subsubsection{Deliver Multi-Component Integration}
+\begin{itemize}
+    \item Build RESTful API server exposing authentication, database listing, connection management, and session control
+    \item Develop cross-platform CLI with secure token storage using OS keyring and automatic token refresh
+    \item Create responsive web administration dashboard supporting all management functions
+    \item Ensure seamless data flow between all three components (Gateway, CLI, WebUI)
+\end{itemize}
+
+\subsubsection{Enable Centralized Administration}
+\begin{itemize}
+    \item Provide web-based interface for managing users, roles, database connections, and access policies
+    \item Support real-time monitoring of active sessions with ability to view connection details and terminate sessions
+    \item Allow administrators to modify permissions and configurations without system restarts
+    \item Implement user and admin account separation with appropriate privilege boundaries
+\end{itemize}
+
+\subsubsection{Support Multi-Database Environments}
+\begin{itemize}
+    \item Design modular architecture allowing support for MySQL and MSSQL through unified interfaces
+    \item Enable addition of new database protocols through implementation of standard handler and manager interfaces
+    \item Maintain per-database configuration for credentials, connection parameters, and access policies
+    \item Support simultaneous connections to multiple database instances of different types
+\end{itemize}
+
+\subsubsection{Ensure Production-Ready Stability}
+\begin{itemize}
+    \item Implement graceful error handling, connection cleanup, and resource management
+    \item Support concurrent sessions from multiple users without resource conflicts
+    \item Provide configuration validation and startup checks to prevent misconfiguration
+    \item Enable zero-downtime configuration reloads for non-breaking changes
+\end{itemize}
+
+\subsection{Academic and Technical Learning Objectives}
+
+\subsubsection{Demonstrate Applied Security Architecture}
+\begin{itemize}
+    \item Apply Zero Trust principles specifically to database access management
+    \item Implement secure authentication flows with proper token lifecycle management
+    \item Design authorization systems with clear separation between authentication, policy evaluation, and enforcement
+    \item Practice secure coding including input validation, SQL injection prevention, and secure credential generation
+\end{itemize}
+
+\subsubsection{Develop Full-Stack System Integration Skills}
+\begin{itemize}
+    \item Build high-performance network services in Go with concurrent connection handling
+    \item Implement database wire protocol parsers and connection proxies
+    \item Create modern React-based web interfaces with real-time data updates
+    \item Develop CLI applications with cross-platform compatibility and user experience focus
+    \item Design and document RESTful APIs for inter-component communication
+\end{itemize}
+
+

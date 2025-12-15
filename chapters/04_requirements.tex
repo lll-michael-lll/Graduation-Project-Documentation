@@ -2,8 +2,1060 @@
 % 4. REQUIREMENTS ENGINEERING
 % ============================================================
 \chapter{Requirements Engineering}
+
 \section{Functional Requirements}
+
+\subsection{FR-1: User Authentication \& Authorization}
+\begin{itemize}
+    \item User login with bcrypt password hashing
+    \item JWT token management (access \& refresh tokens)
+    \item Role-based access control (RBAC)
+    \item Custom user permissions
+\end{itemize}
+
+\subsection{FR-2: Database Connection Management}
+\begin{itemize}
+    \item Multi-database support (MSSQL, MySQL)
+    \item Dynamic proxy creation with auto port allocation
+    \item Temporary database users with auto-cleanup
+    \item Secure credential generation
+\end{itemize}
+
+\subsection{FR-3: Policy Engine}
+\begin{itemize}
+    \item Real-time access control validation
+    \item Permission-based database filtering
+    \item Multi-level permissions (read, write, admin)
+\end{itemize}
+
+\subsection{FR-4: Command Line Interface}
+\begin{itemize}
+    \item Auto token refresh
+    \item Database listing and connection
+    \item Session status monitoring
+\end{itemize}
+
+\subsection{FR-5: Web User Interface}
+\begin{itemize}
+    \item Database configuration management
+    \item User and role management
+    \item Admin account management
+    \item Active session monitoring
+    \item Shared account pools
+    \item Personal database accounts
+    \item Comprehensive audit trail
+\end{itemize}
+
+\subsection{FR-6: Protocol Handling}
+\begin{itemize}
+    \item MSSQL, MySQL and Postgres protocol support with temp user creation
+\end{itemize}
+
+\subsection{FR-7: Audit \& Logging}
+\begin{itemize}
+    \item Security event logging
+    \item User context in all logs
+    \item Structured logging with configurable levels
+\end{itemize}
+
 \section{Non-Functional Requirements}
+
+\subsection{NFR-1: Security}
+\begin{itemize}
+    \item Zero trust architecture principles
+    \item Bcrypt password hashing
+    \item Encrypted connections
+    \item Token-based session security
+\end{itemize}
+
+\textbf{Key Metrics:}
+\begin{itemize}
+    \item Access token expiry: 15 minutes
+    \item Refresh token expiry: 7 days
+    \item Session isolation with temporary users
+\end{itemize}
+
+\subsection{NFR-2: Performance}
+\begin{itemize}
+    \item Authentication: $<$ 500ms
+    \item Database listing: $<$ 200ms
+    \item Connection establishment: $<$ 2 seconds
+    \item WebUI page loads: $<$ 1 second
+\end{itemize}
+
+\subsection{NFR-3: Scalability Targets}
+\begin{itemize}
+    \item 100 concurrent sessions
+    \item 1000 auth requests/minute
+    \item Memory: $<$ 512MB at normal load
+\end{itemize}
+
+\subsection{NFR-4: Reliability}
+\begin{itemize}
+    \item 99.5\% uptime during business hours
+    \item Graceful error handling
+    \item Data integrity guarantees
+    \item Automatic resource cleanup
+\end{itemize}
+
+\subsection{NFR-5: Usability}
+\begin{itemize}
+    \item Unix-style CLI conventions
+    \item Responsive WebUI design
+    \item Helpful error messages
+    \item Comprehensive documentation
+\end{itemize}
+
+\subsection{NFR-6: Maintainability}
+\begin{itemize}
+    \item Go best practices
+    \item Externalized YAML configuration
+    \item Structured logging
+    \item Health check endpoints
+\end{itemize}
+
+\subsection{NFR-7: Portability}
+\begin{itemize}
+    \item Cross-platform CLI (Linux, macOS, Windows)
+    \item Modern browser support
+    \item Docker deployment support
+\end{itemize}
+
+\subsection{NFR-8: Compatibility}
+\begin{itemize}
+    \item MSSQL Server 2016+
+    \item MySQL 5.7+
+    \item API versioning
+    \item Backward compatibility
+\end{itemize}
+
 \section{Actors \& Use Cases}
+
+\subsection{System Actors}
+
+\subsubsection{Actor descriptions}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/actor-diagram.png}
+    \caption{Overview of system actors: End Users, System Administrators, Super Administrators, and Backend Databases}
+    \label{fig:actor-diagram}
+\end{figure}
+
+\subsubsection{End User / Developer}
+\begin{itemize}
+    \item \textbf{Description:} A regular user who needs to access databases for development, analytics, or operations
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Authenticate with the system using CLI
+        \item Request access to authorized databases
+        \item Execute database queries within granted permissions
+    \end{itemize}
+    \item \textbf{Technical Level:} Intermediate (familiar with command line and database clients)
+\end{itemize}
+
+\subsubsection{System Administrator}
+\begin{itemize}
+    \item \textbf{Description:} An admin user responsible for day-to-day management of the zGate platform
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Manage user accounts and role assignments
+        \item Configure database connections
+        \item Monitor active sessions
+        \item Review audit logs
+        \item Manage shared account pools
+    \end{itemize}
+    \item \textbf{Technical Level:} Advanced (understands database administration and security)
+\end{itemize}
+
+\subsubsection{Super Administrator}
+\begin{itemize}
+    \item \textbf{Description:} A privileged admin with full control over the system
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Create and manage admin accounts
+        \item Configure system-wide settings
+        \item Manage roles and permissions
+        \item Handle security incidents
+    \end{itemize}
+    \item \textbf{Technical Level:} Expert (deep understanding of security and database systems)
+\end{itemize}
+
+\subsubsection{zGate Server}
+\begin{itemize}
+    \item \textbf{Description:} The core backend system providing authentication, authorization, and proxy services
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Authenticate users and issue tokens
+        \item Enforce access policies
+        \item Create and manage temporary database users
+        \item Proxy database connections
+        \item Maintain audit logs
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{zGate CLI}
+\begin{itemize}
+    \item \textbf{Description:} Command-line client application for end users
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Provide user-friendly interface for authentication
+        \item Manage token storage and refresh
+        \item Display available databases
+        \item Establish database connections
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{zGate WebUI}
+\begin{itemize}
+    \item \textbf{Description:} Web-based administration dashboard
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Provide graphical interface for system administration
+        \item Display real-time system status
+        \item Facilitate configuration management
+        \item Present audit trail visualization
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Backend Databases}
+\begin{itemize}
+    \item \textbf{Description:} Target database systems (MSSQL, MySQL) that users need to access
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Store application data
+        \item Accept connections from zGate proxy
+        \item Enforce database-level permissions
+    \end{itemize}
+\end{itemize}
+
+\subsection{Use Case Catalog}
+
+\subsubsection{UC-1: User Authentication via CLI}
+\textbf{Actor:} End User \\
+\textbf{Preconditions:} User has valid credentials
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item User executes \texttt{zgate login} command
+    \item CLI prompts for username and password
+    \item CLI sends credentials to zGate Server
+    \item Server validates credentials against user configuration
+    \item Server generates access and refresh tokens
+    \item Server returns tokens to CLI
+    \item CLI stores tokens securely in OS keyring
+\end{enumerate}
+
+\textbf{Postconditions:} User is authenticated and tokens are stored
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 3a: Network connection fails $\rightarrow$ CLI displays error and retries
+    \item 4a: Invalid credentials $\rightarrow$ Server returns 401, CLI displays error
+\end{itemize}
+
+\subsubsection{UC-2: List Available Databases}
+\textbf{Actor:} End User \\
+\textbf{Preconditions:} User is authenticated
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item User executes \texttt{zgate list} command
+    \item CLI retrieves stored access token
+    \item CLI sends list request to zGate Server with token
+    \item Server validates token signature and expiry
+    \item Server retrieves user permissions from configuration
+    \item Server filters database list based on user permissions
+    \item Server returns list of accessible databases with permission levels
+    \item CLI displays formatted database list
+\end{enumerate}
+
+\textbf{Postconditions:} User sees their accessible databases
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 2a: Token expired $\rightarrow$ CLI auto-refreshes using refresh token
+    \item 4a: Token invalid $\rightarrow$ CLI prompts for re-login
+\end{itemize}
+
+\subsubsection{UC-3: Connect to Database}
+\textbf{Actor:} End User \\
+\textbf{Preconditions:} User is authenticated and has permission to target database
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item User executes \texttt{zgate connect --database <db\_name>}
+    \item CLI sends connection request to zGate Server
+    \item Server validates user has permission for requested database
+    \item Server retrieves database configuration
+    \item Server allocates dynamic local port for proxy
+    \item Server retrieves protocol handler for database type
+    \item Server creates temporary database user with appropriate permissions
+    \item Server establishes connection to backend database
+    \item Server starts proxy listener on allocated port
+    \item Server returns connection details (host, port, temp credentials) to CLI
+    \item CLI displays connection information to user
+    \item User connects using database client with provided credentials
+\end{enumerate}
+
+\textbf{Postconditions:} Secure proxy connection established, temporary user created
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 3a: User lacks permission $\rightarrow$ Server returns 403, CLI displays error
+    \item 4a: Database not found $\rightarrow$ Server returns 404
+    \item 7a: Backend database unavailable $\rightarrow$ Server returns error, cleanup any partial state
+    \item 7b: Temporary user creation fails $\rightarrow$ Server aborts and returns error
+\end{itemize}
+
+\subsubsection{UC-4: Auto Disconnect on Session End}
+\textbf{Actor:} System (zGate Server) \\
+\textbf{Trigger:} User terminates database connection or network fails
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Server detects connection closure
+    \item Server drops temporary database user from backend
+    \item Server stops proxy listener
+    \item Server releases allocated port
+    \item Server logs disconnect event with user context
+\end{enumerate}
+
+\textbf{Postconditions:} All session resources cleaned up, temporary user deleted
+
+\subsubsection{UC-5: Admin - Add Database Configuration}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Databases page
+    \item Admin clicks "Add Database" button
+    \item WebUI displays database creation form
+    \item Admin enters database details (name, type, backend address, admin credentials, permissions)
+    \item WebUI validates form inputs
+    \item WebUI sends create request to zGate Server API
+    \item Server validates admin token
+    \item Server tests connection to backend database
+    \item Server adds database configuration
+    \item Server persists configuration to databases.yaml
+    \item Server returns success response
+    \item WebUI displays updated database list
+\end{enumerate}
+
+\textbf{Postconditions:} New database is available in configuration
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 5a: Validation fails $\rightarrow$ Display errors on form
+    \item 8a: Backend connection test fails $\rightarrow$ Return error, don't persist
+    \item 9a: Duplicate database name $\rightarrow$ Return error
+\end{itemize}
+
+\subsubsection{UC-6: Admin - Create User with Roles}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI, roles exist
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Users page
+    \item Admin clicks "Create User" button
+    \item WebUI displays user creation form
+    \item Admin enters username, password, and selects roles
+    \item WebUI validates form inputs
+    \item WebUI sends create user request to zGate Server API
+    \item Server validates admin token
+    \item Server hashes password using bcrypt
+    \item Server adds user configuration with assigned roles
+    \item Server persists configuration to users.yaml
+    \item Server returns success response
+    \item WebUI displays updated user list
+\end{enumerate}
+
+\textbf{Postconditions:} New user can authenticate with assigned permissions
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 5a: Validation fails $\rightarrow$ Display errors
+    \item 9a: Username already exists $\rightarrow$ Return error
+\end{itemize}
+
+\subsubsection{UC-7: Admin - Define Role with Permissions}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI, databases exist
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Access Control page
+    \item Admin clicks "Create Role" button
+    \item WebUI displays role creation form
+    \item Admin enters role name and description
+    \item Admin selects databases and permission levels for each
+    \item WebUI validates inputs
+    \item WebUI sends create role request to zGate Server API
+    \item Server validates admin token
+    \item Server adds role configuration
+    \item Server persists configuration to roles.yaml
+    \item Server returns success response
+    \item WebUI displays updated role list
+\end{enumerate}
+
+\textbf{Postconditions:} New role is available for assignment to users
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 6a: Invalid permission level $\rightarrow$ Display error
+    \item 9a: Role name already exists $\rightarrow$ Return error
+\end{itemize}
+
+\subsubsection{UC-8: Admin - Monitor Active Sessions}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Sessions page
+    \item WebUI sends request to fetch active sessions
+    \item Server validates admin token
+    \item Server retrieves all active proxy sessions
+    \item Server returns session details (user, database, start time, connection info)
+    \item WebUI displays sessions in table format
+    \item Admin reviews active connections
+\end{enumerate}
+
+\textbf{Postconditions:} Admin has visibility into current system usage
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item Admin terminates a session:
+    \begin{enumerate}
+        \item Admin clicks "Terminate" on a session
+        \item WebUI confirms action
+        \item Server closes proxy connection
+        \item Server deletes temporary database user
+        \item WebUI updates session list
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{UC-9: Admin - Review Audit Logs}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Activity Audit page
+    \item Admin optionally applies filters (user, date range, action type)
+    \item WebUI sends filtered log request to server
+    \item Server validates admin token
+    \item Server retrieves matching audit log entries
+    \item Server returns paginated log data
+    \item WebUI displays logs in chronological order with search/filter capabilities
+\end{enumerate}
+
+\textbf{Postconditions:} Admin can track user activities and security events
+
+\subsubsection{UC-10: Auto Token Refresh}
+\textbf{Actor:} System (CLI) \\
+\textbf{Trigger:} Access token nearing expiry
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item CLI detects access token will expire within 1 minute
+    \item CLI retrieves refresh token from secure storage
+    \item CLI sends refresh request to zGate Server
+    \item Server validates refresh token
+    \item Server generates new access token
+    \item Server returns new access token
+    \item CLI updates stored access token
+    \item CLI proceeds with original request
+\end{enumerate}
+
+\textbf{Postconditions:} User session continues seamlessly
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 4a: Refresh token expired $\rightarrow$ CLI prompts user to login again
+\end{itemize}
+
+\subsubsection{UC-11: Logout and Token Revocation}
+\textbf{Actor:} End User \\
+\textbf{Preconditions:} User is authenticated
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item User executes \texttt{zgate logout} command
+    \item CLI retrieves stored tokens
+    \item CLI sends logout request to zGate Server with refresh token
+    \item Server invalidates refresh token
+    \item Server returns success response
+    \item CLI deletes tokens from secure storage
+    \item CLI confirms logout to user
+\end{enumerate}
+
+\textbf{Postconditions:} User session is terminated, tokens are invalid
+
+\subsubsection{UC-12: Configure Shared Account Pool}
+\textbf{Actor:} System Administrator \\
+\textbf{Preconditions:} Admin is logged into WebUI, database exists
+
+\textbf{Main Flow:}
+\begin{enumerate}
+    \item Admin navigates to Shared Accounts page
+    \item Admin clicks "Add Shared Account"
+    \item WebUI displays configuration form
+    \item Admin selects database, permission level, enters credentials, sets max concurrent users
+    \item WebUI validates inputs
+    \item WebUI sends create request to server
+    \item Server validates admin token
+    \item Server tests credentials against database
+    \item Server creates shared account pool configuration
+    \item Server persists configuration
+    \item WebUI displays updated shared account list
+\end{enumerate}
+
+\textbf{Postconditions:} Shared account pool is available for session allocation
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item 8a: Credential test fails $\rightarrow$ Return error, don't persist
+\end{itemize}
+
 \section{Use Case Diagrams}
+
+\subsection{End User Case Diagrams}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/enduser-use-cases.png}
+    \caption{End user workflows: authentication, database listing, connection, session management, and logout}
+    \label{fig:enduser-use-cases}
+\end{figure}
+
+\subsection{Administrator Use Case Diagrams}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/administrator-use-cases.png}
+    \caption{Administrator functions: database configuration, user and role management, session monitoring, and audit review}
+    \label{fig:administrator-use-cases}
+\end{figure}
+\subsection{Complete System Use Case Diagrams}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/complete-system-use-case.png}
+    \caption{Complete system use case diagram showing all actor interactions within the zGate Gateway}
+    \label{fig:complete-system-use-case}
+\end{figure}
+\subsection{System Components Interaction}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/system-component-interaction.png}
+    \caption{System component interactions showing data flow between CLI, Gateway Server, Web Dashboard, Policy Engine, and Backend Databases}
+    \label{fig:system-component-interaction}
+\end{figure}
 \section{User Stories}
+
+\subsection{End User Stories}
+
+\subsubsection{Epic 1: Secure Database Access}
+
+\paragraph{US-1.1: Login with Credentials}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an end user,} \\
+\textbf{I want to} \\
+login using my username and password via the CLI \\
+\textbf{So that} \\
+I can securely authenticate and access authorized databases
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item CLI prompts for username and password
+    \item Credentials are validated against the server
+    \item Access and refresh tokens are generated on success
+    \item Meaningful error message shown for invalid credentials
+    \item Login completes within 500ms
+\end{itemize}
+
+\paragraph{US-1.2: View My Accessible Databases}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an authenticated user,} \\
+\textbf{I want to} \\
+list all databases I have permission to access \\
+\textbf{So that} \\
+I know which databases I can connect to
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Command \texttt{zgate list} shows my accessible databases
+    \item Each database shows: name, type, my permission level, status, description
+    \item Only databases I have permission for are displayed
+    \item Offline databases are clearly marked
+    \item List loads within 200ms
+\end{itemize}
+
+\paragraph{US-1.3: Connect to a Database}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an authenticated user,} \\
+\textbf{I want to} \\
+connect to a specific database using the CLI \\
+\textbf{So that} \\
+I can access data within my permissions
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Command \texttt{zgate connect --database <name>} initiates connection
+    \item System validates my permission before allowing access
+    \item Temporary credentials are auto-generated
+    \item Connection details (host, port, username, password) are displayed
+    \item I can use any database client with the provided credentials
+    \item I receive clear error if I lack permission
+    \item Connection establishes within 2 seconds
+\end{itemize}
+
+\paragraph{US-1.4: Automatic Session Cleanup}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an end user,} \\
+\textbf{I want} \\
+my temporary database access to be automatically cleaned up when I disconnect \\
+\textbf{So that} \\
+I don't have to worry about security hygiene
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Temporary database user is deleted when I close my connection
+    \item Proxy resources are released automatically
+    \item Cleanup happens within 30 seconds of disconnect
+    \item No manual intervention required
+\end{itemize}
+
+\paragraph{US-1.5: Seamless Token Refresh}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an authenticated user,} \\
+\textbf{I want} \\
+my session to continue without interruption \\
+\textbf{So that} \\
+I don't have to re-login frequently
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Access tokens are automatically refreshed before expiry
+    \item I don't experience any interruption during refresh
+    \item I'm only prompted to re-login if my refresh token expires
+    \item Refresh happens transparently in the background
+\end{itemize}
+
+\paragraph{US-1.6: Check Session Status}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an authenticated user,} \\
+\textbf{I want to} \\
+check my current session status \\
+\textbf{So that} \\
+I know if I'm logged in and when my session expires
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Command \texttt{zgate status} shows my current session
+    \item Display includes: username, token expiry, server connection status
+    \item Clear indication if I'm not logged in
+\end{itemize}
+
+\paragraph{US-1.7: Secure Logout}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As an authenticated user,} \\
+\textbf{I want to} \\
+logout and revoke my session \\
+\textbf{So that} \\
+my credentials are invalidated when I'm done
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Command \texttt{zgate logout} terminates my session
+    \item Tokens are revoked on the server
+    \item Local token storage is cleared
+    \item Confirmation message is displayed
+\end{itemize}
+
+\subsection{Administrator Stories}
+
+\subsubsection{Epic 2: User \& Access Management}
+
+\paragraph{US-2.1: Create User Accounts}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+create new user accounts with assigned roles \\
+\textbf{So that} \\
+team members can access databases based on their responsibilities
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can access user creation form in WebUI
+    \item I can enter username and initial password
+    \item I can assign one or more roles to the user
+    \item Password is securely hashed before storage
+    \item User can login immediately after creation
+    \item Duplicate usernames are prevented with clear error
+\end{itemize}
+
+\paragraph{US-2.2: Define Roles with Granular Permissions}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+define roles with specific database permissions \\
+\textbf{So that} \\
+I can implement least-privilege access control
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can create named roles (e.g., "data\_analyst", "developer")
+    \item For each role, I can specify permissions per database
+    \item Permission levels include: read, write, admin
+    \item Roles can be assigned to multiple users
+    \item Changing role permissions affects all assigned users immediately
+\end{itemize}
+
+\paragraph{US-2.3: Manage User-Role Assignments}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+add or remove roles from existing users \\
+\textbf{So that} \\
+I can adjust access as team responsibilities change
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can view current role assignments for any user
+    \item I can add new roles to a user
+    \item I can remove roles from a user
+    \item Changes take effect immediately for new connections
+    \item Audit log captures all role changes
+\end{itemize}
+
+\subsubsection{Epic 3: Database Configuration}
+
+\paragraph{US-3.1: Add Database Configurations}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+add new database connections to the system \\
+\textbf{So that} \\
+users can access additional data sources
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can provide: name, type (MSSQL/MySQL), backend address, admin credentials
+    \item I can specify available permission levels for the database
+    \item Connection is tested before saving
+    \item Configuration is persisted to databases.yaml
+    \item Database appears in user lists immediately
+    \item Clear error shown if connection test fails
+\end{itemize}
+
+\paragraph{US-3.2: Edit Database Settings}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+update existing database configurations \\
+\textbf{So that} \\
+I can reflect infrastructure changes
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can modify connection details (address, credentials)
+    \item I can update available permissions
+    \item Changes are validated before saving
+    \item Active sessions using old config are not disrupted
+    \item New connections use updated configuration
+\end{itemize}
+
+\paragraph{US-3.3: Remove Decommissioned Databases}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+delete database configurations that are no longer needed \\
+\textbf{So that} \\
+users don't see outdated options
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can delete a database configuration
+    \item System confirms deletion to prevent accidents
+    \item Database is immediately removed from user lists
+    \item Deletion is logged in audit trail
+\end{itemize}
+
+\subsubsection{Epic 4: Monitoring \& Audit}
+
+\paragraph{US-4.1: Monitor Active Sessions}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+see all active database sessions in real-time \\
+\textbf{So that} \\
+I can monitor system usage and detect anomalies
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can view list of all active connections
+    \item Each session shows: user, database, connection time, status
+    \item List updates in real-time or on refresh
+    \item I can see connection details (proxy port, temp username)
+\end{itemize}
+
+\paragraph{US-4.2: Terminate Suspicious Sessions}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+forcefully terminate active sessions \\
+\textbf{So that} \\
+I can respond to security incidents
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can select any active session and terminate it
+    \item System confirms action before executing
+    \item Session proxy is closed immediately
+    \item Temporary database user is deleted
+    \item Action is logged in audit trail
+    \item User receives connection closed error
+\end{itemize}
+
+\paragraph{US-4.3: Review Comprehensive Audit Logs}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+review all user activities and system events \\
+\textbf{So that} \\
+I can investigate issues and maintain compliance
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can view chronological audit log in WebUI
+    \item Each entry includes: timestamp, user, action, outcome, context
+    \item I can filter by: user, date range, action type, success/failure
+    \item I can search logs by keywords
+    \item Logs include: logins, connection requests, admin actions, errors
+    \item Logs are paginated for performance
+\end{itemize}
+
+\paragraph{US-4.4: Export Audit Logs}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+export audit logs for compliance reporting \\
+\textbf{So that} \\
+I can provide evidence of access controls
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can export filtered logs to CSV or JSON
+    \item Export includes all relevant fields
+    \item Large exports don't timeout or crash
+\end{itemize}
+
+\subsubsection{Epic 5: Advanced Access Control}
+
+\paragraph{US-5.1: Configure Shared Account Pools}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+create pools of shared database credentials \\
+\textbf{So that} \\
+multiple users can share backend accounts efficiently
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can create shared account pool for a database
+    \item I can specify: database, permission level, credentials, max concurrent users
+    \item System allocates shared account when user connects
+    \item System prevents exceeding max concurrent limit
+    \item User transparently gets shared credentials
+    \item Account is returned to pool on disconnect
+\end{itemize}
+
+\paragraph{US-5.2: Assign Personal Database Accounts}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+assign personal database accounts to specific users \\
+\textbf{So that} \\
+some users have dedicated credentials for auditing
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can create personal account for user-database pair
+    \item I can provide specific database credentials
+    \item User always gets their personal account when connecting
+    \item Personal accounts override shared pools
+    \item I can revoke personal accounts
+\end{itemize}
+
+\paragraph{US-5.3: Define Custom User Permissions}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a system administrator,} \\
+\textbf{I want to} \\
+grant custom permissions to individual users beyond their roles \\
+\textbf{So that} \\
+I can handle special cases without creating new roles
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can add database permissions directly to a user
+    \item Custom permissions combine with role-based permissions
+    \item I can see both role and custom permissions in user view
+    \item Custom permissions can be removed independently
+\end{itemize}
+
+\subsection{Super Administrator Stories}
+
+\subsubsection{Epic 6: Platform Administration}
+
+\paragraph{US-6.1: Manage Admin Accounts}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a super administrator,} \\
+\textbf{I want to} \\
+create and manage admin user accounts \\
+\textbf{So that} \\
+I can grant administrative access to trusted personnel
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can create new admin accounts with secure passwords
+    \item I can view all existing admin accounts
+    \item I can disable or delete admin accounts
+    \item Regular users cannot access admin functions
+    \item Admin account changes are logged
+\end{itemize}
+
+\paragraph{US-6.2: Configure System Settings}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a super administrator,} \\
+\textbf{I want to} \\
+configure system-wide settings \\
+\textbf{So that} \\
+I can tune the platform for our environment
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can set token expiry durations (access and refresh)
+    \item I can configure backend connection timeouts
+    \item I can set log levels (DEBUG, INFO, WARN, ERROR)
+    \item Settings are validated before applying
+    \item Configuration changes are persisted
+\end{itemize}
+
+\paragraph{US-6.3: Perform System Health Checks}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As a super administrator,} \\
+\textbf{I want to} \\
+check the health of all system components \\
+\textbf{So that} \\
+I can proactively identify issues
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item I can view status of: API server, proxy manager, backend databases
+    \item Each database shows: online/offline status, last check time
+    \item I can manually trigger connectivity tests
+    \item Failed health checks generate alerts
+\end{itemize}
+
+\subsection{System Stories (Non-Interactive)}
+
+\subsubsection{Epic 7: Automated Operations}
+
+\paragraph{US-7.1: Automatic Resource Cleanup}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As the zGate system,} \\
+\textbf{I need to} \\
+automatically clean up temporary resources \\
+\textbf{So that} \\
+database systems don't accumulate orphaned users
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Temporary database users are deleted within 30s of disconnect
+    \item Proxy listeners are stopped immediately on session close
+    \item Allocated ports are freed for reuse
+    \item Cleanup happens even if client disconnects ungracefully
+    \item Failed cleanup attempts are retried with exponential backoff
+    \item Persistent cleanup failures are logged as errors
+\end{itemize}
+
+\paragraph{US-7.2: Real-Time Permission Enforcement}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As the zGate system,} \\
+\textbf{I need to} \\
+evaluate permissions at request time using current configuration \\
+\textbf{So that} \\
+permission changes take effect immediately
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item Each connection request checks latest roles and permissions
+    \item Configuration file changes are detected and reloaded
+    \item Users with revoked permissions cannot establish new connections
+    \item Permission checks complete within 50ms
+    \item Permission evaluation is thread-safe
+\end{itemize}
+
+\paragraph{US-7.3: Graceful Error Handling}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As the zGate system,} \\
+\textbf{I need to} \\
+handle errors gracefully without leaking sensitive information \\
+\textbf{So that} \\
+users get helpful feedback while maintaining security
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item User-facing errors don't expose internal paths or stack traces
+    \item Authentication failures return generic "invalid credentials" message
+    \item Network errors suggest retry with backoff
+    \item All errors are logged with full context
+    \item Critical errors trigger alerts to administrators
+\end{itemize}
+
+\paragraph{US-7.4: Comprehensive Audit Logging}
+\mbox{}\\[0.5em]
+
+\noindent\textbf{As the zGate system,} \\
+\textbf{I need to} \\
+log all security-relevant events \\
+\textbf{So that} \\
+administrators can audit access and investigate incidents
+
+\noindent\textbf{Acceptance Criteria:}
+\begin{itemize}
+    \item All authentication attempts are logged (success and failure)
+    \item All database access requests are logged with user context
+    \item All administrative actions are logged
+    \item Logs include: timestamp, user, action, outcome, IP address, session ID
+    \item Logs are structured (JSON format option)
+    \item Log rotation prevents disk exhaustion
+    \item Sensitive data (passwords, credentials) are never logged
+\end{itemize}
