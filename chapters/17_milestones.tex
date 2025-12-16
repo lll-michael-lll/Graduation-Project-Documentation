@@ -2,10 +2,237 @@
 % 17. MILESTONES
 % ============================================================
 \chapter{Milestones}
-\section{Term 1 Milestone Roadmap}
-\subsection{Milestone 1}
-\subsection{Milestone 2}
-\subsection{Milestone 3}
-\subsection{Milestone 4}
-\subsection{Milestone 5}
-\section{Timeline Chart (Gantt-like)}
+
+The development of zGate is structured around six critical milestones that progressively build the system from foundational research to a production-ready solution. The first three milestones, which have been successfully completed during Term~1, established the architectural core and delivered a functional Proof of Concept (POC). The remaining three milestones, scheduled for Term~2, focus on layering security integrations, governance features, and comprehensive validation.
+
+\section{Milestone Roadmap}
+
+\subsection{Milestone 1: Problem Definition \& Market Validation}
+\textbf{Status:} Completed \hfill \textbf{Duration:} September 5 -- October 15
+
+This foundational phase established the theoretical framework for zGate by validating the necessity for a granular, identity-based database proxy within the Zero Trust security paradigm.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Define the scope of the ``Zero Trust Database Access'' problem domain.
+    \item Benchmark existing solutions and identify market gaps.
+    \item Establish the initial system architecture.
+\end{itemize}
+
+\subsubsection{Key Activities}
+\begin{itemize}
+    \item \textbf{Gap Analysis:} Investigated the limitations of traditional VPNs and existing database proxies such as Hoop.dev and PgBouncer. The analysis revealed critical weaknesses in access granularity and user experience that zGate aims to address.
+    \item \textbf{Architecture Design:} Defined the ``Man-in-the-Middle'' architecture required to intercept binary wire protocols for MySQL, PostgreSQL, and MongoDB.
+    \item \textbf{Requirements Specification:} Finalized the requirement for protocol-agnostic handling and identity provider integration.
+    \item \textbf{Feasibility Study:} Researched the technical viability of intercepting binary wire protocols without introducing significant latency overhead.
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{itemize}
+    \item Validated Software Requirements Specification (SRS).
+    \item Initial architectural diagrams and system design documents.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Milestone 2: Technical Skill Acquisition \& Research}
+\textbf{Status:} Completed \hfill \textbf{Duration:} October 16 -- November 15
+
+Following the initial research phase, this milestone was dedicated to equipping the development team with the specialized technical skills and theoretical knowledge required to build a high-performance database proxy.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Acquire proficiency in the Go programming language.
+    \item Understand low-level database communication protocols.
+    \item Explore modern observability concepts and standards.
+\end{itemize}
+
+\subsubsection{Key Focus Areas}
+\begin{itemize}
+    \item \textbf{Database Protocol Engineering:} Conducted in-depth study of the binary wire protocols for MySQL, PostgreSQL, and MongoDB. This involved reverse-engineering how databases handle handshakes, authentication sequences, and query transmission at the packet level.
+    \item \textbf{Go Language Mastery:} Focused on mastering the Go programming language, with particular emphasis on its concurrency primitives---Goroutines and Channels---which are essential for managing multiple simultaneous network connections efficiently.
+    \item \textbf{Observability Research:} Investigated the principles of system observability, including OpenTelemetry standards and eBPF concepts for potential kernel-level tracing in future iterations.
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{itemize}
+    \item Team proficiency in the project's technology stack.
+    \item Internal documentation on protocol structures.
+    \item Initial Go practice implementations and code samples.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Milestone 3: Functional Proof of Concept \& Core Features Delivery}
+\textbf{Status:} Completed \hfill \textbf{Duration:} November 16 -- December 15
+
+Originally scoped to focus solely on connection handling, this milestone was strategically expanded to deliver a complete Proof of Concept. The POC encompasses the initial web interface, basic security mechanisms, and internal token management capabilities.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Validate the full technology stack from the web frontend to database connectivity.
+    \item Demonstrate that the proxy can handle traffic, mask sensitive data, and manage internal sessions.
+\end{itemize}
+
+\subsubsection{Key Activities}
+\begin{itemize}
+    \item \textbf{Proxy Core Development:}
+    \begin{itemize}
+        \item Implemented TCP listeners and connection pooling mechanisms for high-concurrency traffic.
+        \item Developed protocol parsers for MySQL, PostgreSQL, and MongoDB packets.
+        \item Built the core data forwarding logic with support for bidirectional communication.
+        \item Handled CLI errors and established graceful shutdown procedures.
+    \end{itemize}
+    \item \textbf{Security Logic Implementation:}
+    \begin{itemize}
+        \item Implemented Data Masking functionality using regex-based redaction for PII.
+        \item Built Token Refresh and Revocation mechanisms for session management.
+        \item Developed OAuth2-style authentication flows (login, refresh, logout).
+        \item Implemented AES encryption for secure storage of credentials.
+    \end{itemize}
+    \item \textbf{User Interface Development:}
+    \begin{itemize}
+        \item Developed the Initial Admin Dashboard Web UI to visualize system status.
+        \item Built components for managing database accounts and access control roles.
+        \item Integrated real-time session and query monitoring capabilities.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{itemize}
+    \item A working end-to-end Proof of Concept demonstrating core functionality.
+    \item Admin dashboard with system visibility and management capabilities.
+    \item Functional data masking and token management subsystems.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Milestone 4: External IAM \& Identity Integration}
+\textbf{Status:} Planned \hfill \textbf{Duration:} January -- February (Term 2)
+
+This milestone bridges the internal token system established in Milestone~3 with external Identity Providers (IdP), enabling enterprise-grade Single Sign-On (SSO) capabilities.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Integrate external Identity Providers for SSO authentication.
+    \item Replace internal authentication with federated identity management.
+    \item Map external identity claims to internal Role-Based Access Control (RBAC) policies.
+\end{itemize}
+
+\subsubsection{Key Activities}
+\begin{itemize}
+    \item \textbf{Third-Party Integration:} Connect the Admin Dashboard and Proxy to external providers (Google, Okta, Azure AD) to enable SSO workflows.
+    \item \textbf{Authentication Flow:} Implement the OAuth2/OIDC handshake where the interface redirects to the IdP and receives identity tokens.
+    \item \textbf{RBAC Mapping:} Map identity claims from third-party providers to user roles within the zGate policy engine.
+\end{itemize}
+
+\subsubsection{Expected Deliverables}
+\begin{itemize}
+    \item SSO login capability via ``Sign in with Google/Okta'' or other configured IdPs.
+    \item Removal of hardcoded or internal-only authentication from the POC.
+    \item Comprehensive documentation for IdP configuration.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Milestone 5: Observability \& Production Readiness}
+\textbf{Status:} Planned \hfill \textbf{Duration:} March -- April (Term 2)
+
+This milestone transforms the initial dashboard into a comprehensive monitoring platform suitable for production deployment.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Implement comprehensive metrics visualization and monitoring.
+    \item Establish audit logging for compliance requirements.
+    \item Ensure system robustness under various failure conditions.
+\end{itemize}
+
+\subsubsection{Key Activities}
+\begin{itemize}
+    \item \textbf{Metric Visualization:} Populate the dashboard with real-time graphs utilizing connection pooling metrics and system health indicators.
+    \item \textbf{Audit Logging:} Structure session data and access events into a searchable audit trail for compliance and forensic purposes.
+    \item \textbf{Error Handling Polish:} Implement graceful handling of all possible error conditions across the system, ensuring stability under load.
+\end{itemize}
+
+\subsubsection{Expected Deliverables}
+\begin{itemize}
+    \item Production-ready Admin Dashboard with live metrics visualization.
+    \item Searchable audit logs with filtering and export capabilities.
+    \item Comprehensive error handling and graceful degradation.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Milestone 6: Final Validation, Benchmarking \& Delivery}
+\textbf{Status:} Planned \hfill \textbf{Duration:} May -- June (Term 2)
+
+The final milestone serves as a comprehensive quality assurance phase to ensure the system meets production standards and is fully documented.
+
+\subsubsection{Objectives}
+\begin{itemize}
+    \item Stress-test the system under realistic load conditions.
+    \item Validate security robustness through penetration testing.
+    \item Finalize all documentation and prepare for project handoff.
+\end{itemize}
+
+\subsubsection{Key Activities}
+\begin{itemize}
+    \item \textbf{Performance Benchmarking:} Execute load testing to measure latency overhead introduced by the proxy. Optimize Go code based on profiling results.
+    \item \textbf{Security Auditing:} Conduct internal penetration testing, including SQL injection and bypass attack attempts, to validate the robustness of the Policy Engine.
+    \item \textbf{Final Documentation:} Complete the Administrator's Guide, Developer Handbook, and final academic report.
+\end{itemize}
+
+\subsubsection{Expected Deliverables}
+\begin{itemize}
+    \item Final Source Code Release (v1.0).
+    \item Comprehensive Final Project Report.
+    \item Robust Demo Environment ready for final presentation.
+    \item Complete documentation suite (installation guides, API documentation, user manuals).
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\section{Timeline Overview}
+
+Table~\ref{tab:milestone-timeline} presents a consolidated view of all milestones with their respective timelines and completion status.
+
+\begin{table}[htbp]
+\centering
+\caption{Milestone Timeline Summary}
+\label{tab:milestone-timeline}
+\begin{tabular}{|c|l|l|c|}
+\hline
+\textbf{MS} & \textbf{Milestone Name} & \textbf{Timeline} & \textbf{Status} \\
+\hline
+1 & Problem Definition \& Market Validation & Sept 5 -- Oct 15 & $\checkmark$ Completed \\
+2 & Technical Skill Acquisition \& Research & Oct 16 -- Nov 15 & $\checkmark$ Completed \\
+3 & Functional POC \& Core Features & Nov 16 -- Dec 15 & $\checkmark$ Completed \\
+4 & External IAM \& Identity Integration & Jan -- Feb & Planned \\
+5 & Observability \& Production Readiness & Mar -- Apr & Planned \\
+6 & Final Validation \& Delivery & May -- June & Planned \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Term 1 Timeline Chart}
+
+Figure~\ref{fig:term1-timeline} illustrates the project timeline for Term~1, depicting the progression from the Planning \& Analysis phase through the Design phase and into the initial Development phase.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/Term 1 Timeline.jpeg}
+    \caption{Term 1 Project Timeline (September -- December)}
+    \label{fig:term1-timeline}
+\end{figure}
+
+% Note: For Term 2 Gantt chart, consider using the following Mermaid syntax:
+% gantt
+%     title Term 2 Development Timeline
+%     dateFormat  YYYY-MM-DD
+%     section Milestone 4
+%     IAM Integration           :m4, 2025-01-15, 45d
+%     section Milestone 5
+%     Observability & Metrics   :m5, after m4, 60d
+%     section Milestone 6
+%     Testing & Validation      :m6, after m5, 45d
+%     Final Documentation       :doc, after m5, 50d
