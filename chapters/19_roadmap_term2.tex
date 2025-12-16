@@ -2,7 +2,226 @@
 % 19. ROADMAP FOR TERM 2
 % ============================================================
 \chapter{Roadmap for Term 2}
+
+Term~2 represents the critical transition from a functional Proof of Concept to a production-ready database security solution. Building upon the foundational work completed in Term~1, the development team will focus on three primary areas: integrating enterprise-grade identity management, implementing comprehensive observability features, and conducting rigorous validation to ensure system reliability and security.
+
 \section{Remaining Features}
+
+The following features are scheduled for implementation during Term~2, organized by milestone and priority.
+
+\subsection{External Identity Provider Integration (Milestone 4)}
+
+The current POC utilizes an internal token-based authentication system. Term~2 will extend this to support federated identity management through external providers.
+
+\begin{itemize}
+    \item \textbf{OAuth2/OIDC Implementation:} Integrate industry-standard authentication protocols to enable Single Sign-On (SSO) capabilities.
+    \item \textbf{Identity Provider Support:} Configure connectors for major identity providers including:
+    \begin{itemize}
+        \item Google Workspace
+        \item Microsoft Azure Active Directory
+        \item Okta
+        \item Generic SAML 2.0 providers
+    \end{itemize}
+    \item \textbf{Claims-to-Role Mapping:} Develop a flexible mapping engine that translates IdP claims (groups, roles, attributes) to zGate's internal RBAC policies.
+    \item \textbf{Just-in-Time Provisioning:} Implement automatic user provisioning based on IdP attributes upon first login.
+\end{itemize}
+
+\subsection{Enhanced Observability Features (Milestone 5)}
+
+Transform the initial dashboard into a comprehensive monitoring and compliance platform.
+
+\begin{itemize}
+    \item \textbf{Real-Time Metrics Dashboard:}
+    \begin{itemize}
+        \item Connection pool utilization graphs
+        \item Query throughput and latency percentiles
+        \item Active session monitoring
+        \item Database health indicators
+    \end{itemize}
+    \item \textbf{Audit Logging System:}
+    \begin{itemize}
+        \item Structured logging of all database access events
+        \item Query content capture with optional redaction
+        \item User activity timeline visualization
+        \item Export capabilities for compliance reporting (CSV, JSON, SIEM integration)
+    \end{itemize}
+    \item \textbf{Alerting Framework:}
+    \begin{itemize}
+        \item Configurable threshold-based alerts
+        \item Anomaly detection for unusual access patterns
+        \item Integration with notification channels (email, Slack, webhooks)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Advanced Policy Engine Enhancements}
+
+Extend the current policy engine with more granular control mechanisms.
+
+\begin{itemize}
+    \item \textbf{Time-Based Access Controls:} Implement policies that restrict database access to specific time windows.
+    \item \textbf{Query Complexity Limits:} Add configurable limits on query complexity to prevent resource exhaustion.
+    \item \textbf{Row-Level Security Policies:} Develop mechanisms to enforce row-level filtering based on user identity.
+    \item \textbf{Dynamic Masking Rules:} Extend data masking to support context-aware redaction based on user roles.
+\end{itemize}
+
+%-----------------------------------------------------------
+
 \section{Architecture Improvements}
+
+Based on lessons learned during POC development, the following architectural enhancements are planned.
+
+\subsection{Scalability Enhancements}
+
+\begin{itemize}
+    \item \textbf{Horizontal Scaling Support:} Implement stateless proxy instances that can be load-balanced for high availability.
+    \item \textbf{Connection Multiplexing:} Optimize connection pooling to support higher concurrent user loads with fewer backend connections.
+    \item \textbf{Caching Layer:} Introduce caching for policy decisions and session metadata to reduce latency.
+\end{itemize}
+
+\subsection{Security Hardening}
+
+\begin{itemize}
+    \item \textbf{TLS Certificate Management:} Implement automated certificate rotation and enhanced certificate validation.
+    \item \textbf{Secret Management Integration:} Support for external secret stores (HashiCorp Vault, AWS Secrets Manager).
+    \item \textbf{Audit Trail Integrity:} Implement cryptographic signing of audit logs to ensure tamper-evidence.
+\end{itemize}
+
+\subsection{Deployment Improvements}
+
+\begin{itemize}
+    \item \textbf{Container Orchestration:} Official Docker images and Kubernetes Helm charts for production deployment.
+    \item \textbf{Configuration Management:} Migration to environment-based configuration with validation on startup.
+    \item \textbf{Health Check Endpoints:} Enhanced liveness and readiness probes for orchestrator integration.
+\end{itemize}
+
+%-----------------------------------------------------------
+
 \section{Performance Goals}
+
+Table~\ref{tab:performance-goals} outlines the target performance metrics for the production release.
+
+\begin{table}[htbp]
+\centering
+\caption{Term 2 Performance Targets}
+\label{tab:performance-goals}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Measurement Method} \\
+\hline
+Latency Overhead (p50) & $<$ 2ms & Benchmarking with synthetic load \\
+Latency Overhead (p99) & $<$ 10ms & Benchmarking under stress \\
+Concurrent Connections & $\geq$ 1000 & Load testing with connection ramp \\
+Connection Setup Time & $<$ 50ms & End-to-end connection timing \\
+Memory Footprint & $<$ 500MB (idle) & Resource monitoring under load \\
+CPU Utilization & $<$ 30\% (normal load) & Profiling during benchmark \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Optimization Strategies}
+
+To achieve these performance targets, the following optimization strategies will be employed:
+
+\begin{enumerate}
+    \item \textbf{Profiling-Driven Optimization:} Use Go's built-in profiler (pprof) to identify and eliminate bottlenecks.
+    \item \textbf{Memory Pool Management:} Implement buffer pooling to reduce garbage collection overhead.
+    \item \textbf{Protocol Parser Optimization:} Optimize hot paths in protocol parsing using zero-copy techniques where applicable.
+    \item \textbf{Goroutine Pool Management:} Implement worker pools to prevent goroutine explosion under high load.
+\end{enumerate}
+
+%-----------------------------------------------------------
+
 \section{Testing \& Validation Plan}
+
+A comprehensive testing strategy will ensure system reliability and security before final delivery.
+
+\subsection{Automated Testing Framework}
+
+\begin{itemize}
+    \item \textbf{Unit Tests:} Target minimum 80\% code coverage for core proxy logic and security modules.
+    \item \textbf{Integration Tests:} End-to-end tests covering authentication flows, query processing, and data masking across all supported databases.
+    \item \textbf{Regression Test Suite:} Automated test suite executed on every code commit via CI/CD pipeline.
+\end{itemize}
+
+\subsection{Performance Validation}
+
+\begin{itemize}
+    \item \textbf{Load Testing:} Use tools such as \texttt{pgbench} (PostgreSQL), \texttt{mysqlslap} (MySQL), and custom scripts to simulate production workloads.
+    \item \textbf{Stress Testing:} Evaluate system behavior under extreme conditions (connection floods, memory pressure).
+    \item \textbf{Latency Profiling:} Measure and document latency distribution across different query types and database backends.
+\end{itemize}
+
+\subsection{Security Validation}
+
+\begin{itemize}
+    \item \textbf{Penetration Testing:} Internal security audit focusing on:
+    \begin{itemize}
+        \item SQL injection bypass attempts
+        \item Authentication bypass vectors
+        \item Token forging and replay attacks
+        \item Policy engine circumvention
+    \end{itemize}
+    \item \textbf{Threat Modeling:} Document potential attack vectors and corresponding mitigations.
+    \item \textbf{Dependency Audit:} Scan all dependencies for known vulnerabilities using automated tools.
+\end{itemize}
+
+\subsection{User Acceptance Testing}
+
+\begin{itemize}
+    \item \textbf{Supervisor Demonstrations:} Weekly demonstrations of new features to project supervisors.
+    \item \textbf{Documentation Review:} Validation that all user-facing documentation accurately reflects system behavior.
+    \item \textbf{Demo Environment:} Prepare a stable demonstration environment for final presentation.
+\end{itemize}
+
+\subsection{Validation Timeline}
+
+Table~\ref{tab:testing-timeline} presents the planned testing phases and their timelines.
+
+\begin{table}[htbp]
+\centering
+\caption{Testing \& Validation Timeline}
+\label{tab:testing-timeline}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Testing Phase} & \textbf{Timeline} & \textbf{Focus Area} \\
+\hline
+Unit \& Integration Testing & Ongoing (all sprints) & Continuous quality assurance \\
+Performance Benchmarking & May 1--15 & Latency and throughput validation \\
+Security Audit & May 15--31 & Penetration testing and hardening \\
+User Acceptance Testing & June 1--10 & Feature validation and feedback \\
+Final Documentation Review & June 10--15 & Documentation completeness \\
+Demo Environment Preparation & June 15--20 & Final presentation preparation \\
+\hline
+\end{tabular}
+\end{table}
+
+%-----------------------------------------------------------
+
+%\section{Term 2 Development Timeline}
+
+%The following Mermaid diagram can be used to visualize the Term~2 development timeline:
+
+% Mermaid Syntax for Term 2 Gantt Chart:
+% 
+% gantt
+%     title zGate Term 2 Development Timeline
+%     dateFormat  YYYY-MM-DD
+%     axisFormat  %b %d
+%     
+%     section Milestone 4: IAM Integration
+%     OAuth2/OIDC Implementation     :m4a, 2025-01-15, 21d
+%     IdP Connectors (Google, Okta)  :m4b, after m4a, 14d
+%     Claims-to-Role Mapping         :m4c, after m4b, 14d
+%     
+%     section Milestone 5: Observability
+%     Metrics Dashboard              :m5a, 2025-03-01, 21d
+%     Audit Logging System           :m5b, after m5a, 21d
+%     Alerting Framework             :m5c, after m5b, 14d
+%     
+%     section Milestone 6: Validation
+%     Performance Benchmarking       :m6a, 2025-05-01, 14d
+%     Security Audit                 :m6b, after m6a, 14d
+%     Final Documentation            :m6c, 2025-05-15, 30d
+%     Demo Preparation               :m6d, 2025-06-10, 10d
+
+% Note: Generate this diagram using a Mermaid renderer and include as figure
