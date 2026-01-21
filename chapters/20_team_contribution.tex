@@ -2,5 +2,305 @@
 % 20. TEAM CONTRIBUTION
 % ============================================================
 \chapter{Team Contribution}
+
+This chapter documents the individual contributions of each team member throughout the development of the zGate Zero-Trust Database Access Gateway. The project required expertise across multiple domains including backend systems programming, frontend development, security engineering, and research.
+
 \section{Overview of Contribution Approach}
+
+The zGate project was developed by a seven-member team, with responsibilities distributed across the following primary domains:
+
+\begin{itemize}
+    \item \textbf{Backend \& Proxy Development:} Core proxy logic, protocol handlers, connection management
+    \item \textbf{Security Engineering:} Authentication, authorization, encryption, and access control
+    \item \textbf{Frontend Development:} Web-based administration dashboard (Next.js/React)
+    \item \textbf{CLI Development:} Command-line interface for end-user database access
+    \item \textbf{Research \& Architecture:} Zero-Trust research, competitive analysis, system design
+    \item \textbf{Documentation:} Technical documentation, code documentation, presentation materials
+\end{itemize}
+
+Table~\ref{tab:contribution-overview} provides a high-level summary of each member's primary focus areas.
+
+\begin{table}[H]
+\centering
+\caption{Team Contribution Overview}
+\label{tab:contribution-overview}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Team Member} & \textbf{Primary Focus Areas} \\
+\hline
+Moustafa Hashem & Team Lead, Core Architecture, Authentication, CLI \\
+Hana Shamel & PostgreSQL Proxy, Data Masking, CLI, Research \\
+Kareem Ehab & MySQL Proxy, Interceptors, Audit Logging, Security \\
+Michael George & Storage Infrastructure, Encryption, Identity Management \\
+Mayar Walid & MongoDB Proxy, WebUI Development, API Integration \\
+Karen Maurice & Zero-Trust Research, WebUI Development, Theming \\
+Rodina Mohamed & MSSQL Protocol, TLS Security, Testing \\
+\hline
+\end{tabular}
+\end{table}
+
 \section{Individual Contributions}
+
+\subsection{Moustafa Hashem -- Team Lead}
+
+As Team Lead, Moustafa directed the full project lifecycle, including sprint planning, task assignment, and cross-team communication. His technical contributions spanned the core system architecture and critical security components.
+
+\subsubsection{Core System Architecture}
+\begin{itemize}
+    \item Designed the Zero-Trust database proxy architecture, enabling secure identity-based access control and traffic interception.
+    \item Built the core networking foundation: dynamic listeners, connection forwarding logic, and high-performance connection pooling.
+    \item Developed the unified Handler Interface, ensuring protocol consistency across MySQL, PostgreSQL, and MSSQL implementations.
+\end{itemize}
+
+\subsubsection{Dynamic Connection \& Identity Management}
+\begin{itemize}
+    \item Engineered the dynamic proxy system that creates isolated per-session ports (eliminating static listener vulnerabilities).
+    \item Designed multiple identity-management models:
+    \begin{itemize}
+        \item Temporary database users (ephemeral credentials)
+        \item Shared credential pools
+        \item User-specific persistent accounts
+    \end{itemize}
+    \item Implemented both Local Mode tunneling and Remote Mode direct access patterns.
+\end{itemize}
+
+\subsubsection{Security, Authentication \& RBAC}
+\begin{itemize}
+    \item Built the complete JWT authentication system, supporting login, token refresh, revocation, and secure session tracking.
+    \item Designed the RBAC policy engine, enabling granular permissions at the database and table levels.
+\end{itemize}
+
+\subsubsection{CLI \& Admin Tools}
+\begin{itemize}
+    \item Re-engineered the CLI architecture to improve security, consistency, and maintainability.
+    \item Developed admin tools for user provisioning, credential management, and session visibility.
+\end{itemize}
+
+\subsubsection{System Reliability}
+\begin{itemize}
+    \item Engineered the core token lifecycle logic, ensuring consistent expiration handling and safe session cleanup.
+    \item Designed system reliability mechanisms for stable startup, shutdown, and error recovery across components.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Hana Shamel}
+
+Hana contributed to proxy development, CLI implementation, and conducted extensive research on Zero-Trust security models.
+
+\subsubsection{Proxy \& Backend Development}
+\begin{itemize}
+    \item Developed the initial PostgreSQL proxy prototype, establishing early connectivity and packet-flow behavior.
+    \item Implemented the data masking engine used to redact sensitive information from database responses.
+    \item Contributed to backend architecture and low-level packet processing design.
+\end{itemize}
+
+\subsubsection{CLI Development}
+\begin{itemize}
+    \item Built essential CLI authentication and database command workflows.
+    \item Integrated OS-native secure credential storage using:
+    \begin{itemize}
+        \item macOS Keychain
+        \item Windows Credential Manager
+        \item Linux Secret Service
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Security \& Research}
+\begin{itemize}
+    \item Conducted research on Zero-Trust models, database attack vectors, and secure-access frameworks.
+    \item Investigated observability and monitoring tools to support long-term system stability.
+    \item Studied industry attack statistics and market needs to guide feature development.
+\end{itemize}
+
+\subsubsection{Documentation}
+\begin{itemize}
+    \item Wrote documentation for SQL masking logic, CLI behavior, and proxy components.
+    \item Contributed to PowerPoint presentation materials and project documentation structure.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Kareem Ehab}
+
+Kareem led the MySQL proxy implementation and developed the security interceptor framework central to the system's query protection capabilities.
+
+\subsubsection{MySQL Proxy \& Backend Development}
+\begin{itemize}
+    \item Implemented the full MySQL proxy logic, including authentication handshake, packet forwarding, and controlled shutdown.
+    \item Built the extensible interceptor framework used for data masking, SQL safety checks, and logging.
+\end{itemize}
+
+\subsubsection{Security Enforcement}
+\begin{itemize}
+    \item Implemented the Query Safety Enforcement Engine, blocking malicious or destructive SQL statements in real time.
+    \item Integrated TLS/SSL certificate verification to secure proxy connections.
+    \item Added secure temporary credential logic to handle session-specific identities.
+\end{itemize}
+
+\subsubsection{Audit Logging \& Observability}
+\begin{itemize}
+    \item Developed the Comprehensive Audit Logging System, capturing:
+    \begin{itemize}
+        \item Query history with user attribution
+        \item Authentication events
+        \item Proxy metrics
+        \item Session activity
+    \end{itemize}
+    \item Added internal monitoring endpoints to enhance observability and debugging capabilities.
+\end{itemize}
+
+\subsubsection{Research \& Documentation}
+\begin{itemize}
+    \item Conducted research on database threats, competitor proxy architectures, and security standards.
+    \item Contributed technical flow explanations and feature breakdowns for presentation materials.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Michael George}
+
+Michael focused on storage infrastructure, encryption systems, and identity management backend components.
+
+\subsubsection{Proxy \& Early Prototype Development}
+\begin{itemize}
+    \item Developed the early Python-based proxy prototypes to validate networking concepts.
+    \item Implemented the initial PostgreSQL proxy prototype before transitioning to the Go-based design.
+\end{itemize}
+
+\subsubsection{Storage \& Encryption Infrastructure}
+\begin{itemize}
+    \item Migrated system configuration from YAML to SQLite, enabling persistent structured storage for users, roles, tokens, and database configurations.
+    \item Implemented AES-256-GCM encryption for credentials, admin passwords, and sensitive configurations.
+\end{itemize}
+
+\subsubsection{Identity \& Access Management}
+\begin{itemize}
+    \item Implemented backend logic for:
+    \begin{itemize}
+        \item User account creation and update
+        \item Password hashing and verification
+        \item Role assignment and permission control
+    \end{itemize}
+    \item Added full CRUD operations for role management.
+\end{itemize}
+
+\subsubsection{Documentation}
+\begin{itemize}
+    \item Wrote documentation for storage architecture, encryption system, and user/role backend features.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Mayar Walid}
+
+Mayar contributed to MongoDB proxy development and led significant portions of the WebUI development, particularly monitoring and dashboard interfaces.
+
+\subsubsection{Proxy \& Backend Development}
+\begin{itemize}
+    \item Built the initial MongoDB proxy prototype supporting early database routing tests.
+    \item Implemented backend endpoints for Admin Account Management (CRUD operations).
+\end{itemize}
+
+\subsubsection{Web UI Development (Next.js \& React)}
+\begin{itemize}
+    \item \textbf{Shared \& Personal Database Accounts:} Developed UI interfaces for shared credential pools and user-specific account management with validation, search filters, and interactive modals.
+    \item \textbf{Monitoring \& Query Interfaces:}
+    \begin{itemize}
+        \item Session Monitoring Dashboard with real-time session visibility
+        \item Query History Viewer with dynamic updates, filters, and search tools
+    \end{itemize}
+    \item \textbf{Dashboards:} Developed the Overview Dashboard displaying live system metrics and enhanced session, query, and database pages with improved functionality.
+\end{itemize}
+
+\subsubsection{API Integration \& State Management}
+\begin{itemize}
+    \item Integrated UI components with backend APIs for authentication, roles, permissions, databases, sessions, and admin operations.
+    \item Ensured synchronized application state across the UI.
+\end{itemize}
+
+\subsubsection{Documentation}
+\begin{itemize}
+    \item Contributed UI visuals, workflow explanations, and dashboard breakdowns for presentation slides.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Karen Maurice}
+
+Karen conducted Zero-Trust research and contributed extensively to WebUI development, including theming systems and access control interfaces.
+
+\subsubsection{Zero-Trust Research \& Prototype Engineering}
+\begin{itemize}
+    \item Conducted research into Zero-Trust architecture, database security, and access-control models.
+    \item Built the Zero-Trust gateway prototype using Go and Docker.
+    \item Designed the zGate Secure Pipeline Architecture, featuring:
+    \begin{itemize}
+        \item mTLS (mutual TLS) security layer
+        \item JSONL protocol layer
+        \item Security processing pipeline
+        \item Strategy adapter layer for database engines
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Web UI Development (Next.js \& React)}
+\begin{itemize}
+    \item \textbf{User, Role \& Database Management:} Developed UI systems for user, role, database, and access-control management with permission indicators and validation layers.
+    \item \textbf{UI/UX Systems:}
+    \begin{itemize}
+        \item Implemented light/dark mode theming
+        \item Built advanced UI elements including dialogs, permission selectors, detailed views, and filters
+    \end{itemize}
+    \item \textbf{Monitoring Interfaces:} Developed Session Monitoring Dashboard and Query History Viewer with filtering and search capabilities.
+\end{itemize}
+
+\subsubsection{API Integration \& State Management}
+\begin{itemize}
+    \item Integrated Web UI with backend APIs for authentication, roles, databases, and sessions.
+    \item Implemented robust state management and error-handling flows.
+\end{itemize}
+
+\subsubsection{Documentation}
+\begin{itemize}
+    \item Contributed to architectural documentation, UI flow diagrams, and frontend integration notes.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{Rodina Mohamed}
+
+Rodina focused on MSSQL protocol development, security infrastructure, and testing validation.
+
+\subsubsection{MSSQL Protocol Development}
+\begin{itemize}
+    \item Implemented the initial MSSQL proxy framework, including support for the TDS (Tabular Data Stream) protocol.
+    \item Developed foundational packet-handling logic for Microsoft SQL Server communication.
+\end{itemize}
+
+\subsubsection{Security \& Encryption Infrastructure}
+\begin{itemize}
+    \item Contributed to the design of the TLS/SSL encryption layer, securing proxy communication.
+    \item Participated in building engine-agnostic secure protocol abstractions.
+\end{itemize}
+
+\subsubsection{Research \& Architectural Input}
+\begin{itemize}
+    \item Performed research into:
+    \begin{itemize}
+        \item Zero-Trust architecture principles
+        \item Market security needs and requirements
+        \item Relevant software design patterns
+    \end{itemize}
+    \item Provided architectural feedback improving system modularity and scalability.
+\end{itemize}
+
+\subsubsection{Testing \& Validation}
+\begin{itemize}
+    \item Built test applications to verify MSSQL proxy behavior.
+    \item Performed multi-tool validation for stability and correctness.
+\end{itemize}
+
+\subsubsection{Documentation}
+\begin{itemize}
+    \item Documented MSSQL protocol behavior, TDS packet flow, security considerations, and integration architecture for MSSQL components.
+\end{itemize}
