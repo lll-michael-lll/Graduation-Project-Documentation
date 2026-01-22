@@ -2,8 +2,466 @@
 % 14. PROTOTYPE – SEMESTER 1
 % ============================================================
 \chapter{Prototype – Semester 1}
+
+This chapter documents the Proof of Concept (POC) delivered at the conclusion of Semester~1. The prototype demonstrates the core functionality of zGate as a Zero-Trust Database Access Gateway, validating the architectural decisions and technical feasibility established during the planning phase.
+
 \section{Implemented Features}
-\section{Screenshots (CLI \& Dashboard)}
+
+The zGate prototype comprises three integrated components: the core server (backend), the command-line interface (CLI), and the web-based administration dashboard (WebUI). This section details the features implemented in each component.
+
+\subsection{zGate Server (Backend)}
+
+The server, implemented in Go, serves as the central component handling all authentication, authorization, proxying, and administrative operations.
+
+\subsubsection{Authentication \& Authorization}
+
+Table~\ref{tab:auth-features} summarizes the authentication and authorization capabilities implemented in the prototype.
+
+\begin{table}[htbp]
+\centering
+\caption{Authentication \& Authorization Features}
+\label{tab:auth-features}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Feature} & \textbf{Status} & \textbf{Description} \\
+\hline
+User Login & $\checkmark$ & JWT-based authentication with access and refresh tokens \\
+Admin Login & $\checkmark$ & Separate admin authentication with fallback to user auth \\
+Token Refresh & $\checkmark$ & Token rotation with automatic old token revocation \\
+Logout & $\checkmark$ & Server-side token revocation \\
+RBAC & $\checkmark$ & Role-based access control with database-level permissions \\
+Custom Permissions & $\checkmark$ & Direct user-to-database permission assignment \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Database Proxy}
+
+The proxy layer handles the interception and forwarding of database connections. Table~\ref{tab:proxy-features} details the proxy capabilities.
+
+\begin{table}[htbp]
+\centering
+\caption{Database Proxy Features}
+\label{tab:proxy-features}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Feature} & \textbf{Status} & \textbf{Description} \\
+\hline
+MySQL Wire Protocol & $\checkmark$ & Full MySQL/MariaDB protocol support via \texttt{go-mysql} library \\
+Dynamic Port Allocation & $\checkmark$ & Per-session proxy listeners on dynamically allocated ports \\
+Credential Injection & $\checkmark$ & Transparent rewriting of client credentials to database credentials \\
+TLS Backend Connection & $\checkmark$ & TLS with certificate pinning for backend databases \\
+PostgreSQL Proxy & $\times$ & Wire protocol not implemented; query execution via API only \\
+MSSQL Proxy & $\times$ & Handler stub exists but not functional \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Interceptor Pipeline}
+
+The interceptor system provides a composable pipeline for query processing. Table~\ref{tab:interceptor-features} describes the implemented interceptors.
+
+\begin{table}[htbp]
+\centering
+\caption{Interceptor Pipeline Features}
+\label{tab:interceptor-features}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Feature} & \textbf{Status} & \textbf{Description} \\
+\hline
+Safety Interceptor & $\checkmark$ & Blocks DELETE/UPDATE without WHERE, DDL statements \\
+Masking Interceptor & $\checkmark$ & Masks emails, phones, passwords, names, credit cards \\
+Logging Interceptor & $\checkmark$ & Logs all queries with user attribution, duration, row count \\
+Composite Interceptor & $\checkmark$ & Chains multiple interceptors in configurable order \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Account Types}
+
+The platform supports multiple credential management strategies as shown in Table~\ref{tab:account-types}.
+
+\begin{table}[htbp]
+\centering
+\caption{Database Account Types}
+\label{tab:account-types}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Account Type} & \textbf{Status} & \textbf{Description} \\
+\hline
+Personal Accounts & $\checkmark$ & Dedicated database credentials per user \\
+Shared Accounts & $\checkmark$ & Pooled accounts with concurrent user tracking \\
+Ephemeral Accounts & Partial & Interface exists; CREATE/DROP USER requires testing \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Administrative APIs}
+
+The server exposes comprehensive RESTful APIs for platform management:
+
+\begin{itemize}
+    \item \textbf{User CRUD:} Create, read, update, and delete user accounts
+    \item \textbf{Role CRUD:} Manage roles with associated permission sets
+    \item \textbf{Database CRUD:} Register, update, and remove database connections
+    \item \textbf{Admin Account CRUD:} Manage administrator accounts
+    \item \textbf{Shared Account CRUD:} Configure shared database account pools
+    \item \textbf{User DB Account CRUD:} Assign personal database accounts to users
+    \item \textbf{Query Execution:} Execute queries via admin API (MySQL, PostgreSQL, MSSQL)
+    \item \textbf{Session Management:} View active sessions and terminate unauthorized sessions
+    \item \textbf{Activity Logs:} Query logs per session for audit purposes
+\end{itemize}
+
+\subsubsection{Data Store}
+
+The backend utilizes SQLite for persistent storage with the following security characteristics:
+
+\begin{itemize}
+    \item \textbf{AES-256-GCM Encryption:} All sensitive data (database credentials) encrypted at rest
+    \item \textbf{bcrypt Password Hashing:} User passwords stored as one-way hashes
+    \item \textbf{Token Cleanup:} Background task automatically removes expired tokens
+    \item \textbf{Single-File Database:} Entire metadata store in \texttt{data/zgate.db}
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{zGate CLI (Command-Line Client)}
+
+The CLI, also implemented in Go, provides end-user access to databases through the zGate gateway.
+
+\begin{table}[htbp]
+\centering
+\caption{CLI Commands and Features}
+\label{tab:cli-features}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Command} & \textbf{Status} & \textbf{Description} \\
+\hline
+\texttt{login} & $\checkmark$ & Authenticate with username/password \\
+\texttt{logout} & $\checkmark$ & Revoke tokens and clear local session \\
+\texttt{list} & $\checkmark$ & List accessible databases for current user \\
+\texttt{connect} & $\checkmark$ & Connect to database with local TCP tunnel \\
+\texttt{connect --remote} & $\checkmark$ & Direct connection without local tunnel \\
+\texttt{status} & $\checkmark$ & Display current authentication status \\
+\texttt{active-logins} & $\checkmark$ & List user's active sessions \\
+\texttt{revoke} & $\checkmark$ & Terminate a specific session \\
+\hline
+\end{tabular}
+\end{table}
+
+Additional CLI features include:
+
+\begin{itemize}
+    \item \textbf{System Keyring Integration:} Secure token storage using platform-native mechanisms (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+    \item \textbf{Local TCP Tunnel:} Creates localhost listener forwarding to the server proxy
+    \item \textbf{Automatic Token Refresh:} Seamless token renewal during API calls
+    \item \textbf{Graceful Cleanup:} Proper resource release on Ctrl+C interruption
+\end{itemize}
+
+%-----------------------------------------------------------
+
+\subsection{zGate WebUI (Admin Dashboard)}
+
+The web-based dashboard, built with Next.js and React, provides administrators with a graphical interface for platform management.
+
+\begin{table}[htbp]
+\centering
+\caption{WebUI Pages and Functionality}
+\label{tab:webui-pages}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Page} & \textbf{Status} & \textbf{Description} \\
+\hline
+\texttt{/login} & $\checkmark$ & Admin authentication interface \\
+\texttt{/admin/overview} & $\checkmark$ & Dashboard with user, database, session, and role statistics \\
+\texttt{/admin/databases} & $\checkmark$ & Database connection management (CRUD) \\
+\texttt{/admin/users} & $\checkmark$ & User management with role assignment \\
+\texttt{/admin/admins} & $\checkmark$ & Admin account management \\
+\texttt{/admin/access-control} & $\checkmark$ & Role and permission configuration \\
+\texttt{/admin/sessions} & $\checkmark$ & Active session monitoring and termination \\
+\texttt{/admin/queries} & $\checkmark$ & Admin query execution interface \\
+\texttt{/admin/shared-accounts} & $\checkmark$ & Shared database account management \\
+\texttt{/admin/user-db-accounts} & $\checkmark$ & Personal database account assignment \\
+\texttt{/admin/activity-audit} & $\checkmark$ & Session activity and query logs \\
+\hline
+\end{tabular}
+\end{table}
+
+%-----------------------------------------------------------
+
+%\section{Screenshots (CLI \& Dashboard)}
+
+% Note: Add actual screenshots here
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/cli_connect.png}
+%     \caption{zGate CLI: Database Connection Workflow}
+%     \label{fig:cli-connect}
+% \end{figure}
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/dashboard_overview.png}
+%     \caption{zGate WebUI: Admin Dashboard Overview}
+%     \label{fig:dashboard-overview}
+% \end{figure}
+
+% This section will be populated with screenshots demonstrating:
+% \begin{itemize}
+%     \item CLI authentication and database connection workflow
+%     \item Admin dashboard overview with statistics
+%     \item Database management interface
+%     \item User and role management screens
+%     \item Session monitoring and audit log views
+%  \end{itemize}
+
+%-----------------------------------------------------------
+
 \section{What Works vs What Doesn't}
+
+\subsection{Fully Functional Features}
+
+The following capabilities have been validated as production-ready:
+
+\begin{enumerate}
+    \item \textbf{Complete Authentication Flow}
+    \begin{itemize}
+        \item User and admin login with JWT tokens
+        \item Token refresh with rotation (old tokens automatically revoked)
+        \item Secure token storage in system keyring
+    \end{itemize}
+    
+    \item \textbf{MySQL/MariaDB Proxy}
+    \begin{itemize}
+        \item Full wire protocol support
+        \item Credential rewriting (users never see real database credentials)
+        \item Query interception pipeline working end-to-end
+    \end{itemize}
+    
+    \item \textbf{Security Interceptors}
+    \begin{itemize}
+        \item Safety checks block dangerous queries (DELETE without WHERE, DROP, etc.)
+        \item Data masking works on result sets
+        \item All queries logged with user attribution
+    \end{itemize}
+    
+    \item \textbf{RBAC System}
+    \begin{itemize}
+        \item Roles with database-level permissions (read, write, admin)
+        \item Users can have multiple roles
+        \item Custom permissions bypass roles when needed
+    \end{itemize}
+    
+    \item \textbf{Account Type System}
+    \begin{itemize}
+        \item Personal accounts: dedicated credentials per user
+        \item Shared accounts: pooled with concurrent user tracking
+        \item Proper credential resolution order (personal $\rightarrow$ shared $\rightarrow$ ephemeral)
+    \end{itemize}
+    
+    \item \textbf{Admin Dashboard}
+    \begin{itemize}
+        \item All CRUD operations for users, roles, databases
+        \item Session monitoring and termination
+        \item Query execution interface
+    \end{itemize}
+    
+    \item \textbf{CLI Experience}
+    \begin{itemize}
+        \item Complete workflow: login $\rightarrow$ list $\rightarrow$ connect $\rightarrow$ use $\rightarrow$ disconnect
+        \item Local tunneling works seamlessly
+        \item Graceful cleanup on interruption
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Partially Working / Requires Testing}
+
+\begin{enumerate}
+    \item \textbf{Ephemeral Accounts:} Interface defined in protocol handler; \texttt{CreateUser()} and \texttt{DeleteUser()} methods exist but require real-world validation.
+    
+    \item \textbf{Certificate Pinning:} Code path exists for pinned backend certificates with auto-detection from \texttt{certs/} directory; edge cases may need testing.
+    
+    \item \textbf{Shared Account Concurrency:} \texttt{currently\_in\_use} counter and \texttt{max\_concurrent\_users} limit implemented; race conditions under high load untested.
+\end{enumerate}
+
+\subsection{Not Implemented}
+
+\begin{enumerate}
+    \item \textbf{PostgreSQL Full Proxy:} No wire protocol implementation; only available via admin execute-query API.
+    
+    \item \textbf{MSSQL Full Proxy:} Handler stub exists but is not functional for client proxying.
+    
+    \item \textbf{Some Admin Features:} \texttt{handleGrantDatabase} and \texttt{handleRevokeDatabase} marked as TODO.
+    
+    \item \textbf{Automated Tests:} No unit or integration test coverage.
+    
+    \item \textbf{Rate Limiting:} No API rate limiting or connection throttling implemented.
+\end{enumerate}
+
+%-----------------------------------------------------------
+
 \section{Technical Decisions Made}
+
+This section documents the key architectural and implementation decisions made during prototype development.
+
+\subsection{Language \& Framework Selection}
+
+\begin{table}[htbp]
+\centering
+\caption{Technology Stack Decisions}
+\label{tab:tech-stack}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Component} & \textbf{Technology} & \textbf{Rationale} \\
+\hline
+Server & Go 1.23+ & High performance, excellent concurrency, single binary deployment \\
+CLI & Go + Cobra & Consistent with server; Cobra is the standard for Go CLIs \\
+WebUI & Next.js + React & Modern React features, built-in API proxy, good developer experience \\
+UI Components & Radix UI + Tailwind & Accessible components, rapid styling \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Database Wire Protocol}
+
+\textbf{Decision:} Use the \texttt{go-mysql-org/go-mysql} library for MySQL protocol handling.
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item Mature library with full protocol support
+    \item Handles handshake, authentication, and command loop
+    \item Provides \texttt{server.Handler} interface for custom logic injection
+    \item Enables credential rewriting without client awareness
+\end{itemize}
+
+\subsection{Authentication Architecture}
+
+\textbf{Decision:} JWT with short-lived access tokens (5 minutes) and longer refresh tokens (1 hour).
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item Access tokens can be stateless (no database lookup per request)
+    \item Short TTL limits damage window from token theft
+    \item Refresh tokens stored server-side with hash (enables revocation)
+    \item Token rotation on refresh prevents token reuse attacks
+\end{itemize}
+
+\subsection{Data Storage}
+
+\textbf{Decision:} SQLite with AES-256-GCM encryption for sensitive data.
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item SQLite: Zero-configuration, embedded, sufficient for metadata workload
+    \item AES-256-GCM: Industry-standard authenticated encryption
+    \item Encryption key from environment variable (not in codebase)
+    \item User passwords: bcrypt (one-way hash, not reversible)
+\end{itemize}
+
+\subsection{Credential Management}
+
+\textbf{Decision:} Three-tier account system (Personal $\rightarrow$ Shared $\rightarrow$ Ephemeral).
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item Personal: Best for accountability (dedicated audit trail)
+    \item Shared: Reduces credential proliferation on target database
+    \item Ephemeral: Maximum security (credentials exist only during session)
+    \item Fallback order ensures users always obtain credentials
+\end{itemize}
+
+\subsection{Query Interception}
+
+\textbf{Decision:} Composable interceptor pipeline with defined interface.
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item Single responsibility: each interceptor performs one function
+    \item Easy to add new interceptors (e.g., query rewriting, rate limiting)
+    \item Order matters: safety $\rightarrow$ execution $\rightarrow$ masking $\rightarrow$ logging
+    \item Interface-based design enables testing with mocks
+\end{itemize}
+
+\subsection{Session Architecture}
+
+\textbf{Decision:} Dynamic port allocation per session with TCP forwarding.
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item Each session receives isolated port (no cross-session interference)
+    \item CLI can create local tunnel (localhost feels native to users)
+    \item Server handles credential injection transparently
+    \item Clean termination on disconnect (port released)
+\end{itemize}
+
+\subsection{API Design}
+
+\textbf{Decision:} RESTful API with clear separation between user and admin endpoints.
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item \texttt{/api/*} for user operations
+    \item \texttt{/api/admin/*} for admin operations
+    \item Middleware enforces admin-only access
+    \item Consistent response format across all endpoints
+\end{itemize}
+
+%-----------------------------------------------------------
+
 \section{Implementation Challenges}
+
+\subsection{Wire Protocol Complexity}
+
+Implementing a transparent database proxy required deep understanding of the MySQL wire protocol. Challenges included:
+
+\begin{itemize}
+    \item \textbf{Handshake Sequence:} The MySQL handshake involves multiple packet exchanges with specific timing requirements.
+    \item \textbf{Credential Rewriting:} Intercepting authentication packets and substituting credentials without breaking protocol state.
+    \item \textbf{Binary Protocol:} MySQL uses a binary protocol for prepared statements, requiring careful byte-level parsing.
+\end{itemize}
+
+\subsection{Concurrent Connection Management}
+
+The server must handle thousands of simultaneous database sessions:
+
+\begin{itemize}
+    \item \textbf{Goroutine Management:} Each session spawns goroutines for bidirectional data forwarding.
+    \item \textbf{Resource Cleanup:} Ensuring proper cleanup of connections, ports, and goroutines on session termination.
+    \item \textbf{Connection Pooling:} Balancing connection reuse with isolation requirements.
+\end{itemize}
+
+\subsection{Token Security}
+
+Implementing secure token management required careful consideration:
+
+\begin{itemize}
+    \item \textbf{Token Storage:} Integrating with platform-specific keyring implementations across macOS, Windows, and Linux.
+    \item \textbf{Token Rotation:} Ensuring atomic token refresh to prevent race conditions.
+    \item \textbf{Revocation:} Maintaining server-side token state while minimizing database lookups.
+\end{itemize}
+
+\subsection{Data Masking Performance}
+
+Applying regex-based masking to result sets introduced performance considerations:
+
+\begin{itemize}
+    \item \textbf{Pattern Compilation:} Pre-compiling regex patterns to avoid per-query overhead.
+    \item \textbf{Large Result Sets:} Streaming masking for large queries to avoid memory exhaustion.
+    \item \textbf{False Positives:} Tuning patterns to minimize incorrect masking of non-sensitive data.
+\end{itemize}
+
+\subsection{Cross-Platform CLI}
+
+Building a CLI that works consistently across operating systems required:
+
+\begin{itemize}
+    \item \textbf{Keyring Abstraction:} Abstracting platform-specific credential storage APIs.
+    \item \textbf{Signal Handling:} Proper handling of Ctrl+C and other interrupts across platforms.
+    \item \textbf{Path Handling:} Consistent file path handling across Windows and Unix-like systems.
+\end{itemize}
+
+%-----------------------------------------------------------
+
+
+
+

@@ -97,7 +97,13 @@
 % Acknowledgments
 % --------------------------------
 \chapter*{Acknowledgments}
-We would like to thank...
+We would like to express our deepest gratitude to our supervisor, \textbf{Dr. Mohammed Sobh}, for his unwavering support, guidance, and dedication throughout this project. His commitment to engaging with us in weekly meetings, providing constructive feedback, and sharing his expertise in software architecture and security systems was instrumental in shaping zGate into what it is today. We are truly fortunate to have had such an invested and accessible supervisor.
+
+We extend our heartfelt thanks to our mentors, \textbf{Eng. Fady Khallaf} and \textbf{Eng. Kirollos Magdy}, whose contributions to our journey cannot be overstated. From the very beginning, they helped us understand the problem statement, guided us on how to approach the project methodically, and provided invaluable study materials that accelerated our learning. Their participation in our weekly meetings, where they identified our weak spots and helped us address them, was essential to our growth as engineers. Their patience, encouragement, and technical insights made a profound difference in both our project outcomes and our professional development.
+
+We also wish to acknowledge the \textbf{Faculty of Engineering at Ain Shams University} and the \textbf{Computer and Systems Engineering Department} for providing the academic foundation and resources that made this project possible.
+
+Finally, we express our sincere appreciation to our families and friends for their patience, encouragement, and support throughout this demanding journey. Their belief in us kept us motivated during the challenging moments of development and documentation.
 
 \newpage
 
@@ -105,7 +111,15 @@ We would like to thank...
 % Abstract
 % --------------------------------
 \chapter*{Abstract}
-This project introduces a Zero Trust–based database access gateway (SecureDB Gateway)...
+Traditional database access management relies on shared credentials and static permissions, creating significant security vulnerabilities including credential sprawl, lack of individual accountability, and insider threat exposure. Existing solutions such as VPNs, bastion hosts, and privileged access management systems fail to address the fundamental problem: users still handle production database credentials, which can be extracted, shared, or misused.
+
+This project presents zGate, a Zero Trust Database Access Gateway that fundamentally transforms database security by eliminating direct credential exposure. zGate operates as an intelligent proxy layer between users and databases, intercepting traffic at the wire protocol level to enforce identity-based access control, generate session-specific credentials, and provide comprehensive audit logging with full user attribution.
+
+The system comprises three integrated components: a high-performance Go-based gateway server implementing MySQL wire protocol support with transparent credential injection; a cross-platform command-line interface with secure keyring integration for macOS, Windows, and Linux; and a React-based web administration dashboard for managing users, roles, databases, and monitoring active sessions.
+
+Key security features include JWT-based authentication with short-lived access tokens and automatic refresh, role-based access control with database-level permissions, a composable interceptor pipeline for query safety enforcement and dynamic data masking, and immutable audit trails capturing every database operation.
+
+The Term~1 prototype demonstrates functional Zero Trust database access where users authenticate with organizational identities and connect to MySQL databases without ever seeing or handling production credentials. The architecture validates that Zero Trust principles---never trust, always verify, assume breach---can be practically implemented at the database protocol level while maintaining developer productivity, establishing a foundation for production deployment in Term~2.
 
 \newpage
 
@@ -145,12 +159,10 @@ This project introduces a Zero Trust–based database access gateway (SecureDB G
 \input{chapters/13_technology_justification}
 \input{chapters/14_prototype}
 \input{chapters/15_methodology}
-\input{chapters/16_task_tracking}
 \input{chapters/17_milestones}
 \input{chapters/18_risk_analysis}
 \input{chapters/19_roadmap_term2}
 \input{chapters/20_team_contribution}
-\input{chapters/21_expected_outcomes}
 \input{chapters/22_conclusion}
 
 % ============================================================

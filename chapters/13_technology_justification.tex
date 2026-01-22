@@ -130,4 +130,174 @@ To address this vulnerability, the gateway implements a data-at-rest encryption 
 The practical impact of this approach is substantial: even if an attacker obtains a copy of the SQLite database file through a filesystem breach or backup compromise, the sensitive columns contain only cryptographically secure ciphertext. Only the running Go application, which holds the master encryption key in memory (and never persists it to disk), can decrypt and utilize the actual configuration data. This defense-in-depth strategy aligns with Zero Trust principles by assuming that filesystem access controls may be breached and providing an additional layer of protection.
 
 \section{Why mTLS (and why TCP is temporary)}
-\section{Design Decision Summary}
+
+The transport layer security architecture of zGate represents a deliberate phased approach: an initial implementation using plain TCP connections for development velocity, followed by a production-ready implementation using mutual TLS (mTLS) for comprehensive transport security.
+
+\subsection{Current State: Plain TCP Implementation}
+
+The initial development phase of zGate utilizes plain TCP connections between the proxy and backend databases. This architectural decision was strategic rather than permanent, enabling the development team to focus on core proxy functionality—protocol parsing, query interception, and policy enforcement—without the added complexity of certificate management.
+
+\subsubsection{Development Advantages}
+Plain TCP connections during the development phase provided several practical benefits:
+
+\begin{itemize}
+    \item \textbf{Rapid Iteration:} Developers could test proxy functionality without managing certificate authorities, certificate chains, or key rotation procedures.
+    \item \textbf{Simplified Debugging:} Network traffic inspection using tools such as Wireshark was straightforward, enabling faster diagnosis of protocol parsing issues.
+    \item \textbf{Reduced Configuration Overhead:} Test environments could be established quickly without provisioning certificates for each database endpoint.
+\end{itemize}
+
+\subsubsection{Limitations of Plain TCP}
+However, plain TCP connections provide no inherent security guarantees:
+
+\begin{itemize}
+    \item \textbf{No Encryption:} Data transmitted between the proxy and database servers is visible to any entity with network access, exposing sensitive query data and credentials.
+    \item \textbf{No Authentication:} Neither party cryptographically verifies the identity of the other, enabling man-in-the-middle attacks where an adversary impersonates either the proxy or the database.
+    \item \textbf{No Integrity Protection:} Transmitted data can be modified in transit without detection, allowing query manipulation attacks.
+\end{itemize}
+
+These limitations are fundamentally incompatible with Zero Trust principles, which mandate that all network communications be treated as potentially hostile.
+
+\subsection{Target State: Mutual TLS (mTLS)}
+
+The production architecture of zGate mandates mutual TLS for all connections—both client-to-proxy and proxy-to-database. mTLS extends standard TLS by requiring both parties to present and validate X.509 certificates, establishing bidirectional cryptographic trust.
+
+\subsubsection{How mTLS Differs from Standard TLS}
+In conventional TLS (as used in HTTPS), only the server presents a certificate, and only the client verifies the server's identity. The server has no cryptographic assurance of the client's identity—authentication occurs at the application layer through mechanisms such as passwords or tokens.
+
+mTLS inverts this asymmetry by requiring clients to also present certificates that the server validates. This bidirectional authentication ensures that:
+
+\begin{itemize}
+    \item The client confirms it is communicating with a legitimate server (preventing server impersonation).
+    \item The server confirms the client possesses a valid certificate issued by a trusted authority (preventing unauthorized access).
+\end{itemize}
+
+\subsubsection{Security Properties of mTLS}
+
+Table~\ref{tab:tcp-vs-mtls} compares the security properties of plain TCP connections against mTLS-protected communications.
+
+\begin{table}[htbp]
+\centering
+\caption{Security Properties: Plain TCP vs. mTLS}
+\label{tab:tcp-vs-mtls}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Security Property} & \textbf{Plain TCP} & \textbf{mTLS} \\
+\hline
+Encryption (Confidentiality) & $\times$ & $\checkmark$ \\
+Server Authentication & $\times$ & $\checkmark$ \\
+Client Authentication & $\times$ & $\checkmark$ \\
+Integrity Protection & $\times$ & $\checkmark$ \\
+Replay Attack Prevention & $\times$ & $\checkmark$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{mTLS in the Zero Trust Context}
+The adoption of mTLS directly implements core Zero Trust principles:
+
+\begin{itemize}
+    \item \textbf{Never Trust, Always Verify:} Every connection—whether from an internal service or external client—must present a valid certificate. Network location alone confers no trust.
+    \item \textbf{Assume Breach:} Even if an attacker gains network access, they cannot establish connections to protected resources without possessing a valid private key.
+    \item \textbf{Least Privilege Access:} Certificate attributes (such as Common Name or Subject Alternative Names) can encode identity information used by the policy engine to enforce fine-grained access controls.
+\end{itemize}
+
+\subsection{Implementation Architecture}
+
+The zGate mTLS implementation leverages Go's robust \texttt{crypto/tls} package, which provides production-grade TLS support with modern cipher suites and TLS 1.3 by default.
+
+\subsubsection{Go's crypto/tls Package}
+Go's TLS implementation is widely regarded as one of the most secure and well-maintained in the industry. Key characteristics include:
+
+\begin{itemize}
+    \item \textbf{Secure Defaults:} TLS 1.3 is enabled by default, with automatic negotiation fallback to TLS 1.2 for compatibility. Insecure cipher suites and protocol versions are disabled unless explicitly configured.
+    \item \textbf{Certificate Verification:} Built-in support for certificate chain validation, revocation checking, and hostname verification.
+    \item \textbf{Performance Optimization:} Session resumption and connection pooling reduce handshake overhead for repeated connections.
+    \item \textbf{Memory Safety:} Unlike OpenSSL implementations in C, Go's memory-safe runtime eliminates entire classes of vulnerabilities such as Heartbleed-style buffer overreads.
+\end{itemize}
+
+The core configuration in Go for enabling mTLS on the proxy listener follows this pattern:
+
+\begin{verbatim}
+tlsConfig := &tls.Config{
+    Certificates: []tls.Certificate{serverCert},
+    ClientAuth:   tls.RequireAndVerifyClientCert,
+    ClientCAs:    trustedClientCAs,
+    MinVersion:   tls.VersionTLS12,
+}
+listener, err := tls.Listen("tcp", ":5432", tlsConfig)
+\end{verbatim}
+
+The \texttt{ClientAuth: tls.RequireAndVerifyClientCert} directive enforces mutual authentication, rejecting any client that fails to present a valid certificate.
+
+\subsubsection{Certificate Hierarchy}
+The system employs a hierarchical certificate architecture:
+
+\begin{enumerate}
+    \item \textbf{Root Certificate Authority (CA):} A self-managed or enterprise-provided CA that serves as the ultimate trust anchor. The root private key should be stored offline or in a Hardware Security Module (HSM).
+    \item \textbf{Intermediate CA (Optional):} An intermediate authority for certificate issuance, enabling root key protection through offline storage while permitting routine certificate operations.
+    \item \textbf{Endpoint Certificates:} Individual certificates issued to the proxy, database servers, and authorized clients. These certificates have shorter validity periods and can be rotated without modifying the trust chain.
+\end{enumerate}
+
+\subsubsection{Connection Flow with mTLS}
+Figure~\ref{fig:mtls-flow} illustrates the mTLS handshake process. When a client initiates a connection to zGate with mTLS enabled:
+
+\begin{enumerate}
+    \item The client initiates a TCP connection to the proxy endpoint.
+    \item The TLS handshake begins; the proxy presents its server certificate.
+    \item The client validates the proxy's certificate against its trusted CA bundle.
+    \item The proxy requests the client's certificate (the ``mutual'' aspect of mTLS).
+    \item The client presents its certificate, which must be signed by a CA trusted by the proxy.
+    \item The proxy validates the client certificate chain and extracts identity claims from certificate fields.
+    \item Upon successful mutual authentication, an encrypted channel is established using negotiated session keys.
+    \item The proxy extracts the client identity (e.g., Common Name) and passes it to the policy engine for authorization decisions.
+    \item Traffic is forwarded to the database over a separate mTLS connection, where the proxy authenticates as a trusted service.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/mtls_connection_flow.png}
+    \caption{mTLS Connection Flow: Client-to-Proxy and Proxy-to-Database Handshake}
+    \label{fig:mtls-flow}
+\end{figure}
+
+\subsection{Migration Strategy}
+
+The transition from plain TCP to mTLS follows a controlled migration path to minimize operational risk while maintaining development velocity:
+
+\begin{table}[htbp]
+\centering
+\caption{mTLS Migration Phases}
+\label{tab:mtls-migration}
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Phase} & \textbf{Configuration} & \textbf{Environment} \\
+\hline
+1 & Plain TCP (no encryption) & Development \\
+2 & TLS with server-only authentication & Staging \\
+3 & Full mTLS (mutual authentication) & Production \\
+4 & mTLS with enterprise PKI integration & Enterprise \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Phase 1: Development (Current)}
+Plain TCP connections enable rapid development iteration. Developers focus on protocol parsing, query interception, and policy logic without certificate management overhead.
+
+\subsubsection{Phase 2: Staging with Server TLS}
+Server-side TLS is enabled, encrypting traffic and authenticating the proxy to clients. This phase validates TLS configuration and certificate deployment procedures without requiring client certificates.
+
+\subsubsection{Phase 3: Production mTLS}
+Full mutual TLS is enforced. All clients must present valid certificates. Certificate provisioning is automated through internal tooling or integration with certificate management platforms such as HashiCorp Vault PKI or AWS Private CA.
+
+\subsubsection{Phase 4: Enterprise PKI Integration}
+For enterprise deployments, zGate integrates with existing PKI infrastructure. Features include:
+
+\begin{itemize}
+    \item Automatic certificate rotation before expiration
+    \item Certificate Revocation List (CRL) or Online Certificate Status Protocol (OCSP) checking
+    \item Integration with enterprise identity providers for certificate-to-identity mapping
+    \item Hardware Security Module (HSM) support for private key protection
+\end{itemize}
+
+This phased approach ensures that core proxy functionality is thoroughly validated before introducing certificate management complexity, while maintaining a clear trajectory toward production-grade Zero Trust security.
+
