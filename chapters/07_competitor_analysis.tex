@@ -5,7 +5,7 @@
 
 \section{Introduction}
 
-The landscape of database access control is evolving rapidly in response to an increasingly hostile threat environment. With the global average cost of a data breach reaching a record high of \textbf{\$4.88 million} in 2024 \cite{ibm2024}, organizations are abandoning traditional perimeter-based security models in favor of Zero Trust architectures.
+The landscape of database access control is evolving rapidly in response to an increasingly hostile threat environment. With the global average cost of a data breach reaching a record high of \textbf{\$4.88 million} in 2024 \cite{ibm2024}, organizations are abandoning traditional perimeter-based security models in favor of Zero Trust architectures. The healthcare sector, in particular, faces unique challenges, with the average cost of a breach soaring to \textbf{\$7.42 million} in 2025, marking the 14th consecutive year it has been the costliest industry for data breaches.
 
 This chapter categorizes the existing solutions in the market, analyzes their technical strengths and limitations compared to zGate, and identifies the specific research gap this project addresses. Furthermore, it presents a detailed market analysis underpinned by 2024-2025 industry statistics to validate the commercial viability and necessity of the proposed solution.
 
@@ -101,22 +101,22 @@ Based on the analysis above, a clear gap emerges in the current ecosystem:
 \section{Market Need and Security Challenges}
 
 \subsection{Critical Vulnerabilities in Healthcare and Legacy Systems}
-The need for advanced database security is most acute in critical sectors. Research indicates that \textbf{23\% of hospitals} remain vulnerable to cyberattacks specifically due to legacy system issues unaddressed by modern patches. These vulnerabilities are compounded by human factors:
+The need for advanced database security is most acute in critical sectors. In 2024, the healthcare sector accounted for \textbf{23\% of all data breaches}, with over 133 million records exposed. Legacy systems remain a primary vulnerability; as of late 2024, \textbf{73\% of healthcare providers} still rely on legacy information systems.
 \begin{itemize}
-    \item \textbf{Human Error:} Remains a leading cause of security incidents, responsible for \textbf{29\% of breaches annually}.
-    \item \textbf{Misdelivery:} In the healthcare sector, \textbf{31\% of incidents} stem from simple misdelivery errors (sending sensitive data to the wrong recipient), a problem that zGate's data masking could mitigate.
-    \item \textbf{Phishing:} Ransomware attacks are frequently triggered by employee phishing attempts, necessitating a "Assume Breach" mentality.
+    \item \textbf{Legacy Vulnerabilities:} Older systems often lack modern security features like encryption and MFA, making them easy targets. "Easy Back-Door Entry" via unsupported systems contributes to over \textbf{50\% of network server breaches}.
+    \item \textbf{Cost of Inaction:} The financial impact is staggering, with the average healthcare data breach cost reaching \textbf{\$7.42 million} in 2025.
+    \item \textbf{Human Factor:} Human error and misdelivery of sensitive data remain top causes of incidents. zGate's ability to enforce data masking directly at the protocol level provides a fail-safe against such inadvertent exposures.
 \end{itemize}
 
 \subsection{Compliance Pressure}
-Regulatory frameworks are tightening globally. Both \textbf{GDPR} (Europe) and \textbf{CCPA} (California) now mandate breach notifications within \textbf{72 hours}. However, readiness is lagging:
+Regulatory frameworks are tightening globally. Both \textbf{GDPR} (Europe) and \textbf{CCPA} (California) now mandate strict data protection standards. However, readiness is lagging:
 \begin{itemize}
-    \item Only \textbf{45\% of firms} are projected to fully comply with these rigorous regulations by 2025.
-    \item The gap between regulatory mandates and technical capability creates a significant market opportunity for compliance-automating tools like zGate.
+    \item Only \textbf{45\% of firms} are projected to fully comply with rigorous regulations by 2025.
+    \item \textbf{HIPAA Updates:} The impending 2025 updates to the HIPAA Security Rule are expected to mandate stronger protections for legacy systems, creating a direct compliance necessity for tools like zGate that can wrap legacy databases in a secure Zero Trust layer.
 \end{itemize}
 
 \subsection{Third-Party and AI Threats}
-The threat landscape is expanding beyond internal staff. Third-party vendors are involved in \textbf{62\% of breaches} (projected by 2025), highlighting the need for secure, ephemeral access for contractors. Furthermore, the weaponization of AI has accelerated zero-day exploits, which affected over \textbf{30,000 companies} in 2021 alone.
+The threat landscape is expanding beyond internal staff. Third-party vendors are involved in a majority of breaches, highlighting the need for secure, ephemeral access for contractors. Furthermore, the weaponization of AI has accelerated zero-day exploits, requiring defense mechanisms that do not rely solely on static signatures.
 
 % Placeholder for Threat Sources Figure
 \begin{figure}[h]
@@ -176,7 +176,6 @@ Despite the clear benefits, organizations face hurdles:
     \item \textbf{Legacy Systems:} Integration gaps with older mainframes or databases remain a blocker.
     \item \textbf{Skill Fragmentation:} Teams often lack the specific skills to manage fragmented security tools.
 \end{itemize}
-
 % Placeholder for Challenges Figure
 \begin{figure}[h]
     \centering
