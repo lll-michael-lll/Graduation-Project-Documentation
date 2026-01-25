@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex document_main"] 1769302569.72572 "document_main.aux" "document_main.bbl" "document_main" 1769363312.12846 0
+["bibtex document_main"] 0 "document_main.aux" "document_main.bbl" "document_main" 1769364045.98406 0
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/plain.bst" 1292289607 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
-  "document_main.aux" 1769363301.00122 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "document_main.aux" 0 -1 0 "pdflatex"
   "references.bib" 0 -1 0 ""
   (generated)
   "document_main.bbl"
   "document_main.blg"
   (rewritten before read)
-["pdflatex"] 1769363301.00568 "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" "document_main.pdf" "document_main" 1769363312.129 2
+["pdflatex"] 1769364034.79082 "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" "document_main.pdf" "document_main" 1769364045.98452 2
   "/etc/texmf/web2c/texmf.cnf" 1753573302.42095 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" 1769361065.00889 13918 e04d1ad5693690c2e6da1b84ba4af72c ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -294,7 +294,7 @@
   "chapters/04_requirements.tex" 1769361064.9001 37362 70dfcb7f8d9a9c85816b0e7e5848c3ed ""
   "chapters/05_proposed_solution.tex" 1769361064.9001 10752 79eb53787af42ade4fe89ddbeef32684 ""
   "chapters/06_standards.tex" 1769361064.9011 3323 1be83b9c913b9dff093c566a65ef8416 ""
-  "chapters/07_competitor_analysis.tex" 1769361064.9011 13718 ebc34d6aa8a889898af0fec2011b29fd ""
+  "chapters/07_competitor_analysis.tex" 1769364023.3952 13712 b905bbdb72e69638ae159772c7330651 ""
   "chapters/08_literature_review.tex" 1769361064.90424 46554 16e6be3c5ae382a42e3add96e30d9797 ""
   "chapters/09_technical_background.tex" 1769361064.90597 58997 93b42ff17d7885056c9bb63d6a6b6873 ""
   "chapters/10_system_architecture.tex" 1769363289.5564 54270 03026539c48c175b6d31c4cf2a2d0ea0 ""
@@ -308,12 +308,12 @@
   "chapters/20_team_contribution.tex" 1769361064.91618 14708 38ca9e2ae08b8d5cecf2dcabb04062ea ""
   "chapters/22_conclusion.tex" 1769361064.91618 5920 3010df785ba0e4f58a998923e9fad630 ""
   "chapters/appendices.tex" 1765866759.9585 196 811aae25f35020ccc5dc2fd73282c400 ""
-  "document_main.aux" 1769363311.45332 238141 525b834605f24a1a5faf8de5974d947e "pdflatex"
+  "document_main.aux" 1769364045.3326 238142 832725839587489627dd3de4c0295069 "pdflatex"
   "document_main.bbl" 1769361064.9181 49 0eba253fc001332e731e8aba3f23127b "bibtex document_main"
-  "document_main.lof" 1769363311.49732 9186 afb37cf93a507e167fa083913b740cbb "pdflatex"
-  "document_main.lot" 1769363311.49732 3504 3b1a6742aadc919728a7a74f1b00fc7d "pdflatex"
+  "document_main.lof" 1769364045.3786 9186 13c4612eae6394952bdc56a19247dd89 "pdflatex"
+  "document_main.lot" 1769364045.3786 3504 8ca2a2358a8d6bf89f04d11e0fd0c9d0 "pdflatex"
   "document_main.tex" 1769361065.00889 13918 e04d1ad5693690c2e6da1b84ba4af72c ""
-  "document_main.toc" 1769363311.49732 60045 953b1e554079e24e420a2d3e85a09d28 "pdflatex"
+  "document_main.toc" 1769364045.3786 60046 36e4e6f257308dfe6762e3d7cf9c42f1 "pdflatex"
   "images/CLI-workflow.png" 1765866760.01071 428744 331a3fb59fdefe146a06b656dcd00c8d ""
   "images/GDPR.png" 1765866760.01127 24304 422d0541ac6d8654fd5cea944166b046 ""
   "images/PCI-DSS.png" 1765866760.01276 158773 7dba7fe2109b900aacb98e01291d0fd9 ""
@@ -322,6 +322,7 @@
   "images/actor-diagram.png" 1765866760.01327 44725 7a2d739a780a64e5ebe041a38acb9586 ""
   "images/administrator-use-cases.png" 1765866760.01721 436891 2ce562ce5696ce51cae041a930cbf482 ""
   "images/backend.png" 1765866760.02333 521281 682471d5553ab93b96c91636e134eed2 ""
+  "images/challenges.png" 1769363994.53655 70969 3607afc42e61c392c65f5e09a9de2b6c ""
   "images/complete-system-use-case.png" 1765866760.02742 575583 dda71866307385cab67899d623e0497a ""
   "images/context_propagation_in_golang.jpg" 1765866760.02859 115488 9cdaae8abb57245ef77368d2ce26316b ""
   "images/enduser-use-cases.png" 1765866760.03895 162855 105e06f4fa1966c781687f507117c4a7 ""
@@ -348,6 +349,7 @@
   "images/images for doc/WebUI flows/3.7 Admin account management flow.png" 1769319436.33459 161241 88d0d9ba8a72c802f6c9e820b4d18d42 ""
   "images/images for doc/WebUI flows/3.8 shared account flow.png" 1769319436.33612 304747 d4024a1caf909e28b89c85362570197b ""
   "images/images for doc/WebUI flows/3.9 userDb account management flow.png" 1769319436.33767 317403 c84c90ab6df1639aac66314a108324cc ""
+  "images/market_share.png" 1769363929.03382 183339 4d4a0ff438c1e1115258c53282f6d939 ""
   "images/mtls_connection_flow.png" 1769075916.66412 117092 30cff71ad94dde6a7422b81fc005e6a2 ""
   "images/mysql_command_lifecycle.jpg" 1765866760.05716 121376 3c1bceaf16cb576217305fd98f63d725 ""
   "images/mysql_command_packet.jpg" 1765866760.05822 88986 cf111a0b8df3971d22ec16661fe2c48f ""
@@ -357,6 +359,7 @@
   "images/system-component-interaction.png" 1765866760.07896 537752 986663c04abf34d80ffb6e7dce5f2b94 ""
   "images/tcp_in_goroutines.jpg" 1765866760.08024 131009 c1a339949ba4d8a08dca2753012c59ac ""
   "images/tech-stack.png" 1765866760.08328 230390 7b7d162c5da1c84846c5eebf3e3bd07f ""
+  "images/threat_sources.png" 1769363837.71667 70567 5591abbf0c6711d03cd34e26128fc277 ""
   "images/university-logo.png" 1769361065.01016 264552 91d59e7fd97c55d598d84eb4c4bf6cca ""
   "images/what-zgate-implements.png" 1765866760.0886 30545 ddb9706b2865f330b5613f73034afe9e ""
   "images/zGate_arch.png" 1769320501.80727 260617 86ad21faadef4de5a794c767a8bb4456 ""
