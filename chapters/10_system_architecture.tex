@@ -22,6 +22,7 @@
 
 \begin{figure}[H]
     \centering
+    \label{sec:high-level-architecture}
     \includegraphics[angle=90,width=0.45\textheight]{images/zGate_arch.png}
     \caption{zGate Architecture Overview}
     \label{fig:zgate-arch}
@@ -223,8 +224,11 @@ The Dispatcher component (\texttt{internal/gateway/dispatcher.go}) is responsibl
 
 The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a composable pipeline for query processing with three primary interceptors:
 
-\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=\textbf{1. Logging Interceptor}]
-\textbf{Purpose:} Provides comprehensive audit trail for all database operations
+\vspace{0.2cm}
+
+\textbf{1. Logging Interceptor}
+
+\textit{Purpose:} Provides comprehensive audit trail for all database operations.
 
 \textbf{Functionality:}
 \begin{itemize}[leftmargin=*]
@@ -236,10 +240,12 @@ The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a compos
 
 \textbf{Input:} QueryContext before execution\\
 \textbf{Output:} Structured log entry
-\end{tcolorbox}
 
-\begin{tcolorbox}[colback=red!5!white, colframe=red!75!black, title=\textbf{2. Safety Interceptor}]
-\textbf{Purpose:} Prevents dangerous database operations based on configurable rules
+\vspace{0.3cm}
+
+\textbf{2. Safety Interceptor}
+
+\textit{Purpose:} Prevents dangerous database operations based on configurable rules.
 
 \textbf{Blocked Operations:}
 \begin{itemize}[leftmargin=*]
@@ -254,10 +260,12 @@ The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a compos
 
 \textbf{Input:} Query text from QueryContext\\
 \textbf{Output:} BLOCK decision or ALLOW with logged warning
-\end{tcolorbox}
 
-\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=\textbf{3. Masking Interceptor}]
-\textbf{Purpose:} Dynamically masks sensitive data in query results based on column names
+\vspace{0.3cm}
+
+\textbf{3. Masking Interceptor}
+
+\textit{Purpose:} Dynamically masks sensitive data in query results based on column names.
 
 \textbf{Masking Rules:}
 \begin{itemize}[leftmargin=*]
@@ -270,9 +278,10 @@ The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a compos
 
 \textbf{Input:} Query result set with column metadata\\
 \textbf{Output:} Masked result set with sensitive values redacted
-\end{tcolorbox}
 
-\textbf{Composite Interceptor:} The CompositeInterceptor orchestrates the execution of all configured interceptors in sequence, maintaining the chain of responsibility pattern.
+\vspace{0.3cm}
+
+\noindent\textbf{Composite Interceptor:} The CompositeInterceptor orchestrates the execution of all configured interceptors in sequence, maintaining the chain of responsibility pattern.
 
 % ============================================================
 \subsection{Configuration Flow}
@@ -1180,7 +1189,8 @@ The system implements defense-in-depth security with multiple layers of protecti
 
 The zGate platform is engineered with six foundational quality attributes that define its operational characteristics and production readiness. These attributes guide architectural decisions and validate the system's suitability for enterprise environments.
 
-\begin{tcolorbox}[colback=red!5!white, colframe=red!75!black, title=\textbf{Security: Zero Trust by Design}]
+\subsubsection{Security: Zero Trust by Design}
+
 \textbf{Architectural Guarantees:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Credential Elimination:} End users never access or store production database credentials
@@ -1190,12 +1200,11 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Ephemeral Credentials:} Optional temporary accounts that self-destruct on disconnect
     \item \textbf{JWT-Based Authentication:} Stateless token validation with automatic expiration and refresh
 \end{itemize}
-\textbf{Security Posture:} The architecture assumes breach and enforces Zero Trust at every layer, eliminating single points of credential compromise.
-\end{tcolorbox}
 
-\vspace{0.3cm}
+\textit{Security Posture:} The architecture assumes breach and enforces Zero Trust at every layer, eliminating single points of credential compromise.
 
-\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=\textbf{Scalability: Horizontal and Vertical Growth}]
+\subsubsection{Scalability: Horizontal and Vertical Growth}
+
 \textbf{Scaling Characteristics:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Stateless API:} JWT-based authentication enables load balancer distribution without session affinity
@@ -1205,12 +1214,11 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Dynamic Port Allocation:} Operating system manages ephemeral port pool
     \item \textbf{Connection Pooling:} Shared and ephemeral accounts reduce backend database load
 \end{itemize}
-\textbf{Scaling Strategy:} Horizontal scaling through multiple gateway instances, vertical scaling through connection pooling and efficient Go runtime.
-\end{tcolorbox}
 
-\vspace{0.3cm}
+\textit{Scaling Strategy:} Horizontal scaling through multiple gateway instances, vertical scaling through connection pooling and efficient Go runtime.
 
-\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=\textbf{Maintainability: Clean Architecture Principles}]
+\subsubsection{Maintainability: Clean Architecture Principles}
+
 \textbf{Design Characteristics:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Component Separation:} Clear boundaries between Gateway, API, Store, and Protocol layers
@@ -1220,12 +1228,11 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Error Propagation:} Explicit error handling with context preservation
     \item \textbf{Self-Documenting Code:} Type-safe structs and clear naming conventions
 \end{itemize}
-\textbf{Maintenance Philosophy:} Code organization prioritizes clarity over cleverness, with explicit dependencies and minimal coupling.
-\end{tcolorbox}
 
-\vspace{0.3cm}
+\textit{Maintenance Philosophy:} Code organization prioritizes clarity over cleverness, with explicit dependencies and minimal coupling.
 
-\begin{tcolorbox}[colback=orange!5!white, colframe=orange!75!black, title=\textbf{Extensibility: Modular and Composable}]
+\subsubsection{Extensibility: Modular and Composable}
+
 \textbf{Extension Points:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Interceptor Pipeline:} Pluggable query processing stages (safety, logging, masking, custom)
@@ -1235,27 +1242,25 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Storage Backends:} SQLite, PostgreSQL, MySQL supported via unified Store interface
     \item \textbf{Middleware Stack:} HTTP middleware chain for cross-cutting concerns
 \end{itemize}
-\textbf{Extension Philosophy:} Open/Closed principle - open for extension via interfaces, closed for modification of core logic.
-\end{tcolorbox}
 
-\vspace{0.3cm}
+\textit{Extension Philosophy:} Open/Closed principle - open for extension via interfaces, closed for modification of core logic.
 
-\begin{tcolorbox}[colback=purple!5!white, colframe=purple!75!black, title=\textbf{Performance: Low-Latency Proxying}]
+\subsubsection{Performance: Low-Latency Proxying}
+
 \textbf{Performance Characteristics:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Proxy Overhead:} Typically <1ms latency added by zGate layer
+    \item \textbf{Proxy Overhead:} Typically $<$1ms latency added by zGate layer
     \item \textbf{Wire Protocol Efficiency:} Zero serialization - packets forwarded directly
     \item \textbf{Connection Pooling:} Shared accounts reduce backend connection establishment overhead
     \item \textbf{Go Runtime Performance:} Compiled binary, no garbage collection pauses during I/O
-    \item \textbf{Efficient Goroutines:} Lightweight threads with <2KB stack overhead
+    \item \textbf{Efficient Goroutines:} Lightweight threads with $<$2KB stack overhead
     \item \textbf{Memory Efficiency:} Streaming query results without buffering entire result sets
 \end{itemize}
-\textbf{Performance Target:} Sub-millisecond overhead for query proxying, supporting thousands of concurrent connections per instance.
-\end{tcolorbox}
 
-\vspace{0.3cm}
+\textit{Performance Target:} Sub-millisecond overhead for query proxying, supporting thousands of concurrent connections per instance.
 
-\begin{tcolorbox}[colback=gray!5!white, colframe=gray!75!black, title=\textbf{Reliability: Fault Tolerance and Recovery}]
+\subsubsection{Reliability: Fault Tolerance and Recovery}
+
 \textbf{Reliability Mechanisms:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Graceful Degradation:} Shared pool exhaustion falls back to ephemeral accounts
@@ -1265,5 +1270,5 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Connection Timeout:} Configurable timeouts prevent resource leaks
     \item \textbf{Audit Continuity:} Failed queries logged before rejection
 \end{itemize}
-\textbf{Reliability Goal:} 99.9\% uptime for gateway layer, with automatic recovery from transient failures and comprehensive logging for post-mortem analysis.
-\end{tcolorbox}
+
+\textit{Reliability Goal:} 99.9\% uptime for gateway layer, with automatic recovery from transient failures and comprehensive logging for post-mortem analysis.
