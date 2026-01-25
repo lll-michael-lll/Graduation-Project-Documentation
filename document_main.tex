@@ -24,6 +24,10 @@
 \renewcommand{\thesection}{\thechapter.\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
 \renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+% Fix figure and table numbering to reset with each chapter
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}
 \usepackage{array}
 \usepackage{tabularx}
 \usepackage{longtable}
@@ -48,6 +52,9 @@
 \usepackage{mdframed}
 \usepackage{lettrine}  % For drop caps
 \usepackage{fancyhdr}  % For headers and footers
+
+% Define IEEEPARstart command for IEEE-style paragraph starts
+\newcommand{\IEEEPARstart}[2]{\lettrine[lines=2, lhang=0.37, loversize=0.2]{#1}{#2}}
 
 % -----------------------------
 % Professional Color Palette
@@ -139,7 +146,7 @@
 
 % Section formatting - with colored box for number and beige background
 \titleformat{\section}
-  {\clearpage\normalfont\Large\bfseries\color{primaryBlue}}
+  {\normalfont\Large\bfseries\color{primaryBlue}}
   {\colorbox{primaryBlue}{\makebox[2em][c]{\textcolor{white}{\thesection}}}}
   {0.8em}
   {}
@@ -176,6 +183,8 @@
   \phantomsection  % Creates a proper anchor for hyperlinks
   \addcontentsline{toc}{chapter}{\numberline{#1}#2}  % Add to TOC
   \setcounter{chapter}{#1}  % Set chapter counter for section numbering
+  \setcounter{section}{0}  % Reset section counter for new chapter
+  \markboth{Chapter #1: #2}{Chapter #1: #2}  % Set chapter marks for headers
   \thispagestyle{empty}
   \vspace*{3cm}
   

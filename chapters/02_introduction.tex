@@ -4,18 +4,17 @@
 
 \begin{sectionintro}{2}{Introduction \& Problem Definition}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Current state of database access management
-    \item Critical security vulnerabilities and their impact
-    \item The need for Zero Trust database architecture
-    \item Problem statement and project motivation
-    \item Impact on compliance and operations
+    \item Database access vulnerabilities and credential exposure
+    \item Traditional security solution limitations
+    \item Zero Trust principles for database security
+    \item Identity-based access control implementation
   \end{itemize}
 }
-\lettrine[lines=3, lhang=0.1, loversize=0.2]{\color{primaryBlue}I}{n the modern enterprise landscape, databases contain the most valuable and sensitive organizational assets. Yet traditional database access management practices create fundamental security vulnerabilities that expose organizations to breaches, compliance failures, and insider threats. This chapter explores the critical problems that zGate aims to solve and establishes the security imperative for Zero Trust database access control.}
+\lettrine[lines=3, lhang=0, loversize=0.15]{\color{primaryBlue}I}{n modern enterprises, databases store critical assets yet traditional access management creates fundamental security vulnerabilities.} This chapter examines how static credentials, shared accounts, and legacy authentication patterns expose organizations to breaches and compliance failures. We explore the security imperative driving Zero Trust database access control and establish the foundational problems that zGate addresses.
 \end{sectionintro}
 
 \section{Introduction}
-In the modern data-driven enterprise landscape, databases serve as the foundation for critical business operations, storing sensitive customer information, financial records, intellectual property, and operational data. However, the traditional approaches to database access management have not evolved at the same pace as the sophistication of cyber threats and the complexity of organizational structures. Development teams, database administrators, data analysts, and various other technical personnel routinely require direct database access to perform their duties, creating significant security challenges that existing solutions fail to adequately address.
+\IEEEPARstart{I}{n} the modern data-driven enterprise landscape, databases serve as the foundation for critical business operations, storing sensitive customer information, financial records, intellectual property, and operational data. However, the traditional approaches to database access management have not evolved at the same pace as the sophistication of cyber threats and the complexity of organizational structures. Development teams, database administrators, data analysts, and various other technical personnel routinely require direct database access to perform their duties, creating significant security challenges that existing solutions fail to adequately address.
 
 zGate is a Zero Trust database access gateway designed to fundamentally transform how organizations manage, secure, and audit database access. Built on the principles of Zero Trust security architecture, zGate operates as an intelligent intermediary layer between users and database systems, enforcing identity-based access control, implementing dynamic query-level authorization, and ensuring complete auditability of all database operations. The system comprises three integrated components: a high-performance gateway server that intercepts and controls all database traffic, a command-line interface for streamlined user interactions, and a comprehensive web-based administration dashboard for policy management and monitoring.
 

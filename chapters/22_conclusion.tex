@@ -4,19 +4,18 @@
 
 \begin{sectionintro}{22}{Conclusion}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Project achievements and outcomes
-    \item Technical validation and proof of concept
-    \item Security architecture contributions
-    \item Future work and production roadmap
-    \item Final reflections and impact
+    \item Term 1 achievements and validation
+    \item Core infrastructure delivered
+    \item Security mechanisms implemented
+    \item Term 2 production roadmap
   \end{itemize}
 }
-\lettrine[lines=3, lhang=0.1, loversize=0.2]{\color{primaryBlue}T}{he \textbf{zGate} project represents a fundamental advancement in database security architecture.} This concluding chapter reflects on the achievements of Term~1, evaluates how the prototype validates our Zero Trust approach, and articulates the path forward for production deployment. The work demonstrates that eliminating credential exposure while maintaining operational efficiency is not only feasible but architecturally elegant.
+\lettrine[lines=3, lhang=0, loversize=0.15]{\color{primaryBlue}T}{he zGate project represents a fundamental advancement in database security architecture.} This chapter reflects on Term 1 achievements including the MySQL proxy implementation, JWT authentication system, and role-based access control engine that successfully validate Zero Trust database access. We articulate the production roadmap for Term 2 focusing on external identity integration, observability enhancements, and enterprise deployment readiness.
 \end{sectionintro}
 
 \section{Restated Purpose}
 
-This project was undertaken to address a critical gap in enterprise database security: the absence of a comprehensive Zero Trust solution that eliminates credential exposure while maintaining operational efficiency. Traditional approaches—VPNs, bastion hosts, and privileged access management systems—continue to distribute database credentials to end users, creating attack vectors that modern security frameworks cannot adequately mitigate.
+\IEEEPARstart{T}{his} project was undertaken to address a critical gap in enterprise database security: the absence of a comprehensive Zero Trust solution that eliminates credential exposure while maintaining operational efficiency. Traditional approaches—VPNs, bastion hosts, and privileged access management systems—continue to distribute database credentials to end users, creating attack vectors that modern security frameworks cannot adequately mitigate.
 
 zGate was conceived as a Zero Trust Database Access Gateway that places security at the point of database interaction itself. By intercepting all database traffic at the wire protocol level, the system enforces identity-based access control, generates session-specific credentials, and provides complete auditability—capabilities that peripheral security solutions cannot achieve.
 

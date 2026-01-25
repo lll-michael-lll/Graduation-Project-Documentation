@@ -4,17 +4,18 @@
 
 \begin{sectionintro}{10}{System Architecture}{
   \begin{itemize}[leftmargin=1.5em]
-    \item High-level three-tier architecture overview
-    \item Component interactions and data flow
-    \item Security boundaries and trust zones
-    \item Scalability and deployment architecture
-    \item Integration patterns and interfaces
+    \item Three-tier architecture overview
+    \item Gateway component design
+    \item Protocol-aware proxy implementation
+    \item Dynamic session management
+    \item Interceptor chain and query processing
+    \item RESTful API layer
   \end{itemize}
 }
-\lettrine[lines=3, lhang=0.1, loversize=0.2]{\color{primaryBlue}A}{rchitecture defines how system components collaborate to achieve functional and non-functional requirements.} This chapter presents zGate's layered architecture, examining the gateway server, CLI client, and web dashboard in detail. The design emphasizes clear separation of concerns, security by design, and maintainability while implementing Zero Trust principles throughout.
+\lettrine[lines=3, lhang=0, loversize=0.15]{\color{primaryBlue}A}{rchitecture defines how system components collaborate to achieve requirements.} This chapter presents zGate's layered architecture across client, API, gateway, data, and storage tiers, examining the internal structure of the gateway server including listener, acceptor, dispatcher, and session manager components. We explore the protocol-aware proxy implementation, dynamic credential provisioning, interceptor chain for composable security enforcement, and RESTful API layer that enables centralized administration.
 \end{sectionintro}
 
-This chapter provides a comprehensive technical overview of the zGate platform architecture, detailing the design and implementation of each component. The system follows a layered architecture pattern with clear separation of concerns, implementing Zero Trust principles at the database protocol level.
+\IEEEPARstart{T}{his} chapter provides a comprehensive technical overview of the zGate platform architecture, detailing the design and implementation of each component. The system follows a layered architecture pattern with clear separation of concerns, implementing Zero Trust principles at the database protocol level.
 
 % ============================================================
 \section{High-Level Architecture}

@@ -4,19 +4,19 @@
 
 \begin{sectionintro}{5}{Proposed Solution}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Zero Trust architecture design principles
-    \item Three-tier system architecture overview
-    \item Gateway server solution approach
-    \item CLI and WebUI components
-    \item Security mechanisms and protocols
+    \item Zero Trust architecture and credential abstraction
+    \item Dynamic proxy management
+    \item JWT-based authentication and token lifecycle
+    \item Policy enforcement and audit logging
+    \item Cross-platform CLI with secure storage
   \end{itemize}
 }
-\lettrine[lines=3, lhang=0.1, loversize=0.2]{\color{primaryBlue}T}{he \textbf{zGate} solution addresses traditional database security vulnerabilities through a comprehensive Zero Trust architecture.} This chapter presents our proposed approach, detailing how the gateway server, command-line interface, and web dashboard work together to eliminate credential exposure while maintaining operational efficiency. The architecture enforces continuous verification and least-privilege access at every level.
+\lettrine[lines=3, lhang=0, loversize=0.15]{\color{primaryBlue}T}{he zGate solution addresses database security vulnerabilities through Zero Trust architecture.} This chapter presents our comprehensive approach to eliminating credential exposure through dynamic proxy management, JWT-based authentication, and real-time policy enforcement. We explore how the gateway server, CLI, and web dashboard integrate to provide identity-based access control while maintaining operational efficiency.
 \end{sectionintro}
 
 \section{Solution Overview}
 
-The proposed solution is \textbf{zGate}, a comprehensive Zero-Trust Database Access Platform that fundamentally changes how organizations manage database security and access control. Rather than relying on shared credentials and static permissions, zGate introduces a dynamic, policy-driven approach where temporary credentials are created for each user session, eliminating the risks associated with credential sprawl and unauthorized access.
+\IEEEPARstart{T}{he} proposed solution is \textbf{zGate}, a comprehensive Zero-Trust Database Access Platform that fundamentally changes how organizations manage database security and access control. Rather than relying on shared credentials and static permissions, zGate introduces a dynamic, policy-driven approach where temporary credentials are created for each user session, eliminating the risks associated with credential sprawl and unauthorized access.
 
 \subsection{The Core Problem}
 
