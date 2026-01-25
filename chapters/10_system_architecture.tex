@@ -151,7 +151,12 @@ The Manager component (\texttt{internal/proxy/manager.go}) implements the sessio
     \item Initializes session context and starts listener
     \item Returns connection details to API layer
 \end{enumerate}
-
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/acc_types.jpg}
+    \caption{Account Types}
+    \label{fig:acc-types}
+\end{figure}
 \textbf{Input:} JWT claims, database name, user permissions\\
 \textbf{Output:} Session object with port, credentials, account type\\
 \textbf{Communication:} Interacts with Store for credentials, Gateway Server for handlers, Database for ephemeral user creation
@@ -454,7 +459,12 @@ Ephemeral accounts represent the ultimate Zero Trust approach: credentials that 
     \item Grants appropriate permissions based on the user's role permissions from zGate
     \item Account details are stored only in memory within the active session context
 \end{itemize}
-
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/ephemeral.png}
+    \caption{Ephemeral Account Creation}
+    \label{fig:ephemeral}
+\end{figure}
 \textbf{Usage Scenario:}
 \begin{itemize}[leftmargin=*]
     \item Triggered when personal account doesn't exist and shared pool is exhausted
@@ -675,7 +685,12 @@ Figure~\ref{fig:webui-shared-accounts} presents the shared database account pool
     \item Automatically releases accounts when sessions disconnect
     \item Provides account pooling for organizations without personal accounts
 \end{itemize}
-
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/shared_acc.jpg}
+    \caption{Shared Account Pool Management}
+    \label{fig:shared_acc}
+\end{figure}
 \subsubsection{User Database Account Management}
 
 Figure~\ref{fig:webui-userdb-accounts} illustrates personal database account assignment.
