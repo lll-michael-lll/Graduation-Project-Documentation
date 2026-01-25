@@ -17,7 +17,7 @@ The server, implemented in Go, serves as the central component handling all auth
 
 Table~\ref{tab:auth-features} summarizes the authentication and authorization capabilities implemented in the prototype.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Authentication \& Authorization Features}
 \label{tab:auth-features}
@@ -39,7 +39,7 @@ Custom Permissions & $\checkmark$ & Direct user-to-database permission assignmen
 
 The proxy layer handles the interception and forwarding of database connections. Table~\ref{tab:proxy-features} details the proxy capabilities.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Database Proxy Features}
 \label{tab:proxy-features}
@@ -61,7 +61,7 @@ MSSQL Proxy & $\times$ & Handler stub exists but not functional \\
 
 The interceptor system provides a composable pipeline for query processing. Table~\ref{tab:interceptor-features} describes the implemented interceptors.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Interceptor Pipeline Features}
 \label{tab:interceptor-features}
@@ -81,7 +81,7 @@ Composite Interceptor & $\checkmark$ & Chains multiple interceptors in configura
 
 The platform supports multiple credential management strategies as shown in Table~\ref{tab:account-types}.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Database Account Types}
 \label{tab:account-types}
@@ -129,7 +129,7 @@ The backend utilizes SQLite for persistent storage with the following security c
 
 The CLI, also implemented in Go, provides end-user access to databases through the zGate gateway.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{CLI Commands and Features}
 \label{tab:cli-features}
@@ -164,7 +164,7 @@ Additional CLI features include:
 
 The web-based dashboard, built with Next.js and React, provides administrators with a graphical interface for platform management.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{WebUI Pages and Functionality}
 \label{tab:webui-pages}
@@ -192,14 +192,14 @@ The web-based dashboard, built with Next.js and React, provides administrators w
 %\section{Screenshots (CLI \& Dashboard)}
 
 % Note: Add actual screenshots here
-% \begin{figure}[htbp]
+% \begin{figure}[H]
 %     \centering
 %     \includegraphics[width=\textwidth]{images/cli_connect.png}
 %     \caption{zGate CLI: Database Connection Workflow}
 %     \label{fig:cli-connect}
 % \end{figure}
 
-% \begin{figure}[htbp]
+% \begin{figure}[H]
 %     \centering
 %     \includegraphics[width=\textwidth]{images/dashboard_overview.png}
 %     \caption{zGate WebUI: Admin Dashboard Overview}
@@ -306,7 +306,7 @@ This section documents the key architectural and implementation decisions made d
 
 \subsection{Language \& Framework Selection}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Technology Stack Decisions}
 \label{tab:tech-stack}

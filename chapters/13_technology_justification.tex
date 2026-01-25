@@ -175,7 +175,7 @@ mTLS inverts this asymmetry by requiring clients to also present certificates th
 
 Table~\ref{tab:tcp-vs-mtls} compares the security properties of plain TCP connections against mTLS-protected communications.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Security Properties: Plain TCP vs. mTLS}
 \label{tab:tcp-vs-mtls}
@@ -253,7 +253,7 @@ Figure~\ref{fig:mtls-flow} illustrates the mTLS handshake process. When a client
     \item Traffic is forwarded to the database over a separate mTLS connection, where the proxy authenticates as a trusted service.
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/mtls_connection_flow.png}
     \caption{mTLS Connection Flow: Client-to-Proxy and Proxy-to-Database Handshake}
@@ -264,7 +264,7 @@ Figure~\ref{fig:mtls-flow} illustrates the mTLS handshake process. When a client
 
 The transition from plain TCP to mTLS follows a controlled migration path to minimize operational risk while maintaining development velocity:
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{mTLS Migration Phases}
 \label{tab:mtls-migration}
