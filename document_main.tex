@@ -28,6 +28,9 @@
 % Fix figure and table numbering to reset with each chapter
 \renewcommand{\thefigure}{\thechapter.\arabic{figure}}
 \renewcommand{\thetable}{\thechapter.\arabic{table}}
+\usepackage{chngcntr}
+\counterwithin{figure}{chapter}
+\counterwithin{table}{chapter}
 \usepackage{array}
 \usepackage{tabularx}
 \usepackage{longtable}
@@ -185,6 +188,8 @@
   \addcontentsline{toc}{chapter}{\numberline{#1}#2}  % Add to TOC
   \setcounter{chapter}{#1}  % Set chapter counter for section numbering
   \setcounter{section}{0}  % Reset section counter for new chapter
+  \setcounter{figure}{0}  % Reset figure counter for new chapter
+  \setcounter{table}{0}  % Reset table counter for new chapter
   \markboth{Chapter #1: #2}{Chapter #1: #2}  % Set chapter marks for headers
   \thispagestyle{empty}
   \vspace*{3cm}
