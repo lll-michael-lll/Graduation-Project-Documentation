@@ -1,15 +1,7 @@
 # Fdb version 4
-["bibtex document_main"] 0 "document_main.aux" "document_main.bbl" "document_main" 1769381254.92604 0
-  "/usr/share/texlive/texmf-dist/bibtex/bst/base/plain.bst" 1292289607 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
-  "document_main.aux" 0 -1 0 "pdflatex"
-  "references.bib" 0 -1 0 ""
-  (generated)
-  "document_main.bbl"
-  "document_main.blg"
-  (rewritten before read)
-["pdflatex"] 1769381243.34478 "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" "document_main.pdf" "document_main" 1769381254.92658 2
+["pdflatex"] 1769381762.43349 "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" "document_main.pdf" "document_main" 1769381775.16462 2
   "/etc/texmf/web2c/texmf.cnf" 1753573302.42095 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" 1769381231.11282 14496 0cf943f7bccb7c3f94fd2af09b807b02 ""
+  "/home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex" 1769381749.36243 14444 d3122b555e38453e41c3810dc0b62e55 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcbx1200.tfm" 1136768653 1536 c09172c8f235393e6235bb4758357c41 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1200.tfm" 1136768653 1536 74b7293ec3713bb7fdca8dd1bd1f469c ""
@@ -288,7 +280,7 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1741904018 41538 c016915c1d51223b6dbbfe27341748a8 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1765366462 5467255 9a64d1b40e0b893fc5588ecce9d8accf ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1765366557 3348395 d9bd155b2eb5e8ac4c613106cec77769 ""
-  "chapters/01_team_information.tex" 1769377901.7196 2129 ae6292b7245329f979e060cd63e2ed72 ""
+  "chapters/01_team_information.tex" 1769381591.56154 2084 2fdeafa14da4e8d5da34445728575c78 ""
   "chapters/02_introduction.tex" 1769379402.37636 22602 391ffef6bb0355a1484800c6975c8240 ""
   "chapters/03_project_definition.tex" 1769377901.7216 11792 2a02fd7f65c494bc21e510b2465817de ""
   "chapters/04_requirements.tex" 1769377901.72428 37261 317d797bf7668d4ee23699c695c42706 ""
@@ -308,12 +300,11 @@
   "chapters/20_team_contribution.tex" 1769377901.7366 14693 acc0a59abbed5231b77c3f8d8d3a0a64 ""
   "chapters/22_conclusion.tex" 1769377901.7366 5822 e29c742fc6d71b7d0c16d1bb4898f0b6 ""
   "chapters/appendices.tex" 1769374550.05412 149 ada8a915ae4be4a1e3b2ce0887056b6e ""
-  "document_main.aux" 1769381254.22991 237972 653956dbb4e84cf9b55d1d3eb3fa4c9d "pdflatex"
-  "document_main.bbl" 1769376737.87394 49 0eba253fc001332e731e8aba3f23127b "bibtex document_main"
-  "document_main.lof" 1769381254.27391 9473 57b307a9b181de920721d4229c44f677 "pdflatex"
-  "document_main.lot" 1769381254.27391 3464 bd90fbec13f9f15fb92f812b74e87a1d "pdflatex"
-  "document_main.tex" 1769381231.11282 14496 0cf943f7bccb7c3f94fd2af09b807b02 ""
-  "document_main.toc" 1769381254.27391 59926 b9f2eeab7219a1964a912fe638007690 "pdflatex"
+  "document_main.aux" 1769381774.51743 237934 dc841b2af6b9fd839396109555a3eb46 "pdflatex"
+  "document_main.lof" 1769381774.56443 9473 57b307a9b181de920721d4229c44f677 "pdflatex"
+  "document_main.lot" 1769381774.56443 3464 bd90fbec13f9f15fb92f812b74e87a1d "pdflatex"
+  "document_main.tex" 1769381749.36243 14444 d3122b555e38453e41c3810dc0b62e55 ""
+  "document_main.toc" 1769381774.56443 59926 b9f2eeab7219a1964a912fe638007690 "pdflatex"
   "images/CLI-workflow.png" 1765866760.01071 428744 331a3fb59fdefe146a06b656dcd00c8d ""
   "images/GDPR.png" 1765866760.01127 24304 422d0541ac6d8654fd5cea944166b046 ""
   "images/PCI-DSS.png" 1765866760.01276 158773 7dba7fe2109b900aacb98e01291d0fd9 ""
