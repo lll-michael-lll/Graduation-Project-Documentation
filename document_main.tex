@@ -12,6 +12,18 @@
 \usepackage{tocloft}
 \usepackage{geometry}
 \usepackage{setspace}
+
+% Add spacing between numbers and titles in TOC, LOF, LOT
+\setlength{\cftchapnumwidth}{3em}
+\setlength{\cftsecnumwidth}{3em}
+\setlength{\cftsubsecnumwidth}{4em}
+\setlength{\cftfignumwidth}{3em}
+\setlength{\cfttabnumwidth}{3em}
+
+% Fix section numbering to display correctly (8.1, 8.2 instead of 8.32, 8.33)
+\renewcommand{\thesection}{\thechapter.\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
 \usepackage{array}
 \usepackage{tabularx}
 \usepackage{longtable}
@@ -42,6 +54,7 @@
 % -----------------------------
 \definecolor{primaryBlue}{RGB}{41, 98, 155}      % Soft professional blue
 \definecolor{accentBlue}{RGB}{52, 152, 219}      % Brighter accent
+\definecolor{darkNavy}{RGB}{25, 60, 95}          % Darker navy for subsections
 \definecolor{darkGray}{RGB}{64, 64, 64}          % Dark gray for text
 \definecolor{lightGray}{RGB}{245, 245, 245}      % Light gray backgrounds
 \definecolor{sectionBg}{RGB}{240, 248, 255}      % Very light blue for sections
@@ -126,23 +139,23 @@
 
 % Section formatting - with colored box for number and beige background
 \titleformat{\section}
-  {\normalfont\Large\bfseries\color{primaryBlue}}
-  {\colorbox{accentBlue}{\makebox[2em][c]{\textcolor{white}{\thesection}}}}
+  {\clearpage\normalfont\Large\bfseries\color{primaryBlue}}
+  {\colorbox{primaryBlue}{\makebox[2em][c]{\textcolor{white}{\thesection}}}}
   {0.8em}
   {}
-  [\vspace{-1.8ex}{\colorbox{chapterBg}{\parbox{\dimexpr\textwidth-2\fboxsep}{\vspace{0.3ex}\color{accentBlue}\titlerule[0.8pt]\vspace{0.3ex}}}}]
+  [\vspace{-1.8ex}{\colorbox{chapterBg}{\parbox{\dimexpr\textwidth-2\fboxsep}{\vspace{0.3ex}\color{primaryBlue}\titlerule[0.8pt]\vspace{0.3ex}}}}]
 
 % Subsection formatting - clean with colored number
 \titleformat{\subsection}
-  {\normalfont\large\bfseries\color{accentBlue}}
-  {\textcolor{accentBlue}{\thesubsection}}
+  {\normalfont\large\bfseries\color{darkNavy}}
+  {\textcolor{darkNavy}{\thesubsection}}
   {0.8em}
   {}
 
 % Subsubsection formatting
 \titleformat{\subsubsection}
-  {\normalfont\normalsize\bfseries\color{accentBlue}}
-  {\textcolor{accentBlue}{\thesubsubsection}}
+  {\normalfont\normalsize\bfseries\color{darkNavy}}
+  {\textcolor{darkNavy}{\thesubsubsection}}
   {0.8em}
   {}
 
@@ -160,10 +173,13 @@
   % #2 = Chapter title
   % #3 = Bullet points for "This part covers:"
   \clearpage
+  \phantomsection  % Creates a proper anchor for hyperlinks
+  \addcontentsline{toc}{chapter}{\numberline{#1}#2}  % Add to TOC
+  \setcounter{chapter}{#1}  % Set chapter counter for section numbering
   \thispagestyle{empty}
   \vspace*{3cm}
   
-  % Create a TikZ overlay for the large number on the right
+  % Create a TikZ overlay for the large "Chapter X" on the right
   \begin{tikzpicture}[remember picture,overlay]
     \node[
       anchor=north east,
@@ -172,7 +188,7 @@
       opacity=0.3,
       text=darkGray
     ] at (current page.north east) {%
-      \fontsize{350}{350}\selectfont\bfseries #1%
+      \fontsize{120}{120}\selectfont\bfseries Chapter #1%
     };
   \end{tikzpicture}
   
@@ -315,6 +331,7 @@ The Term~1 prototype demonstrates functional Zero Trust database access where us
 % List of Tables
 % --------------------------------
 \listoftables
+\thispagestyle{plain}
 \newpage
 
 % ============================================================
