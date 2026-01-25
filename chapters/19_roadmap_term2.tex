@@ -197,31 +197,41 @@ Demo Environment Preparation & June 15--20 & Final presentation preparation \\
 
 %-----------------------------------------------------------
 
-%\section{Term 2 Development Timeline}
+\section{Term 2 Development Timeline}
 
-%The following Mermaid diagram can be used to visualize the Term~2 development timeline:
+Figure~\ref{fig:term2-timeline} illustrates the project timeline for Term~2, depicting the progression through the remaining three milestones from February to June 2026.
 
-% Mermaid Syntax for Term 2 Gantt Chart:
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/Term 2 Timeline.png}
+    \caption{Term 2 Project Timeline (February -- June 2026)}
+    \label{fig:term2-timeline}
+\end{figure}
+
+% Mermaid Gantt Chart Syntax for Term 2 Timeline:
 % 
+% ```mermaid
 % gantt
-%     title zGate Term 2 Development Timeline
+%     title Term 2 Development Timeline (Feb - June 2026)
 %     dateFormat  YYYY-MM-DD
-%     axisFormat  %b %d
+%     axisFormat  %b %Y
 %     
-%     section Milestone 4: IAM Integration
-%     OAuth2/OIDC Implementation     :m4a, 2025-01-15, 21d
-%     IdP Connectors (Google, Okta)  :m4b, after m4a, 14d
-%     Claims-to-Role Mapping         :m4c, after m4b, 14d
+%     section Milestone 4
+%     External IAM & Identity Integration     :m4_iam, 2026-02-01, 2026-02-28
+%     SSO Integration (Google/Okta/Azure AD)  :m4_sso, 2026-02-01, 2026-02-14
+%     OAuth2/OIDC Authentication Flow         :m4_oauth, 2026-02-08, 2026-02-21
+%     RBAC Mapping & Policy Engine            :m4_rbac, 2026-02-15, 2026-02-28
 %     
-%     section Milestone 5: Observability
-%     Metrics Dashboard              :m5a, 2025-03-01, 21d
-%     Audit Logging System           :m5b, after m5a, 21d
-%     Alerting Framework             :m5c, after m5b, 14d
+%     section Milestone 5
+%     Observability & Production Readiness    :m5_obs, 2026-03-01, 2026-04-30
+%     Metrics Visualization & Dashboard       :m5_metrics, 2026-03-01, 2026-03-21
+%     Audit Logging Implementation            :m5_audit, 2026-03-15, 2026-04-07
+%     Error Handling & System Robustness      :m5_error, 2026-04-01, 2026-04-30
 %     
-%     section Milestone 6: Validation
-%     Performance Benchmarking       :m6a, 2025-05-01, 14d
-%     Security Audit                 :m6b, after m6a, 14d
-%     Final Documentation            :m6c, 2025-05-15, 30d
-%     Demo Preparation               :m6d, 2025-06-10, 10d
-
-% Note: Generate this diagram using a Mermaid renderer and include as figure
+%     section Milestone 6
+%     Final Validation & Delivery             :m6_final, 2026-05-01, 2026-06-15
+%     Performance Benchmarking & Load Testing :m6_perf, 2026-05-01, 2026-05-21
+%     Security Auditing & Penetration Testing :m6_sec, 2026-05-15, 2026-05-31
+%     Final Documentation & Reports           :m6_doc, 2026-05-20, 2026-06-10
+%     Demo Environment & Presentation Prep    :m6_demo, 2026-06-01, 2026-06-15
+% ```
