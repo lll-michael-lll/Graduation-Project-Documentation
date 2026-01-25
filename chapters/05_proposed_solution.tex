@@ -197,9 +197,10 @@ Security is woven into every layer of the zGate platform through multiple defens
 \end{figure}
 \subsection{Security Guarantees}
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|l|}
 \hline
 \textbf{Threat} & \textbf{Mitigation} & \textbf{Implementation} \\
 \hline
@@ -219,7 +220,8 @@ Resource Exhaustion & Automatic cleanup & Temporary users deleted within 30 seco
 \hline
 Man-in-the-Middle & Encrypted connections & TLS support for backend database connections \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Security threats and their mitigations in zGate}
 \label{tab:security-guarantees}
 \end{table}

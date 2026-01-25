@@ -109,7 +109,7 @@ PAM systems manage and audit privileged account credentials, often providing pas
     \item \textbf{Session-Level, Not Query-Level:} PAM typically operates at the session level, recording entire sessions but not enforcing policies on individual queries
     \item \textbf{Limited Data Protection:} PAM cannot dynamically mask sensitive data fields based on user identity or query context
     \item \textbf{Operational Friction:} The check-out/check-in process for credentials adds significant overhead to developer workflows
-    \item \textbf{PostgreSQL/MySQL Limitations:} Many PAM solutions were designed for privileged OS access and offer limited database protocol support
+    \item \textbf{PostgreSQL, MySQL, and MSSQL Limitations:} Many PAM solutions were designed for privileged OS access and offer limited database protocol support
 \end{itemize}
 
 \subsection{Database Activity Monitoring (DAM)}
@@ -192,7 +192,7 @@ This audit trail is immutable, centralized, and sufficient for forensic investig
 \subsection{What zGate Implements}
 The zGate architecture embodies these Zero Trust principles through its three-component design:
 
-\textbf{Gateway Server:} Implements protocol handlers for MySQL and MSSQL, intercepting all database traffic at the wire protocol level. The gateway's policy engine evaluates every query against configured rules, the dispatcher manages connection routing, and session managers track user activity in real-time. Users connect to zGate using standard database clients, but the gateway mediates all communication with backend databases.
+\textbf{Gateway Server:} Implements protocol handlers for PostgreSQL, MySQL and MSSQL, intercepting all database traffic at the wire protocol level. The gateway's policy engine evaluates every query against configured rules, the dispatcher manages connection routing, and session managers track user activity in real-time. Users connect to zGate using standard database clients, but the gateway mediates all communication with backend databases.
 
 \textbf{Command-Line Interface:} Provides developers and analysts with a streamlined authentication flow. Users authenticate with their organizational identity, receive time-limited JWT tokens, and establish database sessions without ever handling production credentials. The CLI manages token storage and renewal transparently.
 
@@ -219,7 +219,8 @@ Zero Trust database access directly addresses every gap in existing solutions:
 
 \begin{table}[h]
 \centering
-\begin{tabular}{|p{0.45\textwidth}|p{0.45\textwidth}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|}
 \hline
 \textbf{Limitation} & \textbf{Zero Trust Solution} \\
 \hline
@@ -237,7 +238,8 @@ DAM is reactive only & Real-time policy enforcement prevents unauthorized querie
 \hline
 Shared credentials prevent accountability & Every action is tied to individual user identity \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Comparison of Traditional Limitations vs. Zero Trust Solutions}
 \label{tab:zero_trust_comparison}
 \end{table}

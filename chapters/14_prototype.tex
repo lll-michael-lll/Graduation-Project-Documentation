@@ -17,11 +17,10 @@ The server, implemented in Go, serves as the central component handling all auth
 
 Table~\ref{tab:auth-features} summarizes the authentication and authorization capabilities implemented in the prototype.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{Authentication \& Authorization Features}
-\label{tab:auth-features}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Feature} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -32,18 +31,20 @@ Logout & $\checkmark$ & Server-side token revocation \\
 RBAC & $\checkmark$ & Role-based access control with database-level permissions \\
 Custom Permissions & $\checkmark$ & Direct user-to-database permission assignment \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{Authentication \& Authorization Features}
+\label{tab:auth-features}
 \end{table}
 
 \subsubsection{Database Proxy}
 
 The proxy layer handles the interception and forwarding of database connections. Table~\ref{tab:proxy-features} details the proxy capabilities.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{Database Proxy Features}
-\label{tab:proxy-features}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Feature} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -54,18 +55,20 @@ TLS Backend Connection & $\checkmark$ & TLS with certificate pinning for backend
 PostgreSQL Proxy & $\times$ & Wire protocol not implemented; query execution via API only \\
 MSSQL Proxy & $\times$ & Handler stub exists but not functional \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{Database Proxy Features}
+\label{tab:proxy-features}
 \end{table}
 
 \subsubsection{Interceptor Pipeline}
 
 The interceptor system provides a composable pipeline for query processing. Table~\ref{tab:interceptor-features} describes the implemented interceptors.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{Interceptor Pipeline Features}
-\label{tab:interceptor-features}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Feature} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -74,18 +77,20 @@ Masking Interceptor & $\checkmark$ & Masks emails, phones, passwords, names, cre
 Logging Interceptor & $\checkmark$ & Logs all queries with user attribution, duration, row count \\
 Composite Interceptor & $\checkmark$ & Chains multiple interceptors in configurable order \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{Interceptor Pipeline Features}
+\label{tab:interceptor-features}
 \end{table}
 
 \subsubsection{Account Types}
 
 The platform supports multiple credential management strategies as shown in Table~\ref{tab:account-types}.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{Database Account Types}
-\label{tab:account-types}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Account Type} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -93,7 +98,10 @@ Personal Accounts & $\checkmark$ & Dedicated database credentials per user \\
 Shared Accounts & $\checkmark$ & Pooled accounts with concurrent user tracking \\
 Ephemeral Accounts & Partial & Interface exists; CREATE/DROP USER requires testing \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{Database Account Types}
+\label{tab:account-types}
 \end{table}
 
 \subsubsection{Administrative APIs}
@@ -129,11 +137,10 @@ The backend utilizes SQLite for persistent storage with the following security c
 
 The CLI, also implemented in Go, provides end-user access to databases through the zGate gateway.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{CLI Commands and Features}
-\label{tab:cli-features}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Command} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -146,7 +153,10 @@ The CLI, also implemented in Go, provides end-user access to databases through t
 \texttt{active-logins} & $\checkmark$ & List user's active sessions \\
 \texttt{revoke} & $\checkmark$ & Terminate a specific session \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{CLI Commands and Features}
+\label{tab:cli-features}
 \end{table}
 
 Additional CLI features include:
@@ -164,11 +174,10 @@ Additional CLI features include:
 
 The web-based dashboard, built with Next.js and React, provides administrators with a graphical interface for platform management.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{WebUI Pages and Functionality}
-\label{tab:webui-pages}
-\begin{tabular}{|l|c|p{7cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|l|}
 \hline
 \textbf{Page} & \textbf{Status} & \textbf{Description} \\
 \hline
@@ -184,7 +193,10 @@ The web-based dashboard, built with Next.js and React, provides administrators w
 \texttt{/admin/user-db-accounts} & $\checkmark$ & Personal database account assignment \\
 \texttt{/admin/activity-audit} & $\checkmark$ & Session activity and query logs \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{WebUI Pages and Functionality}
+\label{tab:webui-pages}
 \end{table}
 
 %-----------------------------------------------------------
@@ -306,11 +318,10 @@ This section documents the key architectural and implementation decisions made d
 
 \subsection{Language \& Framework Selection}
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
-\caption{Technology Stack Decisions}
-\label{tab:tech-stack}
-\begin{tabular}{|l|l|p{6cm}|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|l|}
 \hline
 \textbf{Component} & \textbf{Technology} & \textbf{Rationale} \\
 \hline
@@ -319,7 +330,10 @@ CLI & Go + Cobra & Consistent with server; Cobra is the standard for Go CLIs \\
 WebUI & Next.js + React & Modern React features, built-in API proxy, good developer experience \\
 UI Components & Radix UI + Tailwind & Accessible components, rapid styling \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
+\caption{Technology Stack Decisions}
+\label{tab:tech-stack}
 \end{table}
 
 \subsection{Database Wire Protocol}

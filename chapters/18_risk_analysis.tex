@@ -24,10 +24,11 @@ Based on these two factors, we classify risks into three tiers:
     \item \textbf{Medium/Low Risk:} Risks that are monitored periodically but do not strictly dictate immediate changes to the project roadmap.
 \end{itemize}
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
 \renewcommand{\arraystretch}{1.5}
-\begin{tabular}{|p{4cm}|c|c|c|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|}
 \hline
 \textbf{Risk Description} & \textbf{Likelihood} & \textbf{Impact} & \textbf{Risk Level} \\
 \hline
@@ -43,7 +44,8 @@ Scope Creep (Feature Overload) & High & Medium & \textbf{High} \\
 \hline
 Team Skill Acquisition Curve (Go/Systems Programming) & Low & High & \textbf{Medium} \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Detailed Project Risk Assessment Matrix}
 \label{tab:risk-matrix}
 \end{table}
