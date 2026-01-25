@@ -34,6 +34,18 @@
 \usepackage{pgf-pie}
 \usepackage{framed}
 \usepackage{mdframed}
+\usepackage{lettrine}  % For drop caps
+\usepackage{fancyhdr}  % For headers and footers
+
+% -----------------------------
+% Professional Color Palette
+% -----------------------------
+\definecolor{primaryBlue}{RGB}{41, 98, 155}      % Soft professional blue
+\definecolor{accentBlue}{RGB}{52, 152, 219}      % Brighter accent
+\definecolor{darkGray}{RGB}{64, 64, 64}          % Dark gray for text
+\definecolor{lightGray}{RGB}{245, 245, 245}      % Light gray backgrounds
+\definecolor{sectionBg}{RGB}{240, 248, 255}      % Very light blue for sections
+\definecolor{chapterBg}{RGB}{250, 248, 245}     % Light beige for chapter titles
 
 % Define custom colors for JSON
 \definecolor{jsonkey}{HTML}{FFC000}
@@ -71,6 +83,133 @@
 \geometry{margin=1in}
 \onehalfspacing
 
+% -----------------------------
+% Page Headers and Footers
+% -----------------------------
+\pagestyle{fancy}
+\fancyhf{} % Clear all headers and footers
+\fancyhead[L]{\small\textcolor{primaryBlue}{\nouppercase{\leftmark}}}
+\fancyhead[R]{\small\textcolor{primaryBlue}{\thepage}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primaryBlue}\leaders\hrule height \headrulewidth\hfill}}
+
+% Plain style for chapter pages
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\small\textcolor{primaryBlue}{\thepage}}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% -----------------------------
+% Enhanced Section Formatting
+% -----------------------------
+% Chapter formatting - title in light beige box without outline
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{primaryBlue}}
+  {\chaptertitlename\ \thechapter}
+  {20pt}
+  {%
+    \begin{mdframed}[
+      linewidth=0pt,
+      backgroundcolor=chapterBg,
+      roundcorner=8pt,
+      innertopmargin=15pt,
+      innerbottommargin=15pt,
+      innerrightmargin=20pt,
+      innerleftmargin=20pt,
+      skipabove=10pt,
+      skipbelow=10pt
+    ]
+    \centering\huge\bfseries\color{primaryBlue}
+  }
+  [\end{mdframed}]
+
+% Section formatting - with colored box for number and beige background
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{primaryBlue}}
+  {\colorbox{accentBlue}{\makebox[2em][c]{\textcolor{white}{\thesection}}}}
+  {0.8em}
+  {}
+  [\vspace{-1.8ex}{\colorbox{chapterBg}{\parbox{\dimexpr\textwidth-2\fboxsep}{\vspace{0.3ex}\color{accentBlue}\titlerule[0.8pt]\vspace{0.3ex}}}}]
+
+% Subsection formatting - clean with colored number
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{accentBlue}}
+  {\textcolor{accentBlue}{\thesubsection}}
+  {0.8em}
+  {}
+
+% Subsubsection formatting
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{accentBlue}}
+  {\textcolor{accentBlue}{\thesubsubsection}}
+  {0.8em}
+  {}
+
+% Adjust spacing around sections
+\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+\titlespacing*{\section}{0pt}{20pt}{12pt}
+\titlespacing*{\subsection}{0pt}{15pt}{8pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
+
+% -----------------------------
+% Section Intro Page Environment
+% -----------------------------
+\newenvironment{sectionintro}[3]{%
+  % #1 = Chapter number
+  % #2 = Chapter title
+  % #3 = Bullet points for "This part covers:"
+  \clearpage
+  \thispagestyle{empty}
+  \vspace*{3cm}
+  
+  % Create a TikZ overlay for the large number on the right
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[
+      anchor=north east,
+      xshift=-2cm,
+      yshift=-4cm,
+      opacity=0.3,
+      text=darkGray
+    ] at (current page.north east) {%
+      \fontsize{350}{350}\selectfont\bfseries #1%
+    };
+  \end{tikzpicture}
+  
+  % Title with underline
+  \noindent
+  {\Huge\color{primaryBlue}\textbf{#2}}\\[0.5cm]
+  {\color{primaryBlue}\rule{\textwidth}{2pt}}
+  
+  \vspace{1.5cm}
+  
+  % "This part covers" section in beige box on the left
+  \noindent
+  \begin{minipage}{0.6\textwidth}
+    \begin{mdframed}[
+      linewidth=0pt,
+      backgroundcolor=chapterBg,
+      roundcorner=8pt,
+      innertopmargin=15pt,
+      innerbottommargin=15pt,
+      innerrightmargin=20pt,
+      innerleftmargin=20pt,
+      skipabove=0pt,
+      skipbelow=0pt
+    ]
+      {\large\color{primaryBlue}\textit{This part covers:}}\\[0.4cm]
+      \color{darkGray}
+      #3
+    \end{mdframed}
+  \end{minipage}
+  
+  \vspace{1.5cm}
+  
+  \noindent
+}{%
+  \clearpage
+}
+
 % clickable links formatting
 \hypersetup{
     colorlinks=true,
@@ -78,9 +217,6 @@
     urlcolor=blue,
     citecolor=blue
 }
-
-% Make chapter uppercase and bold
-\titleformat{\chapter}{\bfseries\Large}{\thechapter.}{1em}{}
 
 % -----------------------------
 % DOCUMENT START
