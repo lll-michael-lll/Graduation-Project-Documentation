@@ -25,7 +25,7 @@ Requirements engineering forms the foundation of successful software development
 
 \subsection{FR-2: Database Connection Management}
 \begin{itemize}
-    \item Multi-database support (MSSQL, MySQL)
+    \item Multi-database support (MSSQL, MySQL, PostgreSQL)
     \item Dynamic proxy creation with auto port allocation
     \item Temporary database users with auto-cleanup
     \item Secure credential generation
@@ -40,7 +40,8 @@ Requirements engineering forms the foundation of successful software development
 
 \subsection{FR-4: Command Line Interface}
 \begin{itemize}
-    \item Auto token refresh
+    \item Auto access token refresh (access & refresh tokens)
+    \item Login methods: username/password (local) and OAuth2/OIDC (external IdP)
     \item Database listing and connection
     \item Session status monitoring
 \end{itemize}
@@ -80,18 +81,12 @@ Requirements engineering forms the foundation of successful software development
 
 \textbf{Key Metrics:}
 \begin{itemize}
-    \item Access token expiry: 15 minutes
-    \item Refresh token expiry: 7 days
+    \item Access token expiry: 5 minutes
+    \item Refresh token expiry: 1 day
     \item Session isolation with temporary users
 \end{itemize}
 
-\subsection{NFR-2: Performance}
-\begin{itemize}
-    \item Authentication: $<$ 500ms
-    \item Database listing: $<$ 200ms
-    \item Connection establishment: $<$ 2 seconds
-    \item WebUI page loads: $<$ 1 second
-\end{itemize}
+% NFR-2: Performance removed per requirements
 
 \subsection{NFR-3: Scalability Targets}
 \begin{itemize}
@@ -119,7 +114,7 @@ Requirements engineering forms the foundation of successful software development
 \subsection{NFR-6: Maintainability}
 \begin{itemize}
     \item Go best practices
-    \item Externalized YAML configuration
+    \item Configuration persisted in SQLite (not YAML)
     \item Structured logging
     \item Health check endpoints
 \end{itemize}
@@ -209,7 +204,6 @@ Requirements engineering forms the foundation of successful software development
     \item \textbf{Description:} Command-line client application for end users
     \item \textbf{Responsibilities:}
     \begin{itemize}
-        \item Provide user-friendly interface for authentication
         \item Manage token storage and refresh
         \item Display available databases
         \item Establish database connections
@@ -230,7 +224,7 @@ Requirements engineering forms the foundation of successful software development
 
 \subsubsection{Backend Databases}
 \begin{itemize}
-    \item \textbf{Description:} Target database systems (MSSQL, MySQL) that users need to access
+    \item \textbf{Description:} Target database systems (MSSQL, MySQL, PostgreSQL) that users need to access
     \item \textbf{Responsibilities:}
     \begin{itemize}
         \item Store application data
@@ -294,7 +288,7 @@ Requirements engineering forms the foundation of successful software development
 
 \textbf{Main Flow:}
 \begin{enumerate}
-    \item User executes \texttt{zgate connect --database <db\_name>}
+    \item User executes \texttt{zgate connect <db\_name>}
     \item CLI sends connection request to zGate Server
     \item Server validates user has permission for requested database
     \item Server retrieves database configuration
@@ -614,7 +608,7 @@ I can access data within my permissions
 
 \noindent\textbf{Acceptance Criteria:}
 \begin{itemize}
-    \item Command \texttt{zgate connect --database <name>} initiates connection
+    \item Command \texttt{zgate connect <db\_name>} initiates connection
     \item System validates my permission before allowing access
     \item Temporary credentials are auto-generated
     \item Connection details (host, port, username, password) are displayed

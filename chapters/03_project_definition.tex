@@ -21,11 +21,11 @@ The platform consists of three integrated components working in concert:
 
 \subsubsection{Gateway Server (zGate Core)}
 \begin{itemize}
-    \item \textbf{Protocol Handlers:} Native implementation of MySQL and MSSQL wire protocols, enabling transparent protocol-level interception and inspection of database traffic
+    \item \textbf{Protocol Handlers:} Native implementation of MySQL, PostgreSQL, and MSSQL wire protocols, enabling transparent protocol-level interception and inspection of database traffic
     \item \textbf{Authentication System:} JWT-based authentication with configurable token expiration, eliminating the need for users to possess database credentials
     \item \textbf{Policy Engine:} Real-time policy evaluation engine that performs fresh permission lookups for every database operation, supporting role-based and custom permission models
     \item \textbf{Dynamic Proxy Manager:} On-demand creation and management of database proxies with automatic port allocation, eliminating static listener configurations
-    \item \textbf{Temporary Credential System:} Automated generation of session-specific database users with unique, cryptographically secure credentials that are automatically purged upon session termination
+    % Temporary credential lifecycle is documented elsewhere; removed inline to avoid duplication
     \item \textbf{Session Management:} Per-user, per-database session tracking with context preservation and graceful cleanup mechanisms
     \item \textbf{API Server:} RESTful API exposing authentication, database listing, connection management, and session control endpoints
 \end{itemize}
@@ -76,7 +76,6 @@ Built with Next.js 16, React 19, and Radix UI, the dashboard provides comprehens
 \subsubsection{Out of Scope (Current Phase):}
 \begin{itemize}
     \item Oracle, and other database protocol support (planned for future phases)
-    \item Real-time query analysis and threat detection algorithms
     \item Integration with external identity providers (SAML, LDAP, Active Directory)
     \item Multi-factor authentication (MFA) enforcement
     \item Database activity replay and forensic analysis tools
@@ -142,7 +141,7 @@ The zGate project aims to achieve the following measurable technical and securit
 
 \subsubsection{Support Multi-Database Environments}
 \begin{itemize}
-    \item Design modular architecture allowing support for MySQL and MSSQL through unified interfaces
+    \item Design modular architecture allowing support for MySQL, PostgreSQL, and MSSQL through unified interfaces
     \item Enable addition of new database protocols through implementation of standard handler and manager interfaces
     \item Maintain per-database configuration for credentials, connection parameters, and access policies
     \item Support simultaneous connections to multiple database instances of different types

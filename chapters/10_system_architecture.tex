@@ -313,6 +313,13 @@ The configuration process ensures all components are properly initialized before
 
 The authentication system implements JWT-based token authentication with automatic token rotation for enhanced security. The system supports both user and admin authentication flows.
 
+The gateway supports multiple authentication schemes to suit different deployment and operational needs:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Username / Password (Local):} Traditional credential-based login where passwords are verified (bcrypt) and a JWT pair (access + refresh) is issued for subsequent API access.
+    \item \textbf{OAuth2 / OIDC (External IdP):} Integration point for enterprise identity providers to enable Single Sign-On (SSO) and federation; zGate consumes identity tokens and issues local JWTs as needed.
+    \item \textbf{Mutual TLS (mTLS) / Service Certificates:} Certificate-based authentication for automated clients and service accounts where client certificates are validated during the TLS handshake and mapped to principal identities.
+\end{itemize}
+
 \subsubsection{User Login Flow}
 
 Figure~\ref{fig:user-login} depicts the user authentication process used by both CLI and WebUI components.
