@@ -55,6 +55,8 @@
 \usepackage{mdframed}
 \usepackage{fancyhdr}  % For headers and footers
 \usepackage{lettrine}  % For drop caps
+\usepackage{lmodern}   % Ensure fonts are scalable
+\usepackage{environ}
 
 % -----------------------------
 % Professional Color Palette
@@ -66,9 +68,10 @@
 \definecolor{lightGray}{RGB}{245, 245, 245}      % Light gray backgrounds
 \definecolor{sectionBg}{RGB}{240, 248, 255}      % Very light blue for sections
 \definecolor{chapterBg}{RGB}{250, 248, 245}     % Light beige for chapter titles
+\definecolor{lettrineOptions}{HTML}{06609f}      % User specified lettrine color
 
 % Configure lettrine for drop caps with refined professional styling
-\renewcommand{\LettrineFontHook}{\color{darkNavy}\bfseries}
+\renewcommand{\LettrineFontHook}{\color{lettrineOptions}\bfseries}
 \renewcommand{\DefaultNindent}{0pt}
 \renewcommand{\DefaultLoversize}{0.15}  % Slightly raise the drop cap
 \renewcommand{\DefaultLraise}{0}        % No additional raise
@@ -181,32 +184,17 @@
 \titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
 
 % -----------------------------
-% Lettrine switch for chapter intros
+% Lettrine helper
 % -----------------------------
-\newif\ifapplylettrine
-\applylettrinefalse
-
-\newcommand{\lettrineSwitch}{\applylettrinetrue}
-
-\let\oldpar\par
-\def\par{%
-  \ifapplylettrine
-    \applylettrinefalse
-    \let\par\oldpar
-    \expandafter\handleLettrine
-  \else
-    \oldpar
-  \fi
-}
-
-\def\handleLettrine#1#2 {%
-  \lettrine[lines=3,lhang=0.1,nindent=0em,findent=0.3em,loversize=0.15]{\color{darkNavy}\textbf{#1}}{#2} %
+% Helper macro to split the first word: #1=first letter, #2=rest of word, #3=rest of body
+\long\def\formatLettrineHelpers#1#2 #3\relax{%
+  \lettrine[lines=2,lhang=0,nindent=0em,findent=0.1em,loversize=0.5,lraise=0]{#1}{#2} #3%
 }
 
 % -----------------------------
 % Section Intro Page Environment
 % -----------------------------
-\newenvironment{sectionintro}[3]{%
+\NewEnviron{sectionintro}[3]{%
   % #1 = Chapter number
   % #2 = Chapter title
   % #3 = Bullet points for "This part covers:"
@@ -264,8 +252,9 @@
   \vspace{1.5cm}
   
   \noindent
-  \lettrineSwitch
-}{%
+  % Apply lettrine to the captured body
+  \expandafter\formatLettrineHelpers\BODY\relax
+  \par
 }
 
 % clickable links formatting
