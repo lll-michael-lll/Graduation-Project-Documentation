@@ -218,7 +218,7 @@
       opacity=0.3,
       text=darkGray
     ] at (current page.north east) {%
-      \fontsize{120}{120}\selectfont\bfseries Chapter #1%
+      \fontsize{30}{30}\selectfont\bfseries Chapter #1%
     };
   \end{tikzpicture}
   
@@ -392,7 +392,76 @@ The Term~1 prototype demonstrates functional Zero Trust database access where us
 % ============================================================
 % REFERENCES
 % ============================================================
-\chapter*{References}
+% Let the thebibliography environment print the heading named "References"
+\renewcommand{\bibname}{References}
+\begin{thebibliography}{99}
+\bibitem{nist-zt}
+M. Rose et al., "Zero Trust Architecture", NIST Special Publication 800-207, 2020. Available: https://www.nist.gov/publications/zero-trust-architecture
+
+\bibitem{nist-key}
+NIST, "Recommendation for Key Management" (SP 800-57), NIST, 2020. https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final
+
+\bibitem{owasp-sql}
+OWASP Foundation, "SQL Injection", OWASP Top Ten Project, https://owasp.org/www-community/attacks/SQL_Injection
+
+\bibitem{db-engines}
+S. Ding, "DB-Engines Ranking", DB-Engines, ongoing. https://db-engines.com/en/ranking
+
+\bibitem{mysql-proto}
+Oracle, "MySQL Internals — Client/Server Protocol", MySQL Reference Manual. https://dev.mysql.com/doc/internals/en/client-server-protocol.html
+
+\bibitem{postgres-proto}
+PostgreSQL Global Development Group, "Frontend/Backend Protocol", PostgreSQL Documentation. https://www.postgresql.org/docs/current/protocol.html
+
+\bibitem{tds}
+Microsoft Docs, "Tabular Data Stream (TDS) Protocol", Microsoft. https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds
+
+\bibitem{tls13}
+E. Rescorla, "The Transport Layer Security (TLS) Protocol Version 1.3", RFC 8446, 2018. https://tools.ietf.org/html/rfc8446
+
+\bibitem{vault}
+HashiCorp, "Vault — Secrets Management", HashiCorp Documentation. https://www.vaultproject.io/docs
+
+\bibitem{teleport}
+Gravitational, "Teleport — Secure Access for SSH and Kubernetes", Teleport Documentation. https://goteleport.com/docs/
+
+\bibitem{hoop}
+Hoop, "Hoop — secure database access" (product site), https://hoop.dev/
+
+\bibitem{db-security-book}
+R. Anderson, "Security Engineering: A Guide to Building Dependable Distributed Systems", 3rd ed., Wiley, 2020. (covers secure system and data design principles)
+
+\bibitem{nist-controls}
+NIST, "Security and Privacy Controls for Information Systems and Organizations", NIST SP 800-53 Rev. 5. https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final
+
+\bibitem{react-docs}
+React Core Team, "React – A JavaScript library for building user interfaces", https://reactjs.org/
+
+\bibitem{typescript-docs}
+Microsoft, "TypeScript: JavaScript with syntax for types", https://www.typescriptlang.org/
+
+\bibitem{nextjs-docs}
+Vercel, "Next.js Documentation", https://nextjs.org/docs
+
+\bibitem{tailwind-docs}
+Tailwind Labs, "Tailwind CSS Documentation", https://tailwindcss.com/docs
+
+\bibitem{market-statista}
+Statista, "Database Management Systems – Market size and forecasts", Statista Research, https://www.statista.com/
+
+\bibitem{worldbank-egypt}
+World Bank, "Egypt — Digital Development and ICT Reports", World Bank Data and Reports. https://data.worldbank.org/country/egypt
+
+\bibitem{mcit-egypt}
+Ministry of Communications and Information Technology (MCIT) Egypt, "ICT Indicators and Reports", https://mcit.gov.eg/
+
+\bibitem{teleport-blog}
+Gravitational, "How Teleport secures database access — blog and architecture notes", https://goteleport.com/blog/
+
+\bibitem{ibm-security}
+IBM Security, "Database Security: Best Practices", IBM Documentation and whitepapers. https://www.ibm.com/security
+
+\end{thebibliography}
 
 % ============================================================
 % APPENDICES
