@@ -47,13 +47,14 @@
 \usepackage{amssymb}
 \usepackage{tcolorbox}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows,shapes}
+\usetikzlibrary{positioning,arrows,shapes,shadows}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{pgf-pie}
 \usepackage{framed}
 \usepackage{mdframed}
 \usepackage{fancyhdr}  % For headers and footers
+\usepackage{lettrine}  % For drop caps
 
 % -----------------------------
 % Professional Color Palette
@@ -65,6 +66,13 @@
 \definecolor{lightGray}{RGB}{245, 245, 245}      % Light gray backgrounds
 \definecolor{sectionBg}{RGB}{240, 248, 255}      % Very light blue for sections
 \definecolor{chapterBg}{RGB}{250, 248, 245}     % Light beige for chapter titles
+
+% Configure lettrine for drop caps with refined professional styling
+\renewcommand{\LettrineFontHook}{\color{darkNavy}\bfseries}
+\renewcommand{\DefaultNindent}{0pt}
+\renewcommand{\DefaultLoversize}{0.15}  % Slightly raise the drop cap
+\renewcommand{\DefaultLraise}{0}        % No additional raise
+\renewcommand{\DefaultLhang}{0.1}       % Small hang into margin for elegance
 
 % Define custom colors for JSON
 \definecolor{jsonkey}{HTML}{FFC000}
@@ -173,6 +181,29 @@
 \titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
 
 % -----------------------------
+% Lettrine switch for chapter intros
+% -----------------------------
+\newif\ifapplylettrine
+\applylettrinefalse
+
+\newcommand{\lettrineSwitch}{\applylettrinetrue}
+
+\let\oldpar\par
+\def\par{%
+  \ifapplylettrine
+    \applylettrinefalse
+    \let\par\oldpar
+    \expandafter\handleLettrine
+  \else
+    \oldpar
+  \fi
+}
+
+\def\handleLettrine#1#2 {%
+  \lettrine[lines=3,lhang=0.1,nindent=0em,findent=0.3em,loversize=0.15]{\color{darkNavy}\textbf{#1}}{#2} %
+}
+
+% -----------------------------
 % Section Intro Page Environment
 % -----------------------------
 \newenvironment{sectionintro}[3]{%
@@ -233,6 +264,7 @@
   \vspace{1.5cm}
   
   \noindent
+  \lettrineSwitch
 }{%
 }
 
