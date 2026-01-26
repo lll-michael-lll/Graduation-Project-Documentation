@@ -2,7 +2,7 @@
 % 13. TECHNOLOGY JUSTIFICATION
 % ============================================================
 
-\begin{sectionintro}{13}{Technology Justification}{
+\begin{sectionintro}{12}{Technology Justification}{
   \begin{itemize}[leftmargin=1.5em]
     \item Go programming language selection
     \item Node.js and TypeScript for frontend
@@ -15,7 +15,7 @@ Technology choices fundamentally shape system capabilities and maintainability. 
 \end{sectionintro}
 
 \section{Why Go}
-\IEEEPARstart{T}{he} selection of Go (Golang) as the primary language for implementing the zGate Gateway proxy was driven by several technical requirements unique to high-performance, security-critical network infrastructure. Unlike interpreted languages, Go provides the performance characteristics and concurrency model essential for building a production-grade database access proxy.
+The selection of Go (Golang) as the primary language for implementing the zGate Gateway proxy was driven by several technical requirements unique to high-performance, security-critical network infrastructure. Unlike interpreted languages, Go provides the performance characteristics and concurrency model essential for building a production-grade database access proxy.
 
 \subsection{Performance \& Execution Model}
 Go is a compiled language that translates source code directly into machine code, unlike interpreted languages such as Python that execute code line-by-line at runtime. This fundamental architectural difference results in significantly lower latency and higher throughput—critical metrics for a proxy that sits between clients and database servers, where every millisecond of added latency compounds across thousands of queries.

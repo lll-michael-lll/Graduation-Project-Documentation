@@ -14,18 +14,17 @@
 }
 Architecture defines how system components collaborate to achieve requirements. This chapter presents zGate's layered architecture across client, API, gateway, data, and storage tiers, examining the internal structure of the gateway server including listener, acceptor, dispatcher, and session manager components. We explore the protocol-aware proxy implementation, dynamic credential provisioning, interceptor chain for composable security enforcement, and RESTful API layer that enables centralized administration.
 \end{sectionintro}
+\nopagebreak
 
-% ============================================================
 \section{High-Level Architecture}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
-    \label{sec:high-level-architecture}
     \includegraphics[angle=90,width=0.45\textheight]{images/zGate_arch.png}
     \caption{zGate Architecture Overview}
     \label{fig:zgate-arch}
 \end{figure}
-% ============================================================
+
 \section{Detailed Architecture}
 
 The zGate platform is architected as a distributed system comprising three primary components: the Gateway Server, Web UI, and CLI. Each component is designed with specific responsibilities that collectively implement Zero Trust database access.
