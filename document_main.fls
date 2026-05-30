@@ -470,85 +470,9 @@ INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rmsc.enc
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr10.tfm
-INPUT ./document_main.toc
-INPUT ./document_main.toc
-INPUT document_main.toc
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
-INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
-INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ts1-lmr12.tfm
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
 OUTPUT document_main.toc
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./document_main.lof
-INPUT ./document_main.lof
-INPUT document_main.lof
-INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
-INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
-INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
-INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmtt12.tfm
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
 OUTPUT document_main.lof
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./document_main.lot
-INPUT ./document_main.lot
-INPUT document_main.lot
 OUTPUT document_main.lot
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
 INPUT ./chapters/01_team_information.tex
 INPUT ./chapters/01_team_information.tex
 INPUT ./chapters/01_team_information.tex
@@ -557,9 +481,14 @@ INPUT chapters/01_team_information.tex
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr17.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmri12.tfm
+INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ts1-lmr12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmcsc10.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx12.tfm
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr10.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/lmmi12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/lmmi10.tfm
@@ -675,6 +604,7 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -692,10 +622,15 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
+INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
+INPUT /usr/share/texmf/tex/latex/lm/ot1lmtt.fd
+INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmtt12.tfm
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1370,6 +1305,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/totp_timeslot.png
+INPUT ./images/totp_timeslot.png
+INPUT ./images/totp_timeslot.png
+INPUT ./images/totp_timeslot.png
+INPUT ./images/totp_timeslot.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1382,7 +1322,32 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ts1-lmri12.tfm
+INPUT ./images/altcha_pow.png
+INPUT ./images/altcha_pow.png
+INPUT ./images/altcha_pow.png
+INPUT ./images/altcha_pow.png
+INPUT ./images/altcha_pow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/zero_trust_db.png
+INPUT ./images/zero_trust_db.png
+INPUT ./images/zero_trust_db.png
+INPUT ./images/zero_trust_db.png
+INPUT ./images/zero_trust_db.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1403,6 +1368,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/oidc_device_flow.png
+INPUT ./images/oidc_device_flow.png
+INPUT ./images/oidc_device_flow.png
+INPUT ./images/oidc_device_flow.png
+INPUT ./images/oidc_device_flow.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1415,18 +1385,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
+INPUT ./images/vault_approle.png
+INPUT ./images/vault_approle.png
+INPUT ./images/vault_approle.png
+INPUT ./images/vault_approle.png
+INPUT ./images/vault_approle.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1455,6 +1418,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/postgres_extended_query.png
+INPUT ./images/postgres_extended_query.png
+INPUT ./images/postgres_extended_query.png
+INPUT ./images/postgres_extended_query.png
+INPUT ./images/postgres_extended_query.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1471,6 +1439,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/masking_pipeline.png
+INPUT ./images/masking_pipeline.png
+INPUT ./images/masking_pipeline.png
+INPUT ./images/masking_pipeline.png
+INPUT ./images/masking_pipeline.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1487,6 +1460,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/otel_trace.png
+INPUT ./images/otel_trace.png
+INPUT ./images/otel_trace.png
+INPUT ./images/otel_trace.png
+INPUT ./images/otel_trace.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1507,6 +1485,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/bubbletea_loop.png
+INPUT ./images/bubbletea_loop.png
+INPUT ./images/bubbletea_loop.png
+INPUT ./images/bubbletea_loop.png
+INPUT ./images/bubbletea_loop.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1523,6 +1506,15 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/nextjs_rendering.png
+INPUT ./images/nextjs_rendering.png
+INPUT ./images/nextjs_rendering.png
+INPUT ./images/nextjs_rendering.png
+INPUT ./images/nextjs_rendering.png
 INPUT ./chapters/10_system_architecture.tex
 INPUT ./chapters/10_system_architecture.tex
 INPUT ./chapters/10_system_architecture.tex
@@ -1536,6 +1528,14 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/zGate_arch.png
 INPUT ./images/zGate_arch.png
 INPUT ./images/zGate_arch.png
@@ -1550,6 +1550,10 @@ INPUT ./images/images for doc/Complete system data flow.png
 INPUT ./images/images for doc/Complete system data flow.png
 INPUT ./images/images for doc/Complete system data flow.png
 INPUT ./images/images for doc/Complete system data flow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx8.tfm
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1576,15 +1580,19 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/images for doc/System Configuration.png
+INPUT ./images/images for doc/System Configuration.png
+INPUT ./images/images for doc/System Configuration.png
+INPUT ./images/images for doc/System Configuration.png
+INPUT ./images/images for doc/System Configuration.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT ./images/images for doc/System Configuration.png
-INPUT ./images/images for doc/System Configuration.png
-INPUT ./images/images for doc/System Configuration.png
-INPUT ./images/images for doc/System Configuration.png
-INPUT ./images/images for doc/System Configuration.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1628,6 +1636,23 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/shared_acc.jpg
+INPUT ./images/shared_acc.jpg
+INPUT ./images/shared_acc.jpg
+INPUT ./images/shared_acc.jpg
+INPUT ./images/shared_acc.jpg
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/ephemeral.png
 INPUT ./images/ephemeral.png
 INPUT ./images/ephemeral.png
@@ -1667,6 +1692,34 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
@@ -1681,6 +1734,10 @@ INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
@@ -1708,6 +1765,10 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/images for doc/WebUI flows/3.6 Activity audit flow.png
 INPUT ./images/images for doc/WebUI flows/3.6 Activity audit flow.png
 INPUT ./images/images for doc/WebUI flows/3.6 Activity audit flow.png
@@ -1731,11 +1792,6 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT ./images/shared_acc.jpg
-INPUT ./images/shared_acc.jpg
-INPUT ./images/shared_acc.jpg
-INPUT ./images/shared_acc.jpg
-INPUT ./images/shared_acc.jpg
 INPUT ./images/images for doc/WebUI flows/3.9 userDb account management flow.png
 INPUT ./images/images for doc/WebUI flows/3.9 userDb account management flow.png
 INPUT ./images/images for doc/WebUI flows/3.9 userDb account management flow.png
@@ -1776,6 +1832,10 @@ INPUT ./images/images for doc/CLI features/4.3 CLI session management.png
 INPUT ./images/images for doc/CLI features/4.3 CLI session management.png
 INPUT ./images/images for doc/CLI features/4.3 CLI session management.png
 INPUT ./images/images for doc/CLI features/4.3 CLI session management.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/images for doc/CLI features/4.4 CLI logout flow.png
 INPUT ./images/images for doc/CLI features/4.4 CLI logout flow.png
 INPUT ./images/images for doc/CLI features/4.4 CLI logout flow.png
@@ -1790,6 +1850,22 @@ INPUT ./images/images for doc/CLI features/4.5 CLI list databases.png
 INPUT ./images/images for doc/CLI features/4.5 CLI list databases.png
 INPUT ./images/images for doc/CLI features/4.5 CLI list databases.png
 INPUT ./images/images for doc/CLI features/4.5 CLI list databases.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png

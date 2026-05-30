@@ -10,11 +10,22 @@
     \item Dynamic session management
     \item Interceptor chain and query processing
     \item RESTful API layer
+    \item Authentication: JWT, TOTP, OIDC, mTLS, anti-bot protection
+    \item Admin access-control tiers
+    \item Service accounts and programmatic access
+    \item PKI and mutual TLS client certificates
+    \item Query policy engine: safety templates, warned-query review, rate limiting
+    \item Multi-layer data masking: column, AI-semantic, and row-level
+    \item Anomaly detection and alert management
+    \item Regulatory compliance frameworks (HIPAA, PCI-DSS, SOC2, GDPR, CCPA, NIST)
+    \item AI integration: schema classification and Zara chat assistant
+    \item CLI Bubble Tea TUI and headless tunnel
   \end{itemize}
 }
-Architecture defines how system components collaborate to achieve requirements. This chapter presents zGate's layered architecture across client, API, gateway, data, and storage tiers, examining the internal structure of the gateway server including listener, acceptor, dispatcher, and session manager components. We explore the protocol-aware proxy implementation, dynamic credential provisioning, interceptor chain for composable security enforcement, and RESTful API layer that enables centralized administration.
+Architecture defines how system components collaborate to achieve requirements. This chapter presents zGate's layered architecture across client, API, gateway, data, and storage tiers. It examines the internal structure of the gateway server including listener, acceptor, dispatcher, and session manager components. Beyond the core proxy, the chapter covers the full breadth of the platform: a multi-stage interceptor chain, a rich query-policy engine with admin-review workflow, three complementary data-masking strategies, AI-powered column classification, behavioural anomaly detection, built-in regulatory compliance frameworks, PKI-managed mutual TLS, service-account support for automation, and an AI chat assistant that lowers the operational burden of the entire platform.
 \end{sectionintro}
 
+% ============================================================
 \section{High-Level Architecture}
 
 \begin{figure}[H]
@@ -24,10 +35,12 @@ Architecture defines how system components collaborate to achieve requirements. 
     \label{fig:zgate-arch}
 \end{figure}
 
+% ============================================================
 \section{Detailed Architecture}
 
 The zGate platform is architected as a distributed system comprising three primary components: the Gateway Server, Web UI, and CLI. Each component is designed with specific responsibilities that collectively implement Zero Trust database access.
 
+% ============================================================
 \subsection{System Components Overview}
 
 The zGate architecture can be conceptualized as a multi-layered security gateway that intercepts, validates, and controls all database access. Figure~\ref{fig:complete-system-flow} illustrates the complete data flow across all system components.
@@ -47,6 +60,10 @@ The system architecture follows a clear separation of concerns:
     \item \textbf{Gateway Layer:} Protocol-aware proxy intercepts and controls database traffic
     \item \textbf{Data Layer:} Target databases are accessed through the gateway with enforced security policies
     \item \textbf{Storage Layer:} SQLite database stores users, roles, permissions, and audit logs
+    \item \textbf{Policy Engine:} Safety templates, masking policies, and rate limits are evaluated per query
+    \item \textbf{Compliance Layer:} Built-in regulatory frameworks automate policy configuration
+    \item \textbf{AI Service Layer:} LLM integration powers column classification, anomaly detection, and the admin chat assistant
+    \item \textbf{PKI Layer:} Internal certificate authority issues and revokes mTLS client certificates
 \end{itemize}
 
 % ============================================================
@@ -68,31 +85,31 @@ The gateway implements a modular pipeline architecture with the following core c
     \definecolor{acceptorcolor}{RGB}{200, 100, 255}
     \definecolor{dispatchercolor}{RGB}{255, 100, 100}
     \definecolor{interceptorcolor}{RGB}{255, 200, 100}
-    
+
     % Central circle
     \draw[thick, dashed] (0,0) circle (4cm);
     \node at (0, 0) {\textbf{Gateway}};
     \node at (0, -0.5) {\textbf{Core}};
-    
+
     % Component circles arranged in a circle
     % Server (top)
     \node[circle, draw=servercolor, fill=servercolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (server) at (0, 4.5) {\textbf{\scriptsize Server}};
-    
+
     % Manager (top-right)
     \node[circle, draw=managercolor, fill=managercolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (manager) at (3.9, 2.25) {\textbf{\scriptsize Manager}};
-    
+
     % Dispatcher (bottom-right)
     \node[circle, draw=dispatchercolor, fill=dispatchercolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (dispatcher) at (3.9, -2.25) {\textbf{\scriptsize Dispatcher}};
-    
+
     % Interceptor (bottom)
     \node[circle, draw=interceptorcolor, fill=interceptorcolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (interceptor) at (0, -4.5) {\textbf{\scriptsize Interceptor}};
-    
+
     % Acceptor (bottom-left)
     \node[circle, draw=acceptorcolor, fill=acceptorcolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (acceptor) at (-3.9, -2.25) {\textbf{\scriptsize Acceptor}};
-    
+
     % Listener (top-left)
     \node[circle, draw=listenercolor, fill=listenercolor!20, thick, minimum size=1.8cm, align=center, text width=1.5cm] (listener) at (-3.9, 2.25) {\textbf{\scriptsize Listener}};
-    
+
     % Arrows showing data flow
     \draw[->, thick, servercolor] (server) -- (manager);
     \draw[->, thick, managercolor] (manager) -- (listener);
@@ -149,7 +166,10 @@ The Manager component (\texttt{internal/proxy/manager.go}) implements the sessio
     \item Initializes session context and starts listener
     \item Returns connection details to API layer
 \end{enumerate}
-\begin{figure}
+
+The Manager also listens for role-change notifications from the service layer. When an administrator updates a user's roles or deletes a user, the Manager immediately terminates all active sessions belonging to that user — ensuring access revocation takes effect without waiting for JWT expiry.
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{images/acc_types.jpg}
     \caption{Account Types}
@@ -210,10 +230,11 @@ The Dispatcher component (\texttt{internal/gateway/dispatcher.go}) is responsibl
 \begin{enumerate}[leftmargin=*]
     \item Reads command from client connection using protocol handler
     \item Creates QueryContext with session metadata
-    \item Invokes BeforeQuery interceptor chain (safety checks, logging)
+    \item Invokes BeforeQuery interceptor chain (safety checks, rate limiting, logging)
     \item Forwards allowed queries to backend database
-    \item Receives query results from database
-    \item Invokes AfterQuery interceptor chain (masking, logging)
+    \item Receives query results from database, row by row
+    \item Invokes OnRow interceptor for each result row (masking, AI classification)
+    \item Invokes AfterQuery interceptor chain (anomaly detection, audit logging)
     \item Forwards processed results back to client
 \end{enumerate}
 
@@ -223,11 +244,24 @@ The Dispatcher component (\texttt{internal/gateway/dispatcher.go}) is responsibl
 
 \paragraph{Interceptor Chain}
 
-The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a composable pipeline for query processing with three primary interceptors:
+The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a composable pipeline for query processing. The CompositeInterceptor orchestrates all configured interceptors in the following fixed order:
 
-\vspace{0.2cm}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Logging Interceptor} — Structured audit log entry before and after execution
+    \item \textbf{Routing Boundary Check} — Validates the query targets the permitted database scope
+    \item \textbf{Rate Limiting Interceptor} — Enforces per-role queries-per-second limits
+    \item \textbf{Safety Interceptor} — Evaluates query against configurable safety template rules
+    \item \textbf{Policy Masking Interceptor} — Applies column-level masking according to masking policies
+    \item \textbf{Row Masking Interceptor} — Filters out rows matching row-level masking conditions
+    \item \textbf{AI Masking Interceptor} — Applies semantic masking to AI-classified sensitive columns
+    \item \textbf{Anomaly Detection Interceptor} — Scores behaviour against baseline, raises alerts
+\end{enumerate}
 
-\textbf{1. Logging Interceptor}
+The chain fires three hook points: \textbf{BeforeQuery} (steps 1–4), \textbf{OnRow} per result row (steps 5–7), and \textbf{AfterQuery} (step 8). An \textbf{OnError} callback is always invoked when any hook returns an error, allowing the logging interceptor to record failures.
+
+\vspace{0.3cm}
+
+\textbf{Logging Interceptor}
 
 \textit{Purpose:} Provides comprehensive audit trail for all database operations.
 
@@ -239,50 +273,42 @@ The Interceptor Chain (\texttt{internal/proxy/interceptor/}) implements a compos
     \item Writes structured logs to file for compliance and forensics
 \end{itemize}
 
-\textbf{Input:} QueryContext before execution\\
-\textbf{Output:} Structured log entry
-
 \vspace{0.3cm}
 
-\textbf{2. Safety Interceptor}
+\textbf{Safety Interceptor}
 
-\textit{Purpose:} Prevents dangerous database operations based on configurable rules.
+\textit{Purpose:} Evaluates queries against configurable safety template rules (see Section~\ref{subsec:query-policy-engine}).
 
-\textbf{Blocked Operations:}
+\textbf{Rule Actions:}
 \begin{itemize}[leftmargin=*]
-    \item DELETE without WHERE clause (mass deletion)
-    \item UPDATE without WHERE clause (mass update)
-    \item TRUNCATE TABLE (complete data loss)
-    \item DROP TABLE/DATABASE (schema destruction)
-    \item ALTER TABLE (schema modification)
-    \item CREATE statements (schema creation)
-    \item GRANT/REVOKE (privilege escalation)
+    \item \textbf{block} — Query rejected immediately with an error returned to the client
+    \item \textbf{warn} — Query stored in the warned\_queries table for admin review; execution paused
+    \item \textbf{require\_where} — Query blocked if it lacks a WHERE clause
+    \item \textbf{allow} — Explicit allowance (useful to override template defaults)
 \end{itemize}
 
-\textbf{Input:} Query text from QueryContext\\
-\textbf{Output:} BLOCK decision or ALLOW with logged warning
+\vspace{0.3cm}
+
+\textbf{Masking Interceptors}
+
+Three complementary masking interceptors operate on result rows, each covering a different classification approach. Full details are provided in Section~\ref{subsec:masking-architecture}.
 
 \vspace{0.3cm}
 
-\textbf{3. Masking Interceptor}
+\textbf{Anomaly Detection Interceptor}
 
-\textit{Purpose:} Dynamically masks sensitive data in query results based on column names.
+\textit{Purpose:} Detects behavioural anomalies and raises alerts for administrator review.
 
-\textbf{Masking Rules:}
+\textbf{Signals monitored:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Email:} First character + domain visible (e.g., j***@email.com)
-    \item \textbf{Phone/Mobile:} Last 4 digits visible (e.g., *****1234)
-    \item \textbf{Credit Card/SSN:} Last 4 digits visible
-    \item \textbf{Password/Secret/Token:} Full redaction (*****)
-    \item \textbf{Name fields:} First letter only (e.g., J****)
+    \item Unusually high query volume (rate spikes)
+    \item Access to tables outside a user's normal scope
+    \item Large result sets exceeding historical averages
+    \item Queries executed at unusual hours
+    \item Sequential scan patterns indicative of data exfiltration
 \end{itemize}
 
-\textbf{Input:} Query result set with column metadata\\
-\textbf{Output:} Masked result set with sensitive values redacted
-
-\vspace{0.3cm}
-
-\noindent\textbf{Composite Interceptor:} The CompositeInterceptor orchestrates the execution of all configured interceptors in sequence, maintaining the chain of responsibility pattern.
+Each anomaly is scored, tagged with a reason array and a correlation ID that groups related alerts, and written to the \texttt{anomaly\_notifications} table for admin consumption (see Section~\ref{subsec:anomaly-detection}).
 
 % ============================================================
 \subsection{Configuration Flow}
@@ -300,25 +326,78 @@ The configuration process ensures all components are properly initialized before
 
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Store Initialization:} SQLite database is opened and schema migrations are applied
+    \item \textbf{PKI Initialization:} Internal CA is loaded or generated; revocation cache is populated
     \item \textbf{Gateway Server Creation:} All database type handlers are pre-initialized
     \item \textbf{TLS Configuration:} Certificates are loaded for end-to-end encryption
     \item \textbf{API Server Initialization:} RESTful endpoints are registered with middleware
     \item \textbf{Manager Creation:} Session management component is instantiated with store and gateway references
+    \item \textbf{Schema Cache Start:} Background goroutine begins periodic schema refresh from all registered backends
+    \item \textbf{LLM Client Initialization:} AI service is configured from the persisted \texttt{llm\_config} row
     \item \textbf{Logger Setup:} Structured logging is configured with appropriate verbosity levels
     \item \textbf{Server Listening:} API server starts accepting HTTP requests
 \end{enumerate}
 
 % ============================================================
 \subsection{Authentication System}
+\label{subsec:authentication}
 
-The authentication system implements JWT-based token authentication with automatic token rotation for enhanced security. The system supports both user and admin authentication flows.
+The authentication system implements JWT-based token authentication with automatic token rotation for enhanced security. The system supports multiple authentication schemes to suit different deployment and operational needs.
 
-The gateway supports multiple authentication schemes to suit different deployment and operational needs:
+\subsubsection{Authentication Schemes}
+
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Username / Password (Local):} Traditional credential-based login where passwords are verified (bcrypt) and a JWT pair (access + refresh) is issued for subsequent API access.
-    \item \textbf{OAuth2 / OIDC (External IdP):} Integration point for enterprise identity providers to enable Single Sign-On (SSO) and federation; zGate consumes identity tokens and issues local JWTs as needed.
-    \item \textbf{Mutual TLS (mTLS) / Service Certificates:} Certificate-based authentication for automated clients and service accounts where client certificates are validated during the TLS handshake and mapped to principal identities.
+    \item \textbf{Username / Password (Local):} Traditional credential-based login where passwords are verified (bcrypt) and a JWT pair (access + refresh) is issued. Login requests must additionally satisfy an anti-bot challenge (ALTCHA proof-of-work or an arithmetic puzzle) to prevent automated credential-stuffing attacks.
+    \item \textbf{TOTP / Multi-Factor Authentication:} Users may enrol a time-based one-time password authenticator (TOTP). Once activated, the login flow validates the TOTP code in addition to the password.
+    \item \textbf{OIDC / Keycloak Device Flow:} The CLI uses an OIDC device-authorization grant against a Keycloak realm to obtain tokens without embedding a client secret. The backend exchanges the Keycloak identity token for a zGate JWT via \texttt{POST /api/auth/oidc/exchange}.
+    \item \textbf{Service Account Tokens:} Automated processes authenticate using a client-ID/secret pair issued to a service account, bypassing human authentication flows.
+    \item \textbf{Mutual TLS (mTLS) Client Certificates:} When \texttt{ENFORCE\_MTLS=true}, both human users and service accounts authenticate using X.509 certificates signed by the internal CA. The gateway validates the client certificate during the TLS handshake and maps it to a principal identity.
 \end{itemize}
+
+\subsubsection{Anti-Bot Challenges}
+
+To prevent credential-stuffing and bot-driven brute-force attacks, every login request must first solve one of two challenge mechanisms:
+
+\textbf{1. ALTCHA Proof-of-Work}
+
+ALTCHA is a client-side proof-of-work challenge (\texttt{GET /api/altcha/challenge}). The client performs a computationally expensive hashing task before submission. The server verifies the solution is valid, was issued recently, and has not been replayed (replay-attack detection via HMAC).
+
+\textbf{2. Arithmetic Puzzle}
+
+An alternative lightweight challenge (\texttt{GET /api/puzzle/challenge}) issues a simple arithmetic problem whose answer must accompany the login request. Both challenge types are rate-limited independently to throttle challenge generation.
+
+\subsubsection{TOTP Enrolment and Verification}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: TOTP enrolment flow – QR code generation, first-code activation, and subsequent login verification]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: TOTP Enrolment and Verification Flow]}\vspace{1.5cm}}}
+    \caption{TOTP Multi-Factor Authentication Flow}
+    \label{fig:totp-flow}
+\end{figure}
+
+\begin{enumerate}[leftmargin=*]
+    \item User navigates to profile page in WebUI and requests TOTP setup (\texttt{GET /api/me/totp})
+    \item Server generates a per-user TOTP secret and returns a \texttt{otpauth://} QR URI
+    \item User scans QR code with an authenticator application
+    \item User submits the first TOTP code to \texttt{POST /api/me/totp/activate} to confirm enrolment
+    \item On subsequent logins, the server verifies the TOTP code alongside the password
+    \item \texttt{POST /api/me/totp/verify} allows out-of-band code verification for self-service validation
+\end{enumerate}
+
+\textit{Note:} Backend TOTP is exclusively for human user accounts authenticating against zGate's local identity store. CLI device-flow authentication via Keycloak uses Keycloak's own OTP mechanism and is entirely separate — the two are never merged.
+
+\subsubsection{OIDC / Keycloak Device Flow}
+
+The CLI supports passwordless login via the OIDC device-authorization flow:
+
+\begin{enumerate}[leftmargin=*]
+    \item CLI initiates device-flow authorization against the Keycloak realm
+    \item User authenticates in a browser (including Keycloak OTP if configured in the realm)
+    \item Keycloak issues an identity token to the CLI
+    \item CLI presents the Keycloak identity token to \texttt{POST /api/auth/oidc/exchange}
+    \item zGate backend validates the token against the JWKS URL, creates or syncs the local user record, and issues a zGate JWT pair
+    \item A background sync routine keeps zGate users in sync with the Keycloak realm (creating and removing accounts as the realm changes)
+\end{enumerate}
 
 \subsubsection{User Login Flow}
 
@@ -333,12 +412,15 @@ Figure~\ref{fig:user-login} depicts the user authentication process used by both
 
 \textbf{Authentication Process:}
 \begin{enumerate}[leftmargin=*]
-    \item Client submits credentials to POST /api/login endpoint
+    \item Client solves anti-bot challenge (ALTCHA PoW or arithmetic puzzle)
+    \item Client submits credentials and challenge solution to \texttt{POST /api/login}
+    \item API verifies challenge solution (HMAC/replay check)
     \item API invokes Authenticator component to verify password using bcrypt
+    \item If TOTP is enrolled, TOTP code is validated
     \item Store retrieves user data and associated role permissions
     \item Authenticator combines role-based and custom permissions
-    \item JWT Generator creates short-lived access token (15 minutes expiration)
-    \item Store creates refresh token (7 day expiration) linked to user session
+    \item JWT Generator creates short-lived access token (15-minute expiration)
+    \item Store creates refresh token (7-day expiration) linked to user session
     \item Response includes both tokens, token type, expiration, and username
     \item Client stores tokens securely (OS keyring for CLI, memory for WebUI)
 \end{enumerate}
@@ -356,7 +438,7 @@ Figure~\ref{fig:token-refresh} shows the token refresh mechanism that implements
 
 \textbf{Token Rotation Security:}
 \begin{itemize}[leftmargin=*]
-    \item Client submits current refresh token to POST /api/refresh endpoint
+    \item Client submits current refresh token to \texttt{POST /api/refresh}
     \item Store validates refresh token and retrieves associated username
     \item New access token is generated with updated permissions
     \item New refresh token is created to replace the old one
@@ -378,12 +460,109 @@ Figure~\ref{fig:admin-login} illustrates the administrative authentication flow 
 
 \textbf{Dual Authentication Strategy:}
 \begin{enumerate}[leftmargin=*]
-    \item First attempts admin authentication via dedicated admins table
-    \item If admin credentials valid, sets isAdmin flag to true in response
-    \item If not found in admins table, falls back to regular user authentication
-    \item Returns isAdmin flag indicating permission level for dashboard routing
+    \item Anti-bot challenge is verified first (identical to user login)
+    \item First attempts admin authentication via the dedicated \texttt{accounts} table (admin tier)
+    \item If admin credentials valid, sets \texttt{isAdmin} flag and returns admin tier in response
+    \item If not found in admin accounts, falls back to regular user authentication
+    \item Returns \texttt{isAdmin} flag indicating permission level for dashboard routing
     \item Updates admin last login timestamp for audit purposes
 \end{enumerate}
+
+% ============================================================
+\subsection{Admin Access-Control Tiers}
+\label{subsec:admin-tiers}
+
+zGate implements a four-tier administrative access-control model to enforce least-privilege among administrators themselves. Each tier is stored in the \texttt{accounts.tier} column and enforced by a \texttt{tierMiddleware} in the API layer.
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Admin tier hierarchy diagram showing permission scopes]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Admin Access-Control Tier Diagram]}\vspace{1.5cm}}}
+    \caption{Admin Access-Control Tier Hierarchy}
+    \label{fig:admin-tiers}
+\end{figure}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Super Admin:} Full system access including admin account management, LLM configuration, and tier assignment. Can perform all operations. Only a super admin can promote another account to super.
+    \item \textbf{DB Admin:} Manages users, databases, database accounts (personal, shared, ephemeral), service accounts, and roles. Cannot modify admin accounts or system-wide policies.
+    \item \textbf{Policy Admin:} Manages rate limits, safety templates, masking policies, row masking, AI masking, anomaly alerts, and compliance framework assignments. Cannot modify users or database configurations.
+    \item \textbf{Auditor:} Read-only access to all logs, session activity, query history, and configuration snapshots. Cannot modify any data.
+\end{enumerate}
+
+Super admins assign tiers via \texttt{PATCH /api/admin/admins/\{username\}/tier}. The tier system ensures that a compromised policy admin cannot exfiltrate credentials, and a compromised auditor cannot alter policies.
+
+% ============================================================
+\subsection{Service Accounts and Programmatic Access}
+\label{subsec:service-accounts}
+
+Service accounts provide a first-class authentication primitive for automated processes, CI/CD pipelines, ETL jobs, and microservices that require database access without human interaction.
+
+\subsubsection{Service Account Authentication Modes}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Token-Based:} Service account authenticates using a client-ID and secret (\texttt{POST /api/auth/service-account/token}). Tokens are short-lived and must be refreshed.
+    \item \textbf{mTLS Certificate:} When mTLS enforcement is active, service accounts present a client certificate signed by the zGate internal CA. No secret is transmitted on the wire.
+    \item \textbf{Direct Connect:} \texttt{POST /api/auth/service-account/connect} combines authentication and session creation in a single request for use by the headless tunnel command.
+\end{itemize}
+
+\subsubsection{Service Account Lifecycle}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Service account lifecycle – create, issue cert, connect, rotate, suspend, revoke]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Service Account Lifecycle Flow]}\vspace{1.5cm}}}
+    \caption{Service Account Lifecycle Management}
+    \label{fig:service-account-lifecycle}
+\end{figure}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Create:} DB Admin creates a service account with a name, description, and optional IP allowlist
+    \item \textbf{Issue Certificate:} Admin issues an mTLS certificate via \texttt{POST /api/admin/service-accounts/\{id\}/issue-certificate}; the signed certificate and private key are returned once and never stored by the server
+    \item \textbf{Connect:} Service account presents certificate (or token) to authenticate and obtain a proxy session
+    \item \textbf{Rotate Secret:} \texttt{POST /api/admin/service-accounts/\{id\}/rotate-secret} invalidates the old token and issues a new one
+    \item \textbf{Rotate Certificate:} \texttt{POST /api/admin/service-accounts/\{id\}/rotate-certificate} revokes the existing cert and issues a replacement in one atomic operation
+    \item \textbf{Suspend / Activate:} Temporarily disables access without deleting the account
+    \item \textbf{Revoke:} Permanently invalidates all tokens and certificates; active sessions are terminated
+\end{enumerate}
+
+Service accounts follow the same three-tier account-type priority (personal → shared → ephemeral) as human users.
+
+% ============================================================
+\subsection{PKI and Mutual TLS Client Certificates}
+\label{subsec:pki-mtls}
+
+zGate operates an internal Certificate Authority (CA) to issue and manage X.509 client certificates for both human users and service accounts. This eliminates reliance on external PKI infrastructure and enables fine-grained certificate lifecycle management.
+
+\subsubsection{Internal CA}
+
+The CA is initialised on first start and stored in the \texttt{pki\_ca} table (single row) with the certificate PEM in plaintext and the private key encrypted using AES-256-GCM. CA rotation is supported via admin operation without disrupting existing valid certificates.
+
+\subsubsection{Certificate Issuance and Revocation}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: mTLS flow – client presents certificate, gateway validates, session established]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: mTLS Certificate Lifecycle and Validation Flow]}\vspace{1.5cm}}}
+    \caption{mTLS Client Certificate Lifecycle}
+    \label{fig:mtls-cert-lifecycle}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Human Users (self-service):} \texttt{POST /api/auth/me/issue-certificate} — user requests their own certificate; signed certificate returned in response
+    \item \textbf{Human Users (admin):} \texttt{POST /api/admin/accounts/\{id\}/issue-certificate} — admin issues cert for any user
+    \item \textbf{Service Accounts:} \texttt{POST /api/admin/service-accounts/\{id\}/issue-certificate}
+    \item \textbf{Revocation:} \texttt{POST /api/admin/certificates/\{fingerprint\}/revoke} — marks certificate as revoked; in-memory revocation cache ensures active sessions using the revoked cert are terminated without requiring a server restart
+    \item \textbf{Rotation:} Atomic revoke-and-reissue in a single API call
+\end{itemize}
+
+\subsubsection{mTLS Enforcement Modes}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{\texttt{ENFORCE\_MTLS=true}:} Strict mode. All clients must present a valid, unrevoked client certificate. Ticket-based legacy mode is disabled. No plaintext credential exchange occurs on the proxy port.
+    \item \textbf{\texttt{ENFORCE\_MTLS=false}:} Permissive mode. mTLS is optional. Ticket-based credential injection remains available for JDBC clients that cannot present certificates (e.g., legacy tooling).
+\end{itemize}
+
+The server CA fingerprint and current mTLS mode are exposed via \texttt{GET /api/config} so that CLI tools can auto-configure trust anchors without manual certificate distribution.
 
 % ============================================================
 \subsection{Database Connection Lifecycle}
@@ -429,7 +608,7 @@ Shared accounts implement a connection pool pattern, enabling multiple users to 
 \textbf{Creation and Pool Management:}
 \begin{itemize}[leftmargin=*]
     \item Administrators create a pool of generic database accounts via WebUI
-    \item Each account has configurable concurrent usage limits (max\_concurrent\_users)
+    \item Each account has configurable concurrent usage limits (\texttt{max\_concurrent\_users})
     \item Pool size is determined by anticipated concurrent load
     \item Accounts are tagged as \texttt{shared} in the account type field
 \end{itemize}
@@ -451,6 +630,12 @@ Shared accounts implement a connection pool pattern, enabling multiple users to 
     \item Optimizes resource utilization in environments with high user counts
     \item Provides a balance between security and operational overhead
 \end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/shared_acc.jpg}
+    \caption{Shared Account Pool Management}
+    \label{fig:shared-acc}
+\end{figure}
 
 \paragraph{Ephemeral Temporary Accounts}
 
@@ -464,7 +649,7 @@ Ephemeral accounts represent the ultimate Zero Trust approach: credentials that 
     \item Grants appropriate permissions based on the user's role permissions from zGate
     \item Account details are stored only in memory within the active session context
 \end{itemize}
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{images/ephemeral.png}
     \caption{Ephemeral Account Creation}
@@ -514,11 +699,12 @@ Figure~\ref{fig:query-interception} illustrates the complete query processing pi
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Read Command:} Protocol handler reads and parses client query
     \item \textbf{Create Context:} QueryContext populated with session metadata
-    \item \textbf{BeforeQuery Chain:} Safety and logging interceptors process query
-    \item \textbf{Safety Evaluation:} Dangerous patterns trigger query blocking
+    \item \textbf{BeforeQuery Chain:} Logging, rate limiting, and safety interceptors process query
+    \item \textbf{Safety Evaluation:} Template rules evaluated; query may be blocked, warned, or allowed
     \item \textbf{Forward Allowed:} Safe queries are forwarded to backend database
-    \item \textbf{Result Processing:} Masking interceptor processes result set
-    \item \textbf{AfterQuery Chain:} Result metadata is logged for audit
+    \item \textbf{OnRow Chain:} Column masking, row filtering, and AI masking applied to each result row
+    \item \textbf{AfterQuery Chain:} Anomaly detection scores the completed query execution
+    \item \textbf{Audit Completion:} Final log entry records result metadata
 \end{enumerate}
 
 \subsubsection{RBAC Permission Flow}
@@ -540,12 +726,268 @@ Figure~\ref{fig:rbac-flow} demonstrates how role-based access control is evaluat
     \item Combined permissions are embedded in JWT claims
     \item Connection request validates database access against permissions
     \item Appropriate permission level determines database account type selection
+    \item Role's assigned interceptor set (safety templates, masking policies, rate limits) is loaded for the session
 \end{enumerate}
+
+% ============================================================
+\subsection{Query Policy Engine}
+\label{subsec:query-policy-engine}
+
+The query policy engine provides administrators with fine-grained, declarative control over which SQL operations are permitted, warned, or blocked. Policies are defined as named templates and assigned to roles, allowing different users to operate under different restrictions against the same database.
+
+\subsubsection{Safety Templates}
+
+Safety templates (\texttt{internal/api/safety\_templates.go}) are named rule sets applied per role. Each template has an \textbf{enforcement mode}:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Permissive:} Rules produce warnings and audit logs without blocking execution
+    \item \textbf{Strict (default):} Rules block execution and return an error to the client
+\end{itemize}
+
+Each rule within a template specifies:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Action:} \texttt{block}, \texttt{warn}, \texttt{require\_where}, or \texttt{allow}
+    \item \textbf{Condition Logic:} AND / OR combining multiple condition clauses
+    \item \textbf{Conditions:} Evaluated against query type, target table, target column, query text pattern
+    \item \textbf{Exceptions:} Whitelist clauses that override the rule for specific users or query patterns
+    \item \textbf{Custom Error Message:} Surfaced to the client when the rule fires
+\end{itemize}
+
+Rules are evaluated using an AST-aware SQL parser, enabling table- and column-level targeting without fragile regex matching.
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Safety template evaluation flow – rule matching, condition logic, exception evaluation]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Safety Template Evaluation Flow]}\vspace{1.5cm}}}
+    \caption{Safety Template Rule Evaluation}
+    \label{fig:safety-template-flow}
+\end{figure}
+
+\subsubsection{Warned Query Review Workflow}
+
+When a safety rule fires with the \texttt{warn} action, execution is suspended and the query enters an asynchronous admin-review workflow:
+
+\begin{enumerate}[leftmargin=*]
+    \item Query text, normalized form, rule name, session metadata, and expiry timestamp are written to the \texttt{warned\_queries} table with status \texttt{pending}
+    \item User receives an immediate response indicating the query is awaiting review
+    \item Admin sees a notification in the WebUI (\texttt{/admin/pending-reviews})
+    \item Admin may \textbf{approve} (\texttt{POST /api/admin/warned-queries/\{id\}/approve}): query is executed against the backend and results are stored; the user is notified via \texttt{GET /api/review-notifications}
+    \item Admin may \textbf{deny} (\texttt{POST /api/admin/warned-queries/\{id\}/deny}): query is discarded and user receives a rejection notice
+    \item If the query returns data, results are available for download as CSV (\texttt{GET /api/review-notifications/\{id\}/download})
+    \item Expired, unreviewed queries are automatically cleaned up by a background task
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Warned query review workflow – user submits, query paused, admin review, approve/deny, result download]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Warned Query Review Workflow]}\vspace{1.5cm}}}
+    \caption{Warned Query Admin Review Workflow}
+    \label{fig:warned-query-workflow}
+\end{figure}
+
+\subsubsection{Rate Limiting}
+
+Per-role query rate limits constrain how many queries a user in a given role may execute per unit time:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Queries per second (QPS):} Sustained request rate ceiling
+    \item \textbf{Burst size:} Maximum instantaneous burst above the QPS limit
+    \item \textbf{Time window (ms):} Rolling window for burst calculation
+\end{itemize}
+
+Rate limits are fully administrator-managed via \texttt{/api/admin/rate-limits/\{role-name\}}. Real-time utilisation is visible via \texttt{GET /api/admin/rate-limits/\{role-name\}/stats}. Requests exceeding the limit are rejected at the interceptor layer before reaching the backend.
+
+% ============================================================
+\subsection{Data Masking Architecture}
+\label{subsec:masking-architecture}
+
+zGate provides three complementary, independently configurable masking strategies that operate in sequence on every result row. Together they ensure that sensitive data is never returned to clients who do not require it, regardless of the underlying database's own access controls.
+
+\subsubsection{Column-Level Masking Policies}
+
+Column masking policies (\texttt{internal/api/masking.go}) allow administrators to define explicit masking rules targeting a specific \textit{(role, database, table, column)} combination. Each rule specifies a \textbf{strategy}:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{replace:} Substitute the value with a fixed string
+    \item \textbf{redact:} Replace entirely with \texttt{*****}
+    \item \textbf{partial:} Show only a prefix/suffix of the value (configurable length)
+    \item \textbf{hash:} Return a deterministic SHA-256 hash of the value
+    \item \textbf{mask:} Apply a format-preserving pattern (e.g., preserve email domain)
+\end{itemize}
+
+Policies may be defined directly (\texttt{masking\_policies}) or grouped into reusable \textbf{masking templates} (\texttt{masking\_templates}) that are then assigned to roles via \texttt{role\_masking\_templates}.
+
+\subsubsection{AI Semantic Column Masking}
+
+AI masking (\texttt{internal/proxy/interceptor/ai\_masking.go}) leverages the configured LLM to classify columns by semantic data type and apply masking based on the classification, rather than column name patterns.
+
+\textbf{Classification Pipeline:}
+\begin{enumerate}[leftmargin=*]
+    \item The schema cache worker periodically queries all registered backend databases and submits column names/types in batches to the LLM classifier
+    \item The LLM returns a semantic type for each column: \texttt{SSN}, \texttt{Email}, \texttt{Phone}, \texttt{CreditCard}, \texttt{Address}, \texttt{Name}, \texttt{DateOfBirth}, etc.
+    \item Classifications are stored in \texttt{ai\_column\_classifications} with a confidence score
+    \item Admins configure \textbf{AI masking templates} specifying which semantic types a role is allowed to see in plaintext; all other classified columns are masked
+    \item At query time, the interceptor resolves the column's classification from cache and applies the appropriate masking function
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: AI column classification pipeline – schema cache → LLM → classification store → interceptor → masked result]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: AI Semantic Column Classification and Masking Pipeline]}\vspace{1.5cm}}}
+    \caption{AI-Powered Semantic Column Masking}
+    \label{fig:ai-masking-pipeline}
+\end{figure}
+
+This approach masks sensitive columns even if they have non-obvious names (e.g., a column named \texttt{val1} containing Social Security Numbers), which rule-based column masking alone cannot detect.
+
+\subsubsection{Row-Level Masking (Data Filtering)}
+
+Row masking (\texttt{internal/proxy/interceptor/row\_masking\_interceptor.go}) silently drops rows from a result set that match configurable filter conditions, implementing row-level security without any changes to the backend database.
+
+\textbf{Filter Conditions:}
+
+Rules specify a \textit{(table, column, operator, value)} predicate. Supported operators:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{eq} / \texttt{neq} & Exact equality / inequality \\
+\texttt{contains} / \texttt{starts\_with} / \texttt{ends\_with} & String matching \\
+\texttt{in} & Membership in a value list \\
+\texttt{gt} / \texttt{lt} / \texttt{gte} / \texttt{lte} & Numeric comparison \\
+\texttt{between} & Inclusive range (\texttt{value\_from} -- \texttt{value\_to}) \\
+\end{tabular}
+\end{center}
+
+Row masking templates are assigned to roles via \texttt{role\_row\_masking\_templates}. A role may have multiple templates, each targeting different tables, enabling fine-grained data-partition access without database-level row policies.
+
+% ============================================================
+\subsection{Anomaly Detection}
+\label{subsec:anomaly-detection}
+
+The anomaly detection subsystem continuously monitors query behaviour per session and raises alerts when patterns deviate from the user's or role's established baseline.
+
+\subsubsection{Detection Signals}
+
+The anomaly interceptor (\texttt{internal/proxy/interceptor/anomaly.go}) evaluates each query against multiple behavioural signals:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Rate anomaly:} Sudden spike in queries per minute beyond the rolling average
+    \item \textbf{Table scope anomaly:} Access to tables not queried by this user historically
+    \item \textbf{Result size anomaly:} Rows returned significantly exceeding the user's historical average
+    \item \textbf{Time anomaly:} Queries executed outside the user's normal working hours
+    \item \textbf{Sequential scan pattern:} Systematic table enumeration indicative of data exfiltration
+\end{itemize}
+
+\subsubsection{Alert Structure}
+
+Each alert is written to \texttt{anomaly\_notifications} with:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{severity:} Low / medium / high / critical
+    \item \textbf{score:} Numeric risk score (0–100)
+    \item \textbf{reasons:} JSON array of human-readable explanation strings
+    \item \textbf{correlation\_id:} Groups related alerts from the same attack sequence
+    \item \textbf{session / connection / user references:} For drill-down investigation
+\end{itemize}
+
+Administrators review alerts via \texttt{GET /api/admin/anomaly-notifications} with filtering by severity and status. Aggregated statistics are available at \texttt{GET /api/admin/anomaly-stats}. Alerts can be dismissed individually, by correlation group, or all at once.
+
+% ============================================================
+\subsection{Regulatory Compliance Frameworks}
+\label{subsec:compliance-frameworks}
+
+zGate ships with six built-in regulatory compliance frameworks that automatically configure safety templates and AI masking policies for the most common data protection regimes.
+
+\subsubsection{Supported Frameworks}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{HIPAA} — Health Insurance Portability and Accountability Act (US healthcare data)
+    \item \textbf{PCI-DSS} — Payment Card Industry Data Security Standard (payment card data)
+    \item \textbf{SOC 2} — Service and Organization Controls 2 (trust service criteria)
+    \item \textbf{GDPR} — General Data Protection Regulation (EU personal data)
+    \item \textbf{CCPA} — California Consumer Privacy Act (California resident data)
+    \item \textbf{NIST} — NIST Cybersecurity Framework (federal and enterprise baseline)
+\end{enumerate}
+
+\subsubsection{Applying a Framework}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Compliance framework application flow – select framework, conflict check, apply to databases, templates created]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Compliance Framework Application Flow]}\vspace{1.5cm}}}
+    \caption{Regulatory Compliance Framework Application}
+    \label{fig:compliance-flow}
+\end{figure}
+
+\begin{enumerate}[leftmargin=*]
+    \item Admin selects a framework on the \texttt{/admin/compliance-templates} page
+    \item \textbf{Conflict detection:} \texttt{GET /api/admin/compliance/frameworks/\{id\}/conflicts} checks whether existing policies contradict the framework's rules before committing
+    \item Admin resolves any conflicts, then applies: \texttt{POST /api/admin/compliance/apply/\{id\}}
+    \item The backend creates or updates safety templates and AI masking templates pre-configured for the selected regulation
+    \item Framework-owned templates are marked read-only (cannot be accidentally deleted or modified)
+    \item Custom exceptions may be registered per rule (\texttt{PUT /api/admin/compliance/frameworks/\{id\}/templates/\{template\}/exceptions})
+    \item Framework assignments are tracked per database in \texttt{database\_frameworks}
+    \item Frameworks may be unapplied (\texttt{POST /api/admin/compliance/unapply/\{id\}}) to remove their generated policies
+\end{enumerate}
+
+% ============================================================
+\subsection{AI Integration and Chat Assistant}
+\label{subsec:ai-integration}
+
+zGate integrates a configurable LLM backend to power three AI-driven capabilities: schema column classification (used by AI masking), behavioural anomaly scoring, and an intelligent admin chat assistant named \textbf{Zara}.
+
+\subsubsection{LLM Configuration}
+
+A single LLM provider is configured system-wide by a super admin at \texttt{/admin/ai-settings}. Supported providers:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Ollama} — Self-hosted open-source LLM (privacy-preserving, no external API calls)
+    \item \textbf{OpenAI} — GPT-4o and variants via OpenAI API
+    \item \textbf{Anthropic} — Claude models via Anthropic API
+    \item \textbf{Google Gemini} — Gemini Pro/Ultra via Google AI API
+    \item \textbf{Azure OpenAI} — Enterprise Azure-hosted OpenAI deployments
+\end{itemize}
+
+Configuration (provider, base URL, model name, API key) is persisted in the \texttt{llm\_config} table with the API key encrypted at rest using AES-256-GCM. Health status is queryable at \texttt{GET /api/admin/ai-health}.
+
+\subsubsection{Zara — AI Admin Chat Assistant}
+
+Zara is an intelligent conversational assistant embedded in the WebUI that helps administrators understand the system, navigate configuration, diagnose issues, and execute administrative operations safely.
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: Zara chat interface screenshot showing conversation and proposal confirmation UI]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Zara AI Chat Assistant Interface]}\vspace{1.5cm}}}
+    \caption{Zara AI Admin Chat Assistant}
+    \label{fig:zara-chat}
+\end{figure}
+
+\textbf{Key Capabilities:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Navigation guidance:} Explains where settings are and how features work
+    \item \textbf{Diagnostic assistance:} Interprets anomaly alerts, audit log entries, and policy conflicts
+    \item \textbf{Proposal system:} Zara may suggest write actions (create user, apply compliance framework, update masking policy); these are surfaced as explicit confirmation prompts — no mutation occurs without admin approval
+    \item \textbf{Context awareness:} Has access to WebUI documentation and current system state
+    \item \textbf{Conversation threads:} Each conversation is persisted in \texttt{chat\_conversations} / \texttt{chat\_messages} for reference
+\end{itemize}
+
+Conversations are scoped to the authenticated admin. The \texttt{proposal\_data} JSON field in \texttt{chat\_messages} stores the structured representation of a pending action so the frontend can render an appropriate confirmation widget.
+
+\subsubsection{Schema Cache}
+
+The schema cache (\texttt{internal/masking/schema/}) maintains a live inventory of all registered backend databases, including table and column metadata. It is used by AI masking classification, masking policy UI (column pickers), and compliance framework conflict detection.
+
+\begin{itemize}[leftmargin=*]
+    \item A background goroutine refreshes the cache at a configurable interval (\texttt{ZGATE\_SCHEMA\_CACHE\_INTERVAL})
+    \item Concurrent schema queries against multiple backends are limited by \texttt{ZGATE\_SCHEMA\_CACHE\_CONCURRENCY}
+    \item Admins can trigger an immediate refresh at \texttt{POST /api/admin/schema-cache/refresh}
+    \item The cache is queryable at \texttt{GET /api/admin/schema-cache/databases/\{db\}/tables/\{table\}/columns}
+\end{itemize}
 
 % ============================================================
 \subsection{Web UI Architecture and Features}
 
-The Web UI is built with Next.js and React, providing a comprehensive administrative interface for managing all aspects of the zGate platform.
+The Web UI is built with Next.js and React, providing a comprehensive administrative interface for managing all aspects of the zGate platform. State management uses Redux Toolkit with RTK Query; forms use React Hook Form with Zod validation.
 
 \subsubsection{User Management}
 
@@ -644,9 +1086,53 @@ Figure~\ref{fig:webui-role-mgmt} depicts the role-based access control configura
 \begin{itemize}[leftmargin=*]
     \item Create roles with descriptive names and purposes
     \item Assign database-level permissions (read, write, admin) to roles
-    \item Configure interceptor chains (safe\_query, masking) per role
+    \item Assign safety templates, masking templates, AI masking templates, and row masking templates per role
     \item View users assigned to each role
     \item Modify role permissions with immediate effect on active sessions
+\end{itemize}
+
+\subsubsection{Query Policy and Pending Review Pages}
+
+Two dedicated WebUI pages support the query policy engine:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{/admin/query-policies:} Create, edit, and assign safety templates. Configure rule conditions, actions, and enforcement mode. View which roles a template is assigned to.
+    \item \textbf{/admin/pending-reviews:} Triage warned queries awaiting approval. Displays the query text, requesting user, rule that triggered, and expiry. Admin can approve (and optionally download results as CSV) or deny.
+\end{itemize}
+
+\subsubsection{Service Account Management}
+
+The \texttt{/admin/service-accounts} page exposes the full service account lifecycle:
+
+\begin{itemize}[leftmargin=*]
+    \item Create service accounts with name, description, and IP allowlist
+    \item Issue or rotate mTLS certificates; download certificate bundle (cert + key)
+    \item Rotate client secret
+    \item Suspend or activate accounts
+    \item View last-used timestamp and current status
+\end{itemize}
+
+\subsubsection{Compliance Templates Page}
+
+The \texttt{/admin/compliance-templates} page allows policy admins and super admins to:
+
+\begin{itemize}[leftmargin=*]
+    \item View all six built-in regulatory frameworks with descriptions
+    \item Apply a framework to one or all databases (with conflict pre-check)
+    \item View which databases a framework is applied to
+    \item Configure per-rule exceptions for a framework
+    \item Unapply a framework and remove its generated policies
+\end{itemize}
+
+\subsubsection{AI Settings Page}
+
+The \texttt{/admin/ai-settings} page (super admin only) configures the LLM backend:
+
+\begin{itemize}[leftmargin=*]
+    \item Select provider (Ollama, OpenAI, Anthropic, Gemini, Azure OpenAI)
+    \item Enter API key and model name; key is masked after save
+    \item Test connectivity via a live health check
+    \item View AI masking classification results per database
 \end{itemize}
 
 \subsubsection{Activity Audit}
@@ -690,12 +1176,7 @@ Figure~\ref{fig:webui-shared-accounts} presents the shared database account pool
     \item Automatically releases accounts when sessions disconnect
     \item Provides account pooling for organizations without personal accounts
 \end{itemize}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.65\textwidth]{images/shared_acc.jpg}
-    \caption{Shared Account Pool Management}
-    \label{fig:shared_acc}
-\end{figure}
+
 \subsubsection{User Database Account Management}
 
 Figure~\ref{fig:webui-userdb-accounts} illustrates personal database account assignment.
@@ -718,8 +1199,29 @@ Figure~\ref{fig:webui-userdb-accounts} illustrates personal database account ass
 
 % ============================================================
 \subsection{CLI Architecture and Features}
+\label{subsec:cli-architecture}
 
-The CLI provides a cross-platform command-line interface for developers to authenticate and connect to databases without handling credentials.
+The CLI provides a cross-platform terminal interface for developers and automation to authenticate and connect to databases without handling credentials. The main entry point launches a full-screen \textbf{Bubble Tea TUI} (terminal UI) when invoked without sub-commands. Legacy plain Cobra commands have been replaced by the TUI's built-in \texttt{/slash} command bar.
+
+\subsubsection{Bubble Tea TUI}
+
+The TUI (\texttt{zgate tui}) presents a full-screen dashboard with:
+
+\begin{itemize}[leftmargin=*]
+    \item Real-time session list showing all active database connections
+    \item Database browser showing accessible databases with permission levels
+    \item \texttt{/slash} command bar for all operations: \texttt{/login}, \texttt{/logout}, \texttt{/connect}, \texttt{/list}, \texttt{/status}, \texttt{/disconnect}
+    \item Keyboard-driven navigation (no mouse required)
+    \item Status indicators for connection state and token validity
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    % [PLACEHOLDER: CLI TUI screenshot showing main dashboard, session list, and /slash command bar]
+    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: CLI Bubble Tea TUI Dashboard]}\vspace{1.5cm}}}
+    \caption{CLI Bubble Tea TUI Dashboard}
+    \label{fig:cli-tui}
+\end{figure}
 
 \subsubsection{CLI Login}
 
@@ -759,13 +1261,35 @@ Figure~\ref{fig:cli-connect} illustrates the database connection flow with both 
 
 \textbf{Local Tunnel Architecture:} The CLI starts a local listener that forwards traffic to the zGate proxy:
 \begin{enumerate}[leftmargin=*]
-    \item API returns tunnel\_host and tunnel\_port
+    \item API returns \texttt{tunnel\_host} and \texttt{tunnel\_port}
     \item CLI creates listener on localhost:0 (random port allocation)
     \item CLI returns localhost:port to user
     \item User's database client connects to localhost
     \item CLI accepts connection and dials zGate server
-    \item Bidirectional io.Copy between local and remote connections
+    \item Bidirectional \texttt{io.Copy} between local and remote connections
 \end{enumerate}
+
+\subsubsection{Headless Tunnel Command}
+
+The \texttt{zgate tunnel} command provides a headless, scriptable loopback tunnel designed for service accounts and CI/CD automation:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Authentication:} mTLS certificate (\texttt{--cert} / \texttt{--key} / \texttt{--ca} flags) — no password prompt
+    \item \textbf{Local binding:} \texttt{--local-port} (0 = OS-assigned random port)
+    \item \textbf{Remote target:} \texttt{--remote-host} / \texttt{--remote-port} / \texttt{--sni}
+    \item Writes the local port to stdout on startup so calling scripts can pick it up
+    \item Exits cleanly when the connection terminates or on SIGTERM
+\end{itemize}
+
+\subsubsection{Certificate Management Commands}
+
+\texttt{zgate cert} provides self-service mTLS certificate lifecycle management:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{cert status:} Display local certificate fingerprint, validity period, and expiration
+    \item \textbf{cert rotate:} Request a fresh certificate from the server (\texttt{POST /api/auth/me/issue-certificate}); the CLI automatically trusts the server CA reported by \texttt{GET /api/config}
+    \item \textbf{cert clear:} Delete local certificate artefacts without revoking on the server (for cleanup)
+\end{itemize}
 
 \subsubsection{CLI Session Management}
 
@@ -812,348 +1336,415 @@ Figure~\ref{fig:cli-list} shows the database discovery interface that displays a
 % ============================================================
 \subsection{API Architecture}
 
-The API server provides a RESTful interface for all platform operations, implementing comprehensive authentication and authorization middleware.
+The API server provides a RESTful interface for all platform operations, implementing comprehensive authentication and authorization middleware. The full route set has expanded substantially; what follows covers the primary endpoint groups.
 
 \subsubsection{Public Endpoints (No Authentication Required)}
 
-\begin{tcolorbox}[colback=blue!5, colframe=blue!40, title=\textbf{Authentication Endpoints}]
+\begin{tcolorbox}[colback=blue!5, colframe=blue!40, title=\textbf{Authentication \& Health Endpoints}]
 
-\textbf{POST} \texttt{/api/login}
+\textbf{GET} \texttt{/healthz} \quad Liveness probe.
 
-\quad Authenticates users and issues access/refresh token pair.
+\vspace{0.2cm}
 
-\quad \textit{Request:} username, password
+\textbf{GET} \texttt{/readyz} \quad Readiness probe (verifies database reachability).
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{POST} \texttt{/api/refresh}
+\textbf{GET} \texttt{/api/altcha/challenge} \quad Issue ALTCHA proof-of-work challenge.
 
-\quad Refreshes expired access tokens using valid refresh token.
+\vspace{0.2cm}
 
-\quad \textit{Request:} refresh\_token
+\textbf{GET} \texttt{/api/puzzle/challenge} \quad Issue arithmetic puzzle challenge.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{POST} \texttt{/api/logout}
+\textbf{POST} \texttt{/api/login} \quad Authenticates users; requires challenge solution header.
 
-\quad Revokes refresh token and invalidates session.
+\vspace{0.2cm}
 
-\quad \textit{Request:} refresh\_token
+\textbf{POST} \texttt{/api/refresh} \quad Refreshes expired access tokens using valid refresh token.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{POST} \texttt{/api/admin/login}
+\textbf{POST} \texttt{/api/logout} \quad Revokes refresh token and invalidates session.
 
-\quad Authenticates admin users with elevated privileges.
+\vspace{0.2cm}
 
-\quad \textit{Request:} username, password
+\textbf{POST} \texttt{/api/admin/login} \quad Authenticates admin users; requires challenge solution header.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/auth/service-account/token} \quad Issue service account access token.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/auth/service-account/connect} \quad Service account direct connection.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/auth/oidc/exchange} \quad OIDC token exchange (Keycloak device flow).
 
 \end{tcolorbox}
 
 \subsubsection{Protected User Endpoints}
 
-\begin{tcolorbox}[colback=green!5, colframe=green!40, title=\textbf{User Session Management}]
+\begin{tcolorbox}[colback=green!5, colframe=green!40, title=\textbf{User Session and Self-Service}]
 
-\textbf{GET} \texttt{/api/active-logins}
+\textbf{GET} \texttt{/api/active-logins} \quad List active login sessions for authenticated user.
 
-\quad Lists all active login sessions for the authenticated user.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{DELETE} \texttt{/api/active-logins/\{id\}} \quad Revoke a specific active session.
 
-\textbf{DELETE} \texttt{/api/active-logins/\{id\}}
+\vspace{0.2cm}
 
-\quad Revokes a specific active session belonging to the user.
+\textbf{GET} \texttt{/api/databases} \quad Returns databases accessible to authenticated user.
 
-\end{tcolorbox}
+\vspace{0.2cm}
 
-\vspace{0.4cm}
+\textbf{POST} \texttt{/api/sessions} \quad Establishes a proxy connection to specified database.
 
-\begin{tcolorbox}[colback=green!5, colframe=green!40, title=\textbf{Database Connection}]
+\vspace{0.2cm}
 
-\textbf{GET} \texttt{/api/databases}
+\textbf{DELETE} \texttt{/api/sessions/\{database\}} \quad Closes active database connection.
 
-\quad Returns list of databases accessible to the authenticated user.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{GET} \texttt{/api/me/totp} \quad TOTP setup status and QR URI.
 
-\textbf{POST} \texttt{/api/connect}
+\vspace{0.2cm}
 
-\quad Establishes a proxy connection to specified database.
+\textbf{POST} \texttt{/api/me/totp/activate} \quad Activate TOTP with first code.
 
-\quad \textit{Request:} database\_name
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{POST} \texttt{/api/auth/me/issue-certificate} \quad Issue self-signed mTLS certificate (self-service).
 
-\textbf{POST} \texttt{/api/disconnect}
+\vspace{0.2cm}
 
-\quad Closes active database connection for the user.
+\textbf{GET} \texttt{/api/config} \quad Server CA fingerprint and mTLS mode.
 
-\quad \textit{Request:} database\_name
+\vspace{0.2cm}
 
-\end{tcolorbox}
+\textbf{GET} \texttt{/api/review-notifications} \quad List pending admin reviews for warned queries.
 
-\subsubsection{Admin Endpoints - User Management}
+\vspace{0.2cm}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{User Administration}]
+\textbf{GET} \texttt{/api/review-notifications/\{id\}/download} \quad Download approved query result as CSV.
 
-\textbf{GET} \texttt{/api/admin/users}
+\vspace{0.2cm}
 
-\quad Retrieves complete list of users with their roles and permissions.
+\textbf{PUT} \texttt{/api/me/profile} \quad Update user profile.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{POST} \texttt{/api/admin/users}
-
-\quad Creates a new user account with specified roles.
-
-\quad \textit{Request:} username, password, roles
-
-\vspace{0.3cm}
-
-\textbf{PUT} \texttt{/api/admin/users/\{username\}}
-
-\quad Updates existing user's password, roles, or permissions.
-
-\quad \textit{Request:} password, roles, permissions
-
-\vspace{0.3cm}
-
-\textbf{DELETE} \texttt{/api/admin/users/\{username\}}
-
-\quad Permanently removes user account from the system.
-
-\vspace{0.3cm}
-
-\textbf{GET} \texttt{/api/admin/users/statuses}
-
-\quad Fetches real-time online/offline status for all users.
+\textbf{POST} \texttt{/api/me/password} \quad Change password.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - Role Management}
+\subsubsection{Admin Endpoints — User, Role, and Database Management}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Role Administration}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{User and Role Administration}]
 
-\textbf{GET} \texttt{/api/admin/roles}
+\textbf{GET / POST} \texttt{/api/admin/users} \quad List all users / create user.
 
-\quad Lists all defined roles with their associated permissions.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{PUT / DELETE} \texttt{/api/admin/users/\{username\}} \quad Update / delete user.
 
-\textbf{POST} \texttt{/api/admin/roles}
+\vspace{0.2cm}
 
-\quad Creates a new role with specified permissions set.
+\textbf{GET} \texttt{/api/admin/users/statuses} \quad Real-time online/offline status.
 
-\quad \textit{Request:} name, description, permissions
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{GET / POST} \texttt{/api/admin/roles} \quad List roles / create role.
 
-\textbf{GET} \texttt{/api/admin/roles/\{name\}}
+\vspace{0.2cm}
 
-\quad Retrieves detailed information about a specific role.
+\textbf{GET / PUT / DELETE} \texttt{/api/admin/roles/\{name\}} \quad Get / update / delete role.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{PUT} \texttt{/api/admin/roles/\{name\}}
+\textbf{GET} \texttt{/api/admin/database-types} \quad Supported database types.
 
-\quad Modifies role description or permission configuration.
+\vspace{0.2cm}
 
-\quad \textit{Request:} description, permissions
+\textbf{GET / POST} \texttt{/api/admin/databases} \quad List / create database.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{DELETE} \texttt{/api/admin/roles/\{name\}}
-
-\quad Removes role from system (requires no active assignments).
+\textbf{PUT / DELETE} \texttt{/api/admin/databases/\{name\}} \quad Update / delete database.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - Database Management}
+\subsubsection{Admin Endpoints — Session Monitoring and Audit}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Database Configuration}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Session and Audit Endpoints}]
 
-\textbf{GET} \texttt{/api/admin/database-types}
+\textbf{GET} \texttt{/api/admin/active-logins} \quad All active login sessions system-wide.
 
-\quad Returns list of supported database types (MySQL, PostgreSQL, MSSQL).
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{DELETE} \texttt{/api/admin/active-logins/\{id\}} \quad Terminate any session.
 
-\textbf{GET} \texttt{/api/admin/connected-databases}
+\vspace{0.2cm}
 
-\quad Lists all registered databases with connection status.
+\textbf{GET} \texttt{/api/admin/sessions/\{id\}/logs} \quad Query logs for a session.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{POST} \texttt{/api/admin/databases}
+\textbf{GET} \texttt{/api/admin/users/\{username\}/sessions} \quad Sessions for a user.
 
-\quad Registers new database instance with connection credentials.
+\vspace{0.2cm}
 
-\quad \textit{Request:} name, type, address, credentials
+\textbf{GET} \texttt{/api/admin/logs/users/\{username\}/query-sessions} \quad Query sessions for user.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{PUT} \texttt{/api/admin/databases/\{name\}}
+\textbf{GET} \texttt{/api/admin/logs/sessions/\{id\}/queries} \quad Queries in a session.
 
-\quad Updates database connection parameters or credentials.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
-
-\textbf{DELETE} \texttt{/api/admin/databases/\{name\}}
-
-\quad Removes database registration from the gateway system.
+\textbf{GET} \texttt{/api/admin/system-status} \quad System version, uptime, and health metrics.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - Session \& Query Management}
+\subsubsection{Admin Endpoints — Account Management}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Session Monitoring \& Query Execution}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Shared, Personal, and Service Accounts}]
 
-\textbf{GET} \texttt{/api/admin/sessions}
+\textbf{GET / POST} \texttt{/api/admin/shared-accounts} \quad List / create shared accounts.
 
-\quad Displays all active proxy sessions across the system.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{DELETE} \texttt{/api/admin/shared-accounts/\{id\}} \quad Remove shared account.
 
-\textbf{POST} \texttt{/api/admin/execute-query}
+\vspace{0.2cm}
 
-\quad Executes administrative queries directly on specified database.
+\textbf{GET / POST} \texttt{/api/admin/users/\{user\}/db-accounts} \quad List / assign personal accounts.
 
-\quad \textit{Request:} database, query
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{DELETE} \texttt{/api/admin/users/\{user\}/db-accounts/\{db\}} \quad Revoke personal account.
 
-\textbf{GET} \texttt{/api/admin/queries}
+\vspace{0.2cm}
 
-\quad Retrieves query execution history with filtering capabilities.
+\textbf{GET / POST / PATCH / DELETE} \texttt{/api/admin/service-accounts\{/id\}} \quad Service account CRUD.
 
-\end{tcolorbox}
+\vspace{0.2cm}
 
-\subsubsection{Admin Endpoints - Session Activity Logs}
+\textbf{POST} \texttt{/api/admin/service-accounts/\{id\}/\{issue-certificate|rotate-certificate|revoke-certificate\}} \quad Certificate lifecycle.
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Activity Tracking}]
+\vspace{0.2cm}
 
-\textbf{GET} \texttt{/api/admin/active-logins}
-
-\quad Lists all active login sessions for all users system-wide.
-
-\vspace{0.3cm}
-
-\textbf{GET} \texttt{/api/admin/session-activity/\{id\}}
-
-\quad Retrieves detailed activity logs for a specific session.
-
-\vspace{0.3cm}
-
-\textbf{GET} \texttt{/api/admin/user-sessions/\{user\}}
-
-\quad Shows all proxy connection sessions for specified user.
+\textbf{POST} \texttt{/api/admin/service-accounts/\{id\}/\{rotate-secret|suspend|activate|revoke\}} \quad Token/status lifecycle.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - Shared Accounts}
+\subsubsection{Admin Endpoints — PKI and Certificates}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Shared Account Management}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Certificate Management}]
 
-\textbf{GET} \texttt{/api/admin/shared-accounts}
+\textbf{GET} \texttt{/api/admin/certificates} \quad List all certificates (users and service accounts).
 
-\quad Lists shared database accounts with optional database filter.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{POST} \texttt{/api/admin/certificates/\{fingerprint\}/revoke} \quad Revoke by fingerprint.
 
-\textbf{GET} \texttt{/api/admin/shared-accounts/all}
+\vspace{0.2cm}
 
-\quad Retrieves all shared accounts across all databases.
-
-\vspace{0.3cm}
-
-\textbf{POST} \texttt{/api/admin/shared-accounts}
-
-\quad Creates new shared account with concurrency limits.
-
-\quad \textit{Request:} database, username, password, max\_concurrent\_users
-
-\vspace{0.3cm}
-
-\textbf{DELETE} \texttt{/api/admin/shared-accounts/\{id\}}
-
-\quad Removes shared account from the system.
+\textbf{POST} \texttt{/api/admin/accounts/\{id\}/\{issue-certificate|revoke-certificate|rotate-certificate\}} \quad Human user cert lifecycle.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - User DB Accounts}
+\subsubsection{Admin Endpoints — Policy Engine}
 
-\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Personal Database Account Assignment}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Safety Templates, Masking, and Rate Limits}]
 
-\textbf{GET} \texttt{/api/admin/users/\{user\}/db-accounts}
+\textbf{GET / POST / PUT / DELETE} \texttt{/api/admin/safety-templates\{/id\}} \quad Safety template CRUD.
 
-\quad Lists all personal database accounts assigned to user.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{GET} \texttt{/api/admin/warned-queries} \quad Queries pending admin review.
 
-\textbf{POST} \texttt{/api/admin/users/\{user\}/db-accounts}
+\vspace{0.2cm}
 
-\quad Assigns personal database credentials to specific user.
+\textbf{POST} \texttt{/api/admin/warned-queries/\{id\}/approve} \quad Approve and execute warned query.
 
-\quad \textit{Request:} database, username, password
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{POST} \texttt{/api/admin/warned-queries/\{id\}/deny} \quad Deny warned query.
 
-\textbf{DELETE} \texttt{/api/admin/users/\{user\}/db-accounts/\{db\}}
+\vspace{0.2cm}
 
-\quad Revokes user's personal database account assignment.
+\textbf{GET / POST / PUT / DELETE} \texttt{/api/admin/masking-policies\{/id\}} \quad Column masking policy CRUD.
+
+\vspace{0.2cm}
+
+\textbf{GET / POST / PUT / DELETE} \texttt{/api/admin/ai-masking-templates\{/id\}} \quad AI masking template CRUD.
+
+\vspace{0.2cm}
+
+\textbf{GET / POST / PUT / DELETE} \texttt{/api/admin/row-masking-templates\{/id\}} \quad Row masking template CRUD.
+
+\vspace{0.2cm}
+
+\textbf{GET / POST / DELETE} \texttt{/api/admin/rate-limits/\{role-name\}} \quad Per-role rate limit CRUD.
+
+\vspace{0.2cm}
+
+\textbf{GET} \texttt{/api/admin/rate-limits/\{role-name\}/stats} \quad Live rate limit utilisation.
 
 \end{tcolorbox}
 
-\subsubsection{Admin Endpoints - Admin Account Management}
+\subsubsection{Admin Endpoints — Anomaly Detection and Compliance}
 
-\begin{tcolorbox}[colback=red!5, colframe=red!50, title=\textbf{Administrator Account Control}]
+\begin{tcolorbox}[colback=orange!5, colframe=orange!50, title=\textbf{Anomaly and Compliance Endpoints}]
 
-\textbf{POST} \texttt{/api/admin/create}
+\textbf{GET} \texttt{/api/admin/anomaly-notifications} \quad List anomaly alerts.
 
-\quad Creates new administrator account with full privileges.
+\vspace{0.2cm}
 
-\quad \textit{Request:} username, password, full\_name
+\textbf{GET} \texttt{/api/admin/anomaly-stats} \quad Aggregated anomaly statistics.
 
-\vspace{0.3cm}
+\vspace{0.2cm}
 
-\textbf{GET} \texttt{/api/admin/read}
+\textbf{POST} \texttt{/api/admin/anomaly-notifications/read-all} \quad Mark all alerts read.
 
-\quad Retrieves list of all administrator accounts.
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{POST} \texttt{/api/admin/anomaly-notifications/correlation/\{id\}/read} \quad Mark alert group read.
 
-\textbf{PUT} \texttt{/api/admin/update/\{user\}}
+\vspace{0.2cm}
 
-\quad Updates administrator account password or profile information.
+\textbf{GET} \texttt{/api/admin/compliance/frameworks} \quad List 6 regulatory frameworks.
 
-\quad \textit{Request:} password, full\_name
+\vspace{0.2cm}
 
-\vspace{0.3cm}
+\textbf{GET} \texttt{/api/admin/compliance/framework-assignments} \quad Current framework-to-database assignments.
 
-\textbf{DELETE} \texttt{/api/admin/delete/\{user\}}
+\vspace{0.2cm}
 
-\quad Permanently deletes administrator account (requires super-admin).
+\textbf{GET} \texttt{/api/admin/compliance/frameworks/\{id\}/conflicts} \quad Pre-application conflict check.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/admin/compliance/apply/\{id\}} \quad Apply framework.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/admin/compliance/unapply/\{id\}} \quad Unapply framework.
+
+\end{tcolorbox}
+
+\subsubsection{Admin Endpoints — AI and Chat}
+
+\begin{tcolorbox}[colback=red!5, colframe=red!50, title=\textbf{AI, LLM, and Chat Endpoints (Super Admin)}]
+
+\textbf{GET / PUT} \texttt{/api/admin/llm-config} \quad Read / update LLM provider configuration.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/admin/llm-test} \quad Test LLM connectivity.
+
+\vspace{0.2cm}
+
+\textbf{GET} \texttt{/api/admin/ai-health} \quad AI service health status.
+
+\vspace{0.2cm}
+
+\textbf{GET} \texttt{/api/admin/schema-cache} \quad Schema cache snapshot.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/admin/schema-cache/refresh} \quad Trigger immediate schema refresh.
+
+\vspace{0.2cm}
+
+\textbf{POST} \texttt{/api/admin/chat} \quad Send message to Zara assistant.
+
+\vspace{0.2cm}
+
+\textbf{GET / DELETE} \texttt{/api/admin/chat/conversations\{/id\}} \quad List / delete conversation threads.
+
+\vspace{0.2cm}
+
+\textbf{GET} \texttt{/api/admin/chat/conversations/\{id\}} \quad Get conversation messages.
 
 \end{tcolorbox}
 
 % ============================================================
 \subsection{Data Storage Architecture}
 
-The system utilizes SQLite as the embedded database for configuration, credentials, and audit data. SQLite was chosen for its zero-configuration deployment, ACID compliance, and sufficient performance for the access patterns.
+The system utilises SQLite as the embedded database for configuration, credentials, and audit data. SQLite was chosen for its zero-configuration deployment, ACID compliance, and sufficient performance for the access patterns.
 
 \subsubsection{Database Schema}
 
-The store implements the following primary tables:
+The store has grown to cover all platform subsystems. Key table groups:
 
+\textbf{Core Identity and Access:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{users:} User accounts with bcrypt-hashed passwords, roles, custom permissions
-    \item \textbf{admins:} Administrative accounts with elevated privileges
-    \item \textbf{roles:} Role definitions with associated permissions
-    \item \textbf{databases:} Registered target database configurations
-    \item \textbf{refresh\_tokens:} Active refresh tokens with user association and metadata
-    \item \textbf{shared\_accounts:} Pool of shared database accounts with concurrent usage tracking
-    \item \textbf{user\_db\_accounts:} Personal database account assignments
-    \item \textbf{query\_logs:} Immutable audit trail of all database queries (optional, can use file-based logging)
+    \item \textbf{accounts:} Users and admins with bcrypt passwords, roles, tier, TOTP secret, and certificate fields
+    \item \textbf{user\_roles:} Many-to-many user-to-role assignments
+    \item \textbf{roles:} Role definitions
+    \item \textbf{role\_permissions:} Role-to-database permission levels
+    \item \textbf{user\_custom\_permissions:} User-level permission overrides
+    \item \textbf{refresh\_tokens:} Token rotation tracking with family IDs and revocation support
+    \item \textbf{revoked\_access\_tokens:} JWT revocation list (JTI + expiry for cleanup)
+\end{itemize}
+
+\textbf{Database Configuration:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{db\_configs:} Database connections with encrypted admin credentials
+    \item \textbf{database\_frameworks:} Regulatory framework assignments per database
+\end{itemize}
+
+\textbf{Account Types:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{user\_db\_accounts:} Personal credential assignments (user + database unique)
+    \item \textbf{shared\_db\_accounts:} Shared credential pools with concurrency counters
+    \item \textbf{service\_accounts:} Programmatic accounts with token, IP allowlist, certificate fields
+    \item \textbf{service\_account\_certificates:} Certificate fingerprint and revocation tracking
+\end{itemize}
+
+\textbf{PKI:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{pki\_ca:} Singleton internal CA (cert PEM + encrypted private key)
+    \item \textbf{account\_certificates:} Human user certificate fingerprints, serials, validity, revocation
+\end{itemize}
+
+\textbf{Query Policy Engine:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{safety\_templates:} Named rule sets with enforcement mode and optional framework ownership
+    \item \textbf{safety\_template\_rules:} Individual rules (action, condition logic, custom error message)
+    \item \textbf{rule\_conditions:} Condition clauses (type, operator, value, negation, grouping)
+    \item \textbf{rule\_exceptions:} Whitelist exception clauses
+    \item \textbf{role\_safety\_templates:} Template-to-role assignments
+    \item \textbf{warned\_queries:} Warned query review workflow (status, execution tracking, results, expiry)
+    \item \textbf{role\_rate\_limits:} Per-role rate limit configuration (QPS, burst, window)
+\end{itemize}
+
+\textbf{Data Masking:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{masking\_policies:} Direct column masking assignments (role, database, table, column, strategy)
+    \item \textbf{masking\_templates / masking\_template\_rules / role\_masking\_templates:} Reusable column masking sets
+    \item \textbf{ai\_column\_classifications:} LLM-generated semantic type per (database, table, column) with confidence score
+    \item \textbf{ai\_masking\_templates / role\_ai\_masking\_templates:} AI masking policy sets assigned to roles
+    \item \textbf{row\_masking\_templates / row\_masking\_template\_rules / role\_row\_masking\_templates:} Row filter conditions and role assignments
+\end{itemize}
+
+\textbf{Anomaly Detection and Compliance:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{anomaly\_notifications:} Alerts with severity, score, reasons JSON, correlation ID, and status
+    \item \textbf{framework\_exceptions:} Custom exception overrides for framework-owned rules
+\end{itemize}
+
+\textbf{AI and Chat:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{llm\_config:} Singleton LLM provider configuration with encrypted API key
+    \item \textbf{chat\_conversations:} Conversation thread metadata
+    \item \textbf{chat\_messages:} Individual messages with role, content type, and optional \texttt{proposal\_data} JSON
 \end{itemize}
 
 \subsubsection{Migration System}
@@ -1169,38 +1760,52 @@ The store implements an automatic schema migration system that:
 % ============================================================
 \subsection{Security Architecture}
 
-The system implements defense-in-depth security with multiple layers of protection.
+The system implements defence-in-depth security with multiple layers of protection spanning authentication, transport, query analysis, data handling, and administrative operations.
 
 \subsubsection{Credential Protection}
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{User Passwords:} bcrypt hashing with salt (cost factor 10)
-    \item \textbf{Database Credentials:} Stored encrypted in SQLite, decrypted only in memory during connection
-    \item \textbf{JWT Tokens:} HS256 signing with secret key, short expiration times
-    \item \textbf{Refresh Tokens:} Cryptographically random, stored hashed in database
+    \item \textbf{Database Credentials:} Stored encrypted in SQLite (AES-256-GCM), decrypted only in memory during connection
+    \item \textbf{JWT Tokens:} HS256 signing with secret key, 15-minute access token expiration
+    \item \textbf{Refresh Tokens:} Cryptographically random, stored hashed, single-use (rotation on every refresh)
+    \item \textbf{LLM API Keys:} AES-256-GCM encrypted at rest in \texttt{llm\_config}
+    \item \textbf{Service Account Secrets:} One-token-at-a-time model; rotation invalidates the previous token immediately
 \end{itemize}
 
 \subsubsection{Network Security}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{TLS Support:} Optional end-to-end TLS from client to database
+    \item \textbf{TLS Support:} Optional end-to-end TLS from client to database; standard server TLS available for JDBC clients
+    \item \textbf{Mutual TLS (mTLS):} Internal CA issues client certificates; strict mode (\texttt{ENFORCE\_MTLS}) disables all legacy credential exchange
+    \item \textbf{Certificate Revocation:} In-memory revocation cache; revocation terminates active sessions immediately without restart
     \item \textbf{Certificate Pinning:} Strict certificate verification for backend databases
-    \item \textbf{Proxy Authentication:} Fake credentials prevent direct database access
-    \item \textbf{Port Isolation:} Each session on dedicated port prevents cross-session attacks
+    \item \textbf{Proxy Authentication:} Users present fake credentials to the proxy; real credentials are injected at the wire-protocol layer
+    \item \textbf{Port Isolation:} Each session on a dedicated dynamically allocated port prevents cross-session attacks
+    \item \textbf{IP Allowlist:} Service accounts may be restricted to specific source IP ranges
+    \item \textbf{Slowloris Defence:} Protocol-level read timeouts (5-second default) prevent connection exhaustion from slow clients
+\end{itemize}
+
+\subsubsection{Anti-Bot and Rate-Limiting Protection}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{ALTCHA Proof-of-Work:} Client must spend CPU time before login attempts; replay detection via HMAC
+    \item \textbf{Arithmetic Puzzle:} Alternative lightweight challenge for environments where PoW is impractical
+    \item \textbf{Per-Role Query Rate Limits:} Configurable QPS and burst limits enforced at the interceptor layer
+    \item \textbf{Challenge Rate Limiting:} Challenge generation endpoints are rate-limited independently to prevent DDoS amplification
 \end{itemize}
 
 \subsubsection{Audit and Compliance}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Immutable Logs:} All queries logged with user attribution
-    \item \textbf{Session Tracking:} Complete session lifecycle recorded
-    \item \textbf{Query Blocking:} Dangerous operations prevented and logged
-    \item \textbf{Data Masking:} Sensitive data redacted in query results
+    \item \textbf{Immutable Query Logs:} All queries logged with user attribution and execution metadata
+    \item \textbf{Session Tracking:} Complete session lifecycle recorded (connect, queries, disconnect)
+    \item \textbf{Warned Query Trail:} Admin review decisions and execution results permanently recorded
+    \item \textbf{Anomaly Alerts:} Behavioural anomalies scored and logged with correlation tracking
+    \item \textbf{Data Masking:} Sensitive data redacted via three complementary masking strategies before reaching the client
+    \item \textbf{Regulatory Frameworks:} Automated compliance policy configuration for HIPAA, PCI-DSS, SOC2, GDPR, CCPA, and NIST
+    \item \textbf{Admin Tier Enforcement:} Least-privilege admin model ensures auditors cannot modify data and policy admins cannot access credentials
 \end{itemize}
-
-
-
-
 
 % ============================================================
 \subsection{Architecture Quality Attributes}
@@ -1212,11 +1817,12 @@ The zGate platform is engineered with six foundational quality attributes that d
 \textbf{Architectural Guarantees:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Credential Elimination:} End users never access or store production database credentials
-    \item \textbf{Wire-Protocol Interception:} All database traffic passes through security enforcement layer
+    \item \textbf{Wire-Protocol Interception:} All database traffic passes through the security enforcement layer
     \item \textbf{Comprehensive Audit Trail:} Every query, connection, and authentication event logged immutably
-    \item \textbf{Defense in Depth:} Multiple security layers (authentication, authorization, query validation, masking)
-    \item \textbf{Ephemeral Credentials:} Optional temporary accounts that self-destruct on disconnect
-    \item \textbf{JWT-Based Authentication:} Stateless token validation with automatic expiration and refresh
+    \item \textbf{Defence in Depth:} Multiple security layers: authentication (local/OIDC/mTLS), anti-bot challenges, RBAC, query safety rules, column masking, row filtering, AI semantic masking, anomaly detection
+    \item \textbf{Ephemeral Credentials:} Temporary accounts self-destruct on disconnect; zero persistent footprint
+    \item \textbf{Mutual TLS:} Internal CA enforces client identity at the transport layer
+    \item \textbf{Regulatory Automation:} Built-in compliance frameworks eliminate manual policy configuration errors
 \end{itemize}
 
 \textit{Security Posture:} The architecture assumes breach and enforces Zero Trust at every layer, eliminating single points of credential compromise.
@@ -1228,7 +1834,7 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{Stateless API:} JWT-based authentication enables load balancer distribution without session affinity
     \item \textbf{Shared Session State:} Centralized SQLite/PostgreSQL store allows multiple gateway instances
     \item \textbf{Efficient Protocol Handling:} Go goroutines provide lightweight concurrency (10,000+ simultaneous connections)
-    \item \textbf{Minimal Per-Connection Overhead:} <5MB memory per active session
+    \item \textbf{Minimal Per-Connection Overhead:} $<$5 MB memory per active session
     \item \textbf{Dynamic Port Allocation:} Operating system manages ephemeral port pool
     \item \textbf{Connection Pooling:} Shared and ephemeral accounts reduce backend database load
 \end{itemize}
@@ -1239,12 +1845,11 @@ The zGate platform is engineered with six foundational quality attributes that d
 
 \textbf{Design Characteristics:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Component Separation:} Clear boundaries between Gateway, API, Store, and Protocol layers
-    \item \textbf{Interface-Based Design:} Protocol handlers implement common interface for database abstraction
+    \item \textbf{Component Separation:} Clear boundaries between Gateway, API, Store, Policy, Masking, Compliance, AI, and Protocol layers
+    \item \textbf{Interface-Based Design:} Protocol handlers implement a common interface for database abstraction
     \item \textbf{Dependency Injection:} Components receive dependencies explicitly, not via globals
-    \item \textbf{Comprehensive Logging:} Structured JSON logs with correlation IDs for distributed tracing
+    \item \textbf{Comprehensive Logging:} Structured logs with correlation IDs for distributed tracing
     \item \textbf{Error Propagation:} Explicit error handling with context preservation
-    \item \textbf{Self-Documenting Code:} Type-safe structs and clear naming conventions
 \end{itemize}
 
 \textit{Maintenance Philosophy:} Code organization prioritizes clarity over cleverness, with explicit dependencies and minimal coupling.
@@ -1253,26 +1858,28 @@ The zGate platform is engineered with six foundational quality attributes that d
 
 \textbf{Extension Points:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Interceptor Pipeline:} Pluggable query processing stages (safety, logging, masking, custom)
-    \item \textbf{Protocol Handler Interface:} Add new database protocols by implementing Handler interface
-    \item \textbf{Policy Engine:} Custom policy rules via store extensions
-    \item \textbf{Authentication Providers:} Extensible to LDAP, OAuth, SAML via AuthService interface
+    \item \textbf{Interceptor Pipeline:} Pluggable query processing stages; new interceptors implement a single interface and are inserted into the composite chain
+    \item \textbf{Protocol Handler Interface:} Add new database protocols by implementing the Handler interface
+    \item \textbf{LLM Provider:} New AI providers added by implementing the LLM client interface (currently: Ollama, OpenAI, Anthropic, Gemini, Azure)
+    \item \textbf{Compliance Frameworks:} New regulatory frameworks registered by implementing the framework interface with predefined templates
+    \item \textbf{Authentication Providers:} Extensible to LDAP, SAML via AuthService interface (OIDC already implemented)
     \item \textbf{Storage Backends:} SQLite, PostgreSQL, MySQL supported via unified Store interface
     \item \textbf{Middleware Stack:} HTTP middleware chain for cross-cutting concerns
 \end{itemize}
 
-\textit{Extension Philosophy:} Open/Closed principle - open for extension via interfaces, closed for modification of core logic.
+\textit{Extension Philosophy:} Open/Closed principle — open for extension via interfaces, closed for modification of core logic.
 
 \subsubsection{Performance: Low-Latency Proxying}
 
 \textbf{Performance Characteristics:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Proxy Overhead:} Typically $<$1ms latency added by zGate layer
-    \item \textbf{Wire Protocol Efficiency:} Zero serialization - packets forwarded directly
+    \item \textbf{Proxy Overhead:} Typically $<$1 ms latency added by zGate layer
+    \item \textbf{Wire Protocol Efficiency:} Zero serialization — packets forwarded directly
     \item \textbf{Connection Pooling:} Shared accounts reduce backend connection establishment overhead
     \item \textbf{Go Runtime Performance:} Compiled binary, no garbage collection pauses during I/O
-    \item \textbf{Efficient Goroutines:} Lightweight threads with $<$2KB stack overhead
+    \item \textbf{Efficient Goroutines:} Lightweight threads with $<$2 KB stack overhead
     \item \textbf{Memory Efficiency:} Streaming query results without buffering entire result sets
+    \item \textbf{Schema Cache:} Pre-fetched column metadata eliminates per-query schema lookups for masking
 \end{itemize}
 
 \textit{Performance Target:} Sub-millisecond overhead for query proxying, supporting thousands of concurrent connections per instance.
@@ -1281,12 +1888,13 @@ The zGate platform is engineered with six foundational quality attributes that d
 
 \textbf{Reliability Mechanisms:}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Graceful Degradation:} Shared pool exhaustion falls back to ephemeral accounts
+    \item \textbf{Graceful Degradation:} Shared pool exhaustion falls back to ephemeral accounts; AI masking cache miss falls back to rule-based masking
     \item \textbf{Automatic Cleanup:} Session goroutines clean up resources on disconnect or panic
-    \item \textbf{Error Recovery:} Panic handlers prevent single-connection failures from crashing gateway
-    \item \textbf{Health Checks:} /health and /ready endpoints for orchestration platforms
-    \item \textbf{Connection Timeout:} Configurable timeouts prevent resource leaks
-    \item \textbf{Audit Continuity:} Failed queries logged before rejection
+    \item \textbf{Error Recovery:} Panic handlers prevent single-connection failures from crashing the gateway
+    \item \textbf{Health Checks:} \texttt{/healthz} and \texttt{/readyz} endpoints for orchestration platforms
+    \item \textbf{Connection Timeout:} Configurable timeouts prevent resource leaks from slow or abandoned clients
+    \item \textbf{Audit Continuity:} Failed queries logged before rejection; anomaly detection fires on errors via OnError hook
+    \item \textbf{Background Workers:} Schema cache and Keycloak sync workers run independently with their own error recovery
 \end{itemize}
 
-\textit{Reliability Goal:} 99.9\% uptime for gateway layer, with automatic recovery from transient failures and comprehensive logging for post-mortem analysis.
+\textit{Reliability Goal:} 99.9\% uptime for the gateway layer, with automatic recovery from transient failures and comprehensive logging for post-mortem analysis.
