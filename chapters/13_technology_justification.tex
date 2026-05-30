@@ -2,313 +2,359 @@
 % 13. TECHNOLOGY JUSTIFICATION
 % ============================================================
 
-\begin{sectionintro}{12}{Technology Justification}{
+\begin{sectionintro}{13}{Technology Justification}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Go programming language selection
-    \item Node.js and TypeScript for frontend
-    \item React framework justification
-    \item SQLite for configuration storage
-    \item mTLS for production security
+    \item Go for high-performance, memory-safe gateway proxy
+    \item MySQL with AES-256-GCM for encrypted control-plane storage
+    \item HashiCorp Vault for secrets lifecycle management
+    \item Keycloak and OpenID Connect for federated identity
+    \item OpenTelemetry for standards-based observability
+    \item Next.js, React 19, TypeScript, and Tailwind CSS for the admin dashboard
+    \item Bubble Tea TUI and Cobra for the developer CLI
+    \item Internal ECDSA P-256 PKI and implemented mTLS gateway
+    \item SQL parsing engines aligned with database wire protocols
+    \item Docker Compose for reproducible deployment orchestration
   \end{itemize}
 }
-Technology choices fundamentally shape system capabilities and maintainability. This chapter justifies selecting Go for its goroutine concurrency and memory safety, Node.js and TypeScript for type-safe frontend development, React for component-based dashboards, and SQLite with AES-256 encryption for configuration storage. We establish how each technology decision directly addresses specific technical requirements, performance targets, and operational constraints.
+Technology selection for a Zero-Trust Database Access Gateway is not incidental---each choice directly determines the security guarantees, regulatory compliance posture, and operational reliability the system can provide. This chapter justifies every major technology decision in the zGate stack by tracing it to specific technical requirements, international standards, and architectural constraints. Choices span four components: the Go backend server and gateway proxy, the MySQL-backed encrypted control-plane store, the identity and secrets infrastructure (Keycloak, HashiCorp Vault), the observability stack (OpenTelemetry, Prometheus, Jaeger), the Next.js administration dashboard, and the Bubble Tea terminal-user-interface CLI. Each technology is evaluated against alternatives, and the rationale is grounded in concrete implementation evidence from the codebase.
 \end{sectionintro}
 
-\section{Why Go}
-The selection of Go (Golang) as the primary language for implementing the zGate Gateway proxy was driven by several technical requirements unique to high-performance, security-critical network infrastructure. Unlike interpreted languages, Go provides the performance characteristics and concurrency model essential for building a production-grade database access proxy.
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Go for the Backend Gateway and Proxy}
+% ──────────────────────────────────────────────────────────────────────────────
 
-\subsection{Performance \& Execution Model}
-Go is a compiled language that translates source code directly into machine code, unlike interpreted languages such as Python that execute code line-by-line at runtime. This fundamental architectural difference results in significantly lower latency and higher throughput—critical metrics for a proxy that sits between clients and database servers, where every millisecond of added latency compounds across thousands of queries.
+The selection of Go (Golang) as the primary implementation language for the zGate server and gateway proxy was driven by a set of requirements that are unique to security-critical, high-throughput network infrastructure: goroutine-level concurrency, memory safety without a managed runtime, a production-grade standard library for TCP and TLS, and a single-binary deployment model that minimises the attack surface.
 
-Additionally, Go applications exhibit substantially lower memory overhead compared to equivalent implementations in interpreted languages. This efficiency allows the gateway to handle significantly more concurrent traffic on the same hardware resources, directly impacting the scalability and cost-effectiveness of the system.
+\subsection{Concurrency Model: Goroutines and Channels}
 
-\subsection{Goroutine Concurrency Model}
-The most significant advantage of Go for proxy server implementation lies in its concurrency model based on goroutines. This feature is crucial for handling the massive number of simultaneous database connections that a production gateway must support.
+A database access proxy must handle thousands of simultaneous client connections, each requiring independent state (authentication context, query interceptor state, credential mapping, and an upstream TCP tunnel to the backend database). Traditional OS-thread-per-connection models impose a 1--8\,MB stack overhead per thread~\cite{go-spec}, making them impractical at scale. Go's goroutines start with a 2\,KB stack that grows on demand under the runtime's management, enabling tens of thousands of concurrent proxy sessions on modest hardware without exhausting virtual memory.
 
-Traditional threading models impose significant memory overhead, as each thread typically consumes megabytes of stack space. In contrast, goroutines are extremely lightweight, consuming only approximately 2KB of initial stack space. This efficiency enables the gateway to spawn tens of thousands of goroutines to handle concurrent proxy connections without exhausting system resources—a capability that would be impractical with traditional threading approaches.
+Go channels provide a first-class, deadlock-safe mechanism for coordinating goroutines. In the zGate gateway, channels are used to pass authenticated connection objects from the \texttt{Acceptor} to protocol dispatcher goroutines and to broadcast graceful-shutdown signals across the listener pool---patterns that would require explicit locking and condition variables in C++ or Java and that are common sources of race conditions in those ecosystems.
 
-Furthermore, Go provides \textit{channels} as a first-class language construct for safely communicating between concurrent processes. This built-in mechanism eliminates the complex locking patterns and race conditions that plague concurrent programming in other languages, making the codebase more maintainable and less prone to subtle concurrency bugs.
+\subsection{Memory Safety and Security Posture}
 
-\subsection{Production-Grade Standard Library}
-Go was designed by Google specifically for building networked systems and internet services. The standard library's \texttt{net} and \texttt{net/http} packages are robust, secure, and production-ready out of the box, eliminating the need for heavy external frameworks.
+Unlike C or C++, Go is a memory-safe language: bounds-checked array accesses, garbage-collected heap, and no pointer arithmetic eliminate entire classes of vulnerabilities that have historically devastated network proxies---buffer overflows, use-after-free exploits, and heap-spray attacks. The Heartbleed vulnerability (CVE-2014-0160), which exposed millions of private keys via a single-byte out-of-bounds read in OpenSSL's C implementation, is structurally impossible in a correctly written Go program. For a security gateway that sits on the boundary between untrusted clients and sensitive databases, this class-level elimination of memory-corruption vulnerabilities is a non-negotiable design criterion.
 
-The \texttt{net} library provides fine-grained control over TCP socket behavior, including precise management of timeouts, deadlines, and keep-alive settings. This low-level control is essential for a custom proxy that must intelligently manage traffic flow, implement connection pooling, and enforce session policies at the transport layer.
+\subsection{Standard Library: \texttt{net}, \texttt{crypto/tls}, and \texttt{crypto/x509}}
 
-\subsection{Security \& Cryptography Ecosystem}
-Security is paramount for a Zero Trust database access gateway, and Go's cryptography ecosystem is exceptionally well-suited to this requirement. The \texttt{crypto/tls} package in Go is considered one of the industry's best implementations of SSL/TLS protocols, with built-in support for modern standards including TLS 1.3 by default.
-
-Critically, Go is a memory-safe language despite its performance characteristics comparable to C or C++. The language's garbage collector prevents common security vulnerabilities such as buffer overflows, use-after-free errors, and memory leaks—all of which would be catastrophic in a security gateway positioned between untrusted clients and sensitive database systems.
-
-\subsection{Deployment Simplicity}
-Go's compilation model produces a single static binary that bundles all dependencies and libraries. This characteristic eliminates "dependency hell" and dramatically simplifies deployment operations.
-
-To deploy the zGate Gateway to a server or container, operators simply copy a single executable file—no runtime installation, no package manager invocations, and no version conflict resolution required. This simplicity reduces the attack surface, minimizes deployment complexity, and ensures consistent behavior across different target environments.
-
-\subsection{Developer Experience \& Code Maintainability}
-Go's minimalist design philosophy emphasizes simplicity and readability, featuring a deliberately small syntax with no complex inheritance hierarchies or implicit behaviors. This characteristic is particularly valuable for security-critical software, where code auditability is essential. If code is easy to read, it is correspondingly easier to audit for security flaws and verify correctness.
-
-As a statically typed language with a powerful type system, Go enables the compiler to catch many classes of bugs—including type mismatches, null pointer dereferences, and interface violations—before code execution. This compile-time validation substantially reduces the likelihood of runtime errors in production environments, contributing to overall system reliability.
-
-\section{Why Node.js / TypeScript / React}
-The zGate Web Administration Dashboard serves as the centralized control plane for the entire gateway infrastructure. While the Go backend handles the computationally intensive proxy operations, the WebUI provides administrators with real-time visibility, configuration management, and audit capabilities. The selection of Node.js, TypeScript, and React for this interface was driven by the need for a responsive, type-safe, and maintainable frontend that complements the Go backend architecture.
-
-\subsection{React: Dynamic and Real-Time Dashboard Capabilities}
-The administrative dashboard for a database access proxy presents unique user interface challenges. Administrators require real-time visibility into active connections, traffic patterns, policy violations, and system health metrics—all of which change continuously during normal operations.
-
-\subsubsection{Component-Based Architecture}
-React's component-based architecture aligns naturally with the modular nature of a proxy gateway dashboard. The interface comprises numerous repeating elements: toggle switches for policy rules, status cards for connection statistics, table rows for audit logs, and configuration forms for database endpoints. React enables these elements to be built as reusable, self-contained components that encapsulate their own logic and styling. This approach yields a clean, organized codebase where modifications to one component do not cascade unpredictably throughout the application.
-
-\subsubsection{Virtual DOM for Live Monitoring}
-A production proxy processes database traffic continuously, generating metrics and events at high frequency. Displaying live traffic graphs, active connection counts, and streaming audit logs requires the UI to update rapidly without degrading user experience. React's Virtual DOM reconciliation algorithm addresses this challenge by computing the minimal set of DOM mutations required to reflect state changes. Rather than re-rendering entire page sections, React surgically updates only the elements that have actually changed, preventing the lag and flickering that would otherwise occur with frequent data updates.
-
-\subsubsection{Single Page Application Model}
-The dashboard implements a Single Page Application (SPA) architecture, providing administrators with a fluid, application-like experience. Navigation between views—such as switching from the Dashboard to Settings to Audit Logs—occurs instantaneously without full page reloads. This responsiveness is critical for operational scenarios where administrators must rapidly investigate security events or modify policies under time pressure.
-
-\subsection{TypeScript: Type Safety and Contract Enforcement}
-The selection of TypeScript over plain JavaScript reflects a deliberate architectural decision to extend the type safety guarantees of the Go backend into the frontend layer.
-
-\subsubsection{Consistency with Backend Type Discipline}
-Go was selected for the backend partly due to its static type system, which catches entire categories of bugs at compile time. Using TypeScript brings equivalent discipline to the frontend codebase. Common JavaScript runtime errors—such as accessing properties on undefined values or passing incorrect argument types—are detected during compilation rather than manifesting as failures in production. This consistency in type safety across both layers of the application reduces the overall defect rate and improves system reliability.
-
-\subsubsection{API Contract Enforcement Through Interfaces}
-The WebUI communicates with the Go backend through RESTful API endpoints that exchange JSON payloads. TypeScript's interface system enables precise definition of these data contracts, ensuring that frontend code correctly handles the structures returned by the backend.
-
-For example, if the Go backend defines a database connection response containing a numeric identifier, TypeScript interfaces enforce this contract throughout the frontend codebase. Any attempt to treat this identifier as a string or access non-existent properties results in a compile-time error rather than a subtle runtime bug. This compile-time validation is particularly valuable as the API evolves, since TypeScript immediately flags any frontend code that becomes incompatible with backend changes.
-
-\subsubsection{Enhanced Developer Tooling}
-TypeScript's static analysis enables sophisticated editor features including intelligent autocompletion, inline documentation, and real-time error highlighting. These capabilities accelerate development velocity by reducing the cognitive load on developers and eliminating the need for frequent context switches to reference documentation or debug type-related issues.
-
-\subsection{Node.js: Ecosystem Access and Build Infrastructure}
-While the production backend runs entirely on Go, the frontend development environment leverages Node.js to access the extensive JavaScript ecosystem and modern build tooling.
-
-\subsubsection{NPM Registry and Library Ecosystem}
-The Node Package Manager (NPM) registry provides access to thousands of production-ready libraries that would be impractical to develop in-house. For the zGate dashboard, this ecosystem enables rapid integration of specialized capabilities:
-
-\begin{itemize}
-    \item \textbf{Data Visualization:} Libraries such as Recharts and Chart.js provide sophisticated charting capabilities for rendering traffic volume graphs, connection histograms, and latency distributions—visualizations essential for monitoring proxy health and identifying anomalies.
-    \item \textbf{State Management:} Complex dashboard state—including authentication status, cached configuration data, and real-time metrics—is managed through established patterns using libraries like Zustand or Redux, providing predictable state transitions and debugging capabilities.
-    \item \textbf{UI Component Libraries:} Pre-built component libraries such as Radix UI provide accessible, well-tested interface primitives that accelerate development while ensuring consistency and accessibility compliance.
-\end{itemize}
-
-\subsubsection{Modern Build Tooling}
-Node.js powers the build pipeline through tools like Vite, which provides near-instantaneous hot module replacement during development. When a developer saves a file, changes appear in the browser within milliseconds without losing application state. This rapid feedback loop dramatically improves development efficiency compared to traditional build-refresh cycles.
-
-\subsection{Architectural Separation of Concerns}
-The decision to implement the WebUI as a separate application from the Go proxy reflects a deliberate architectural pattern that provides operational and reliability benefits.
-
-\subsubsection{Decoupled Failure Domains}
-By separating the presentation layer (React/Node.js) from the core proxy logic (Go), the system establishes independent failure domains. If the WebUI experiences an error—whether due to a browser compatibility issue, a JavaScript exception, or a frontend deployment problem—the Go proxy continues operating uninterrupted. Database connections remain active, policies continue to be enforced, and audit logging persists. Administrators may temporarily lose dashboard visibility, but the security-critical proxy functionality remains unaffected.
-
-\subsubsection{Independent Scaling and Resource Allocation}
-The decoupled architecture enables independent resource allocation for each tier. The Go proxy may require substantial CPU and memory resources to handle high connection volumes, while the WebUI imposes minimal server-side load since rendering occurs in the administrator's browser. This separation prevents dashboard activity from competing with proxy operations for system resources, ensuring that administrative tasks do not degrade proxy performance under load.
-
-\subsubsection{Independent Development and Deployment Cycles}
-Frontend and backend teams can develop, test, and deploy their respective components independently, provided API contracts are maintained. UI improvements, new dashboard features, or visual redesigns can be shipped without redeploying or restarting the proxy, minimizing operational risk and enabling more frequent iterations on the administrative experience.
-
-\section{Why SQLite for Internal Storage}
-The evolution of the zGate Gateway's configuration management architecture represents a critical design decision that directly impacts system reliability, security, and operational efficiency. Initially, the system utilized YAML files for storing configuration data, including database connection strings, user permissions, and policy rules. However, this approach proved insufficient for a production-grade security gateway, leading to the adoption of SQLite as the internal storage mechanism.
-
-\subsection{Zero-Downtime Updates}
-The most significant limitation of file-based configuration was the requirement for application restarts to apply changes. In the YAML-based implementation, configuration data was loaded into memory only during application startup. Any modification to proxy rules, database connection strings, or user permissions required editing the file and restarting the entire gateway—an operation that necessarily resulted in dropped connections and service interruption.
-
-SQLite fundamentally resolves this issue by enabling real-time configuration queries. When an administrator updates a setting through the WebUI, the change is committed to the database immediately and atomically. Subsequent requests automatically retrieve the updated configuration without requiring any application restart or service disruption. This capability is essential for maintaining high availability in production environments where configuration changes are routine operational tasks.
-
-\subsection{Efficiency \& Memory Management}
-The YAML approach required loading the entire configuration dataset into memory at startup, creating a cached representation of all configuration data. This architecture introduced several problems, including memory inefficiency and the risk of state drift—a condition where in-memory data diverges from the on-disk representation if files are modified externally or by concurrent processes.
-
-SQLite's relational model eliminates these issues through structured, on-demand data access. Rather than maintaining complex nested maps and arrays in memory, the gateway queries specific configuration elements exactly when needed. This approach significantly reduces the application's memory footprint, particularly as the configuration dataset grows to encompass hundreds of database connections, thousands of user accounts, and complex policy rules.
-
-Furthermore, SQLite's query optimizer ensures that data retrieval operations are efficient even as the dataset scales, something that would require substantial custom indexing logic if implemented with in-memory data structures.
-
-\subsection{API Integration \& WebUI Compatibility}
-Modern administrative interfaces require comprehensive Create, Read, Update, and Delete (CRUD) operations on configuration data. Implementing these operations safely with YAML files—particularly handling concurrent modifications, maintaining data integrity, and providing transactional semantics—is complex and error-prone.
-
-SQLite provides a standardized SQL interface that dramatically simplifies API development. The Go backend can leverage SQL's powerful query capabilities to implement sophisticated operations with minimal code. For example, filtering connection strings by environment, paginating audit logs, or searching for users by role becomes trivial with SQL queries:
+Go's standard library was designed by the team that built Google's production networking infrastructure. The \texttt{net} package provides low-level TCP primitives (deadline management, \texttt{SO\_KEEPALIVE}, half-close control) that are essential for a proxy implementing three-way handshake teardown correctly across MySQL, PostgreSQL, and MSSQL wire protocols. The \texttt{crypto/tls} package implements TLS 1.3 by default, enforces secure cipher suites, and supports mutual authentication through a single \texttt{tls.Config} field---the same configuration used in zGate's \texttt{mtlsListener} (\path{internal/gateway/mtls\_listener.go}):
 
 \begin{verbatim}
-SELECT * FROM connections 
-WHERE environment='production' 
-ORDER BY name LIMIT 10
+tlsCfg := &tls.Config{
+    ClientAuth:           tls.RequireAndVerifyClientCert,
+    ClientCAs:            deps.CAManager.ClientCAs(),
+    MinVersion:           tls.VersionTLS13,
+    SessionTicketsDisabled: true,
+}
 \end{verbatim}
 
-This SQL-based approach integrates seamlessly with the React/Node.js WebUI, which can issue standard REST API calls that translate directly to SQL queries. The result is a clean, maintainable codebase with clear separation between the presentation layer (React), business logic (Node.js API), and data persistence (SQLite).
+Session ticket resumption is explicitly disabled so that a revoked client certificate cannot bypass the real-time revocation cache through a cached session. This decision maps directly to NIST SP 800-52 Rev.\ 2 guidance on TLS session management~\cite{nist-tls}.
 
-\subsection{Enhanced Security Through Data-at-Rest Encryption}
-Security considerations provided the final compelling argument for SQLite adoption. YAML files are inherently plain text, meaning that any attacker who gains read access to the server's filesystem can immediately view all sensitive configuration data, including database credentials, encryption keys, and access tokens.
+\subsection{Static Binary Deployment}
 
-To address this vulnerability, the gateway implements a data-at-rest encryption strategy using AES (Advanced Encryption Standard). Before persisting sensitive data to the SQLite database, the Go application encrypts it using AES-256 in GCM mode. Database connection strings, API keys, and other sensitive fields are stored only in their encrypted form.
+Go compiles to a single, statically linked binary with all dependencies included. The zGate server image is built in a two-stage Docker build: a Go builder stage compiles the binary, and a \texttt{gcr.io/distroless/base} final stage contains only the binary and its minimal OS dependencies---no shell, no package manager, no interpreter. The resulting image surface is orders of magnitude smaller than a Node.js or JVM-based equivalent, directly reducing the number of CVE-relevant components that must be patched.
 
-The practical impact of this approach is substantial: even if an attacker obtains a copy of the SQLite database file through a filesystem breach or backup compromise, the sensitive columns contain only cryptographically secure ciphertext. Only the running Go application, which holds the master encryption key in memory (and never persists it to disk), can decrypt and utilize the actual configuration data. This defense-in-depth strategy aligns with Zero Trust principles by assuming that filesystem access controls may be breached and providing an additional layer of protection.
+\subsection{Ecosystem Fit: SQL Parsing and Protocol Libraries}
 
-\section{Why mTLS (and why TCP is temporary)}
+Go's ecosystem provides production-grade libraries for the exact domain zGate occupies. The \texttt{vitess.io/vitess} library (developed and maintained by PlanetScale, originally for YouTube's MySQL sharding infrastructure) exposes a full MySQL SQL AST parser used by zGate's query interceptor to classify statements, extract table and column references, and apply safety-rule conditions without executing the query. Similarly, \texttt{github.com/pganalyze/pg\_query\_go/v5} provides a Go binding to the official PostgreSQL parser---the same parser used inside the PostgreSQL server---guaranteeing that no syntactically valid PostgreSQL query can evade interception due to parser divergence. These library choices are discussed further in Section~\ref{sec:sql-parsing}.
 
-The transport layer security architecture of zGate represents a deliberate phased approach: an initial implementation using plain TCP connections for development velocity, followed by a production-ready implementation using mutual TLS (mTLS) for comprehensive transport security.
+% ──────────────────────────────────────────────────────────────────────────────
+\section{MySQL for the Encrypted Control-Plane Store}
+\label{sec:mysql-store}
+% ──────────────────────────────────────────────────────────────────────────────
 
-\subsection{Current State: Plain TCP Implementation}
+The zGate control-plane---user accounts, roles, permissions, database registrations, session state, safety templates, compliance frameworks, and revocation records---is persisted in a MySQL database accessed via \texttt{github.com/go-sql-driver/mysql}. This choice is distinct from the backend target databases (which may be MySQL, PostgreSQL, or MSSQL); the control-plane store is a dedicated MySQL instance managed entirely by zGate and not accessible by end users.
 
-The initial development phase of zGate utilizes plain TCP connections between the proxy and backend databases. This architectural decision was strategic rather than permanent, enabling the development team to focus on core proxy functionality—protocol parsing, query interception, and policy enforcement—without the added complexity of certificate management.
+\subsection{Why a Relational Store Over Flat Files}
 
-\subsubsection{Development Advantages}
-Plain TCP connections during the development phase provided several practical benefits:
-
-\begin{itemize}
-    \item \textbf{Rapid Iteration:} Developers could test proxy functionality without managing certificate authorities, certificate chains, or key rotation procedures.
-    \item \textbf{Simplified Debugging:} Network traffic inspection using tools such as Wireshark was straightforward, enabling faster diagnosis of protocol parsing issues.
-    \item \textbf{Reduced Configuration Overhead:} Test environments could be established quickly without provisioning certificates for each database endpoint.
-\end{itemize}
-
-\subsubsection{Limitations of Plain TCP}
-However, plain TCP connections provide no inherent security guarantees:
+An earlier design considered YAML flat files for configuration storage. This approach was rejected because:
 
 \begin{itemize}
-    \item \textbf{No Encryption:} Data transmitted between the proxy and database servers is visible to any entity with network access, exposing sensitive query data and credentials.
-    \item \textbf{No Authentication:} Neither party cryptographically verifies the identity of the other, enabling man-in-the-middle attacks where an adversary impersonates either the proxy or the database.
-    \item \textbf{No Integrity Protection:} Transmitted data can be modified in transit without detection, allowing query manipulation attacks.
+    \item \textbf{No atomic multi-record updates:} Policy changes that affect multiple tables (e.g., revoking a role and simultaneously invalidating its session tickets) cannot be made atomically in flat files, risking a partially applied state on crash.
+    \item \textbf{No live queries:} YAML requires full load into memory at startup; any change requires an application restart, introducing downtime.
+    \item \textbf{No referential integrity:} Foreign-key relationships between users, roles, permissions, and databases must be enforced manually in application code, creating a class of consistency bugs.
+    \item \textbf{Poor scaling:} A compliance catalog seeded at startup contains hundreds of safety-rule records; querying or filtering them in memory requires custom indexing logic that a SQL engine provides natively.
 \end{itemize}
 
-These limitations are fundamentally incompatible with Zero Trust principles, which mandate that all network communications be treated as potentially hostile.
+MySQL's ACID transaction model (\texttt{BEGIN} / \texttt{COMMIT} / \texttt{ROLLBACK}) eliminates the first and third concerns; its query engine eliminates the fourth. Live configuration updates---adding a database, revoking a role, enabling a compliance template---are committed instantly and reflected in the next request without restarting the gateway.
 
-\subsection{Target State: Mutual TLS (mTLS)}
+\subsection{AES-256-GCM Encryption of Sensitive Columns}
 
-The production architecture of zGate mandates mutual TLS for all connections—both client-to-proxy and proxy-to-database. mTLS extends standard TLS by requiring both parties to present and validate X.509 certificates, establishing bidirectional cryptographic trust.
+A relational store alone does not satisfy Zero Trust principles if the data it contains is readable to any process that can read the database files. zGate addresses this through a field-level encryption layer implemented in \path{internal/store/crypto.go}: all sensitive columns (database passwords, service-account secrets, CA private keys, TOTP seeds, refresh-token hashes) are encrypted with AES-256 in Galois/Counter Mode (GCM) before being written to MySQL and decrypted on read:
 
-\subsubsection{How mTLS Differs from Standard TLS}
-In conventional TLS (as used in HTTPS), only the server presents a certificate, and only the client verifies the server's identity. The server has no cryptographic assurance of the client's identity—authentication occurs at the application layer through mechanisms such as passwords or tokens.
+\begin{verbatim}
+gcm, _ := cipher.NewGCM(aes.NewCipher(s.encryptionKey))
+nonce := make([]byte, gcm.NonceSize())
+io.ReadFull(rand.Reader, nonce)
+ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+\end{verbatim}
 
-mTLS inverts this asymmetry by requiring clients to also present certificates that the server validates. This bidirectional authentication ensures that:
+A 128-bit (12-byte) nonce is generated via \texttt{crypto/rand} for each encryption operation, making ciphertext non-deterministic. GCM's built-in authentication tag detects any tampering with the ciphertext before decryption proceeds. The encryption key is a 32-byte (256-bit) secret loaded from the \texttt{ZGATE\_STORE\_KEY} environment variable, which is injected at container start via HashiCorp Vault (Section~\ref{sec:vault})---it is never written to disk or committed to source control. This design satisfies FIPS 197~\cite{fips-197} (AES), NIST SP 800-38D (GCM mode), and NIST SP 800-53 Rev.\ 5 control SC-28 (protection of information at rest)~\cite{nist-controls}.
+
+\subsection{Row-Level Locking and the Shared-Account Pool}
+
+zGate's shared database account model requires that exactly one active session holds a shared credential at a time. This mutual exclusion is implemented using \texttt{SELECT \ldots FOR UPDATE} on the shared-accounts table within a transaction, which MySQL's InnoDB engine enforces at the row level. This is a capability that file-based or embedded stores without row-level locking (e.g., plain SQLite in WAL mode) cannot provide safely under concurrent gateway connections.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{HashiCorp Vault for Secrets Lifecycle Management}
+\label{sec:vault}
+% ──────────────────────────────────────────────────────────────────────────────
+
+Sensitive values---database master passwords, the \texttt{ZGATE\_STORE\_KEY} encryption key, SMTP credentials, and Keycloak client secrets---must never appear in source control, container images, or deployment scripts. The \texttt{docker-compose.yml} orchestration uses HashiCorp Vault as the secrets backend for all zGate services.
+
+\subsection{AppRole Authentication}
+
+The zGate server authenticates to Vault using the AppRole auth method: a \texttt{role\_id} (non-secret) identifies the application, and a \texttt{secret\_id} (short-lived, single-use) proves possession at startup. The \texttt{secret\_id} is delivered to the container via a Vault init container and expires after first use, so it cannot be replayed from a captured environment. This satisfies NIST SP 800-53 IA-5 (Authenticator Management) and SC-12 (Cryptographic Key Management)~\cite{nist-controls}.
+
+\subsection{Dynamic Secrets and Lease Renewal}
+
+Vault's dynamic secrets engine can generate database credentials with a bounded lease (e.g., 1 hour). When a lease expires, Vault automatically revokes the credentials at the database level. This model means that even if a credential is intercepted, it self-expires without administrator intervention---a concrete implementation of the ``assume breach'' tenet of Zero Trust Architecture (NIST SP 800-207~\cite{nist-zt}). The Go integration uses the official \texttt{github.com/hashicorp/vault/api} client with AppRole-specific helpers from \texttt{github.com/hashicorp/vault/api/auth/approle}.
+
+\subsection{Why Vault Over Alternatives}
+
+Environment variables provide no rotation, expiry, or access auditing. Cloud-provider secret stores (AWS Secrets Manager, Azure Key Vault) introduce a vendor dependency and require cloud-specific IAM configuration incompatible with on-premises deployments. Vault provides a vendor-neutral, self-hosted solution with open-source licensing, a well-defined audit log, and a Go SDK maintained by the same organisation that produces the server---reducing the risk of API incompatibility across versions.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Keycloak and OpenID Connect for Federated Identity}
+\label{sec:keycloak}
+% ──────────────────────────────────────────────────────────────────────────────
+
+zGate supports two authentication paths: a native JWT path for lightweight deployments and an OIDC path for enterprise environments that already operate an identity provider. The OIDC integration is built on Keycloak, an open-source identity and access management server developed by Red Hat, using the standard \texttt{github.com/coreos/go-oidc/v3} library for token verification.
+
+\subsection{OpenID Connect Core 1.0}
+
+OpenID Connect (OIDC) is a standards-track identity layer built on OAuth 2.0, published by the OpenID Foundation~\cite{oidc-core}. OIDC provides cryptographically verifiable identity tokens (ID tokens) signed with the provider's private key, with a JWKS (JSON Web Key Set) endpoint for public-key distribution. The \texttt{OIDCVerifier} in \path{internal/auth/oidc.go} performs provider discovery, fetches the JWKS, and verifies the token signature, audience (\texttt{aud}), issuer (\texttt{iss}), and expiry on every protected API request---no shared secret is required between the server and the identity provider.
+
+\subsection{Realm-Level Role Mapping}
+
+Keycloak assigns realm roles (e.g., \texttt{super}, \texttt{db\_admin}, \texttt{policy\_admin}, \texttt{auditor}) to user accounts, and these roles are embedded in the JWT \texttt{realm\_access.roles} claim. The \texttt{OIDCClaims.IsAdmin()} method checks for the presence of any of the four admin-tier roles, enabling seamless onboarding of enterprise users without a separate zGate account-provisioning step. This architecture supports NIST SP 800-53 IA-8 (Identification and Authentication of Non-Organisational Users) and SC-12 (Cryptographic Key Management)~\cite{nist-controls}.
+
+\subsection{Google Social Login and Multi-Factor Authentication}
+
+The Keycloak realm is configured with a Google Identity Provider (IdP) for social login and with TOTP (RFC 6238~\cite{rfc-6238}) for CLI device-flow MFA. The TOTP implementation uses the \texttt{github.com/pquerna/otp} library, which generates RFC 6238-compliant time-based one-time passwords with a 30-second window and SHA-1 HMAC, compatible with Google Authenticator and every major TOTP client. Keycloak's per-flow authentication policies allow MFA to be selectively enforced for the CLI device flow while permitting SSO sessions for browser-based admin logins---a separation that prevents forced re-enrolment for administrators who authenticate via an enterprise SSO provider that itself enforces MFA.
+
+\subsection{ALTCHA Proof-of-Work Anti-Bot Protection}
+
+Both the Keycloak login form and the native zGate login endpoint are protected by ALTCHA~\cite{altcha-spec}, an open-source proof-of-work challenge system. The server issues a challenge signed with HMAC-SHA256 (\texttt{ZGATE\_ALTCHA\_HMAC\_KEY}); the client must find a nonce $n$ such that $\text{SHA-256}(\text{challenge} \,\|\, n) < \text{threshold}$, requiring approximately 500\,000 hash evaluations on average before a solution is valid. This makes automated credential-stuffing attacks computationally expensive without adding friction for human users. The implementation uses \texttt{altcha-lib} on the backend and the \texttt{altcha} web component on the frontend. ALTCHA satisfies NIST SP 800-53 AC-7 (Unsuccessful Logon Attempts)~\cite{nist-controls}.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{OpenTelemetry for Standards-Based Observability}
+\label{sec:otel}
+% ──────────────────────────────────────────────────────────────────────────────
+
+Production-grade security infrastructure requires comprehensive, vendor-neutral observability: distributed traces to diagnose latency across service boundaries, metrics to detect anomalies and capacity exhaustion, and structured logs to satisfy audit requirements. zGate implements the OpenTelemetry (OTel) specification~\cite{otel-spec} for all three signal types.
+
+\subsection{Why OpenTelemetry Over Proprietary SDKs}
+
+OpenTelemetry is a Cloud Native Computing Foundation (CNCF) incubating project that provides a vendor-neutral API, SDK, and wire protocol (OTLP) for telemetry data. Adopting OTel means that zGate's traces, metrics, and logs can be routed to any OTel-compatible backend---Jaeger for tracing, Prometheus for metrics scraping, Loki or Elasticsearch for log ingestion---by changing the OTel Collector configuration rather than modifying application code. This vendor neutrality is critical for on-premises enterprise deployments where the observability backend is mandated by policy, not chosen by the application team.
+
+\subsection{Three-Signal Implementation}
+
+The \path{internal/telemetry/telemetry.go} package initialises all three OTel signals at server startup:
 
 \begin{itemize}
-    \item The client confirms it is communicating with a legitimate server (preventing server impersonation).
-    \item The server confirms the client possesses a valid certificate issued by a trusted authority (preventing unauthorized access).
+    \item \textbf{Traces:} A \texttt{BatchSpanProcessor} exports trace spans over OTLP/gRPC to the OTel Collector, which forwards them to a Jaeger all-in-one container. The Gorilla Mux HTTP server is instrumented via \texttt{otelmux}, automatically creating a span for every REST API request with the HTTP method, route, and status code as span attributes.
+    \item \textbf{Metrics:} A \texttt{PeriodicReader} exports metrics every 15 seconds over OTLP/gRPC to the Collector, which exposes a Prometheus scrape endpoint. Go runtime metrics (goroutine count, GC pause duration, heap allocation rate, CPU utilisation) are collected automatically via \texttt{go.opentelemetry.io/contrib/instrumentation/runtime}.
+    \item \textbf{Logs:} Structured log records are exported via \texttt{otlploggrpc} alongside application logs, enabling correlation of log events with trace spans using the \texttt{trace\_id} and \texttt{span\_id} fields.
 \end{itemize}
 
-\subsubsection{Security Properties of mTLS}
+Every audit log record includes an OTel trace ID, enabling an administrator investigating a policy violation to navigate directly from the zGate audit table to the distributed trace that spans the REST API call, the gateway tunnel establishment, and the database connection---a capability directly supporting NIST SP 800-53 AU-3 (Content of Audit Records)~\cite{nist-controls}.
 
-Table~\ref{tab:tcp-vs-mtls} compares the security properties of plain TCP connections against mTLS-protected communications.
+\subsection{Prometheus and Jaeger in the Deployment Stack}
+
+The Docker Compose deployment includes \texttt{prom/prometheus:v2.48.0} and \texttt{jaegertracing/all-in-one:1.52}. Prometheus scrapes the OTel Collector's metrics endpoint on a 15-second interval. Jaeger provides a web UI for trace search, waterfall view, and comparison. This stack is a reference implementation of the CNCF Observability Landscape best practices~\cite{cncf-landscape} and aligns with the ISO/IEC 27001:2022 Annex A control A.8.16 (Monitoring Activities)~\cite{iso27001-2022}.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{SQL Parsing Engines: Vitess and \texttt{pg\_query\_go}}
+\label{sec:sql-parsing}
+% ──────────────────────────────────────────────────────────────────────────────
+
+The query-interception layer must parse every SQL statement before it reaches the backend database in order to classify it (SELECT, INSERT, DELETE, DDL, etc.), extract structural features (presence of WHERE clause, column list breadth, use of aggregates), and evaluate safety-rule conditions. Parser correctness is not optional---a divergence between the interceptor's parser and the database's parser could allow a carefully crafted statement to bypass a blocking rule while being accepted by the backend.
+
+\subsection{Vitess for MySQL}
+
+\texttt{vitess.io/vitess} is the MySQL query routing and sharding engine originally developed by YouTube~\cite{vitess-docs} and now maintained under the CNCF. Its SQL parser is a full implementation of the MySQL grammar, including extensions like \texttt{WITH} (CTEs), \texttt{WINDOW} functions, \texttt{JSON\_*} operators, and MySQL-dialect type casts. Using Vitess ensures that zGate's interceptor parses MySQL queries with the same grammar the MySQL server would accept---no syntactic edge case can produce a false negative in the safety rule engine.
+
+\subsection{\texttt{pg\_query\_go} for PostgreSQL}
+
+\texttt{github.com/pganalyze/pg\_query\_go/v5} provides Go bindings to \texttt{libpg\_query}, a C library that extracts the actual PostgreSQL server parser into a standalone library. Because it is the \emph{same parser} used inside PostgreSQL itself, it is provably impossible for a syntactically valid PostgreSQL statement to parse differently in the interceptor versus the backend database. This guarantee is the primary reason for choosing \texttt{pg\_query\_go} over hand-written or third-party PostgreSQL parsers~\cite{pganalyze-parser}.
+
+\subsection{MSSQL: T-SQL Microservice}
+
+T-SQL has no open-source Go parser with full coverage. zGate delegates T-SQL statement parsing to a dedicated \texttt{zgate-tsql-parser} microservice (containerised in the Docker Compose stack), keeping the parsing logic isolated from the main server binary and allowing independent updates to the parser without recompiling the gateway.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Internal ECDSA P-256 PKI and the Implemented mTLS Gateway}
+\label{sec:pki-mtls}
+% ──────────────────────────────────────────────────────────────────────────────
+
+A Zero Trust gateway cannot rely on application-layer authentication alone: the transport layer must provide cryptographic proof of identity for every connection, independent of the credential presented at the application layer. zGate implements mutual TLS (mTLS) with a fully self-managed ECDSA P-256 Certificate Authority.
+
+\subsection{Why ECDSA P-256 Over RSA}
+
+RSA keys at equivalent security levels (RSA-2048 $\approx$ 112-bit security; RSA-3072 $\approx$ 128-bit security) are significantly larger than ECDSA keys on the NIST P-256 curve, which provides 128-bit security with a 256-bit key. For a proxy that establishes a new TLS handshake on each incoming connection, the computational cost of ECDSA signature verification is substantially lower than RSA, directly reducing connection-establishment latency. ECDSA P-256 is specified in FIPS 186-4~\cite{fips-186-4} and is one of the two cipher suites mandated by NIST SP 800-52 Rev.\ 2 for TLS 1.3~\cite{nist-tls}.
+
+\subsection{The \texttt{CAManager}: Key Generation and Storage}
+
+The \path{internal/pki/ca.go} \texttt{CAManager} generates a self-signed ECDSA P-256 CA certificate at first startup (\texttt{LoadOrInit}). The CA private key is immediately encrypted with the store master key (\texttt{EncryptPublic}) and written to the \texttt{ca\_certificates} table---it is never persisted in plain text. Subsequent startups load the encrypted key, decrypt it into memory, and use it to sign client certificates for service accounts. Certificate serial numbers are 128-bit cryptographically random integers generated by \texttt{crypto/rand}, satisfying the CA/Browser Forum baseline requirements for certificate serial entropy and NIST SP 800-57 randomness guidance~\cite{nist-key}.
+
+\subsection{Revocation Without OCSP}
+
+Real-time revocation is implemented as an in-process cache (\path{internal/pki/revocation\_cache.go}) keyed by the leaf certificate's SHA-256 fingerprint. The \texttt{mtlsListener} consults this cache in the \texttt{VerifyConnection} callback, which runs \emph{after} the TLS handshake has verified the certificate chain but \emph{before} the connection is handed to the protocol dispatcher. This design avoids the latency and availability concerns of OCSP responders while providing the same real-time revocation semantics---a compromised service account certificate is blocked within one cache-refresh interval (configurable, default 30 seconds) of an administrator marking it revoked in the admin panel.
+
+\subsection{mTLS Handshake: Security Properties}
+
+Table~\ref{tab:tcp-vs-mtls} summarises the security properties of the mTLS implementation compared to plain TCP, which is retained for local development environments where certificate provisioning overhead would impede iteration.
 
 \begin{table}[H]
 \centering
-\caption{Security Properties: Plain TCP vs. mTLS}
+\caption{Security Properties: Plain TCP (Development) vs.\ mTLS (Production)}
 \label{tab:tcp-vs-mtls}
 \begin{tabular}{|l|c|c|}
 \hline
-\textbf{Security Property} & \textbf{Plain TCP} & \textbf{mTLS} \\
+\textbf{Security Property} & \textbf{Plain TCP} & \textbf{mTLS (TLS 1.3)} \\
 \hline
 Encryption (Confidentiality) & $\times$ & $\checkmark$ \\
 Server Authentication & $\times$ & $\checkmark$ \\
 Client Authentication & $\times$ & $\checkmark$ \\
-Integrity Protection & $\times$ & $\checkmark$ \\
+Integrity Protection (AEAD) & $\times$ & $\checkmark$ \\
 Replay Attack Prevention & $\times$ & $\checkmark$ \\
+Certificate Revocation Checking & N/A & $\checkmark$ \\
+Session Ticket Resumption Disabled & N/A & $\checkmark$ \\
 \hline
 \end{tabular}
 \end{table}
 
-\subsubsection{mTLS in the Zero Trust Context}
-The adoption of mTLS directly implements core Zero Trust principles:
+The gateway listener is selected at startup based on the \texttt{ENFORCE\_MTLS} environment variable, implemented by a \texttt{ListenerFactory} (\path{internal/gateway/listener.go}) that returns either \texttt{mtlsListener} or \texttt{plainListener}---the same \texttt{ConnectionHandler} interface is used in both cases, so the protocol dispatch and session management code is independent of the transport security mode.
 
-\begin{itemize}
-    \item \textbf{Never Trust, Always Verify:} Every connection—whether from an internal service or external client—must present a valid certificate. Network location alone confers no trust.
-    \item \textbf{Assume Breach:} Even if an attacker gains network access, they cannot establish connections to protected resources without possessing a valid private key.
-    \item \textbf{Least Privilege Access:} Certificate attributes (such as Common Name or Subject Alternative Names) can encode identity information used by the policy engine to enforce fine-grained access controls.
-\end{itemize}
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Next.js, React 19, TypeScript, and Tailwind CSS for the Admin Dashboard}
+\label{sec:webui}
+% ──────────────────────────────────────────────────────────────────────────────
 
-\subsection{Implementation Architecture}
+The zGate Web Administration Dashboard is the primary control surface for configuring the gateway, managing users and roles, monitoring active sessions, and reviewing audit logs. The technology stack---Next.js 15 (App Router), React 19, TypeScript 5, Tailwind CSS 4, Radix UI, React Hook Form, and Zod---was selected for consistent type safety across the frontend, rapid iteration on the UI without redeploying the Go backend, and accessibility compliance.
 
-The zGate mTLS implementation leverages Go's robust \texttt{crypto/tls} package, which provides production-grade TLS support with modern cipher suites and TLS 1.3 by default.
+\subsection{Next.js 15 with the App Router}
 
-\subsubsection{Go's crypto/tls Package}
-Go's TLS implementation is widely regarded as one of the most secure and well-maintained in the industry. Key characteristics include:
+Next.js 15 provides server-side rendering (SSR) and React Server Components (RSC) through the App Router, enabling the dashboard's authentication-gated pages to render their initial HTML on the server with verified session state---reducing the attack surface of client-side token handling~\cite{nextjs-docs}. The App Router's file-system-based routing maps directly to the zGate admin page hierarchy: \path{app/admin/databases/}, \path{app/admin/users/}, \path{app/admin/audit-logs/}, etc. The \texttt{iron-session} package provides encrypted, tamper-proof server-side session cookies, replacing the need for a client-accessible JWT in the browser---a significant improvement over traditional SPA authentication patterns from a Cross-Site Scripting (XSS) attack surface perspective.
 
-\begin{itemize}
-    \item \textbf{Secure Defaults:} TLS 1.3 is enabled by default, with automatic negotiation fallback to TLS 1.2 for compatibility. Insecure cipher suites and protocol versions are disabled unless explicitly configured.
-    \item \textbf{Certificate Verification:} Built-in support for certificate chain validation, revocation checking, and hostname verification.
-    \item \textbf{Performance Optimization:} Session resumption and connection pooling reduce handshake overhead for repeated connections.
-    \item \textbf{Memory Safety:} Unlike OpenSSL implementations in C, Go's memory-safe runtime eliminates entire classes of vulnerabilities such as Heartbleed-style buffer overreads.
-\end{itemize}
+\subsection{React 19 and Server Components}
 
-The core configuration in Go for enabling mTLS on the proxy listener follows this pattern:
+React 19's Server Components allow data-fetching components to run exclusively on the server, keeping API keys and internal service URLs out of the browser bundle entirely. Client Components, annotated with \texttt{"use client"}, are used only for interactive elements (form inputs, toggle switches, real-time connection counters) where browser event handling is required. This hybrid rendering model reduces the client-side JavaScript bundle size, improving Time to Interactive (TTI) for administrators working on low-bandwidth connections in enterprise environments.
 
-\begin{verbatim}
-tlsConfig := &tls.Config{
-    Certificates: []tls.Certificate{serverCert},
-    ClientAuth:   tls.RequireAndVerifyClientCert,
-    ClientCAs:    trustedClientCAs,
-    MinVersion:   tls.VersionTLS12,
-}
-listener, err := tls.Listen("tcp", ":5432", tlsConfig)
-\end{verbatim}
+\subsection{TypeScript 5 for End-to-End Type Safety}
 
-The \texttt{ClientAuth: tls.RequireAndVerifyClientCert} directive enforces mutual authentication, rejecting any client that fails to present a valid certificate.
+The Go backend defines strongly typed API response structures. TypeScript interfaces mirror these structures in the frontend, ensuring that any breaking change to a backend API response---adding a required field, changing a type from string to number---produces a TypeScript compilation error in the affected frontend components before the change reaches production. This compile-time contract enforcement is equivalent in principle to the type safety that Go's static type system provides on the backend, extending that guarantee across the API boundary~\cite{typescript-docs}.
 
-\subsubsection{Certificate Hierarchy}
-The system employs a hierarchical certificate architecture:
+Form validation uses Zod (version 3.25), a TypeScript-first schema library that generates both runtime validators and TypeScript types from a single schema definition. A Zod schema for a database registration form, for example, simultaneously validates user input at runtime and types the form's submitted data---eliminating the dual-maintenance burden of separate runtime validators and TypeScript interfaces. React Hook Form integrates with Zod via \texttt{@hookform/resolvers}, providing field-level error messages derived directly from the schema without manual error-state management.
 
-\begin{enumerate}
-    \item \textbf{Root Certificate Authority (CA):} A self-managed or enterprise-provided CA that serves as the ultimate trust anchor. The root private key should be stored offline or in a Hardware Security Module (HSM).
-    \item \textbf{Intermediate CA (Optional):} An intermediate authority for certificate issuance, enabling root key protection through offline storage while permitting routine certificate operations.
-    \item \textbf{Endpoint Certificates:} Individual certificates issued to the proxy, database servers, and authorized clients. These certificates have shorter validity periods and can be rotated without modifying the trust chain.
-\end{enumerate}
+\subsection{Tailwind CSS 4 and Radix UI}
 
-\subsubsection{Connection Flow with mTLS}
-Figure~\ref{fig:mtls-flow} illustrates the mTLS handshake process. When a client initiates a connection to zGate with mTLS enabled:
+Tailwind CSS 4 provides a utility-first styling system that eliminates the specificity conflicts endemic to global CSS in large single-page applications~\cite{tailwind-docs}. All styling is colocated with the component that consumes it, making visual regression audits straightforward: changing a component's styles cannot affect unrelated components.
 
-\begin{enumerate}
-    \item The client initiates a TCP connection to the proxy endpoint.
-    \item The TLS handshake begins; the proxy presents its server certificate.
-    \item The client validates the proxy's certificate against its trusted CA bundle.
-    \item The proxy requests the client's certificate (the ``mutual'' aspect of mTLS).
-    \item The client presents its certificate, which must be signed by a CA trusted by the proxy.
-    \item The proxy validates the client certificate chain and extracts identity claims from certificate fields.
-    \item Upon successful mutual authentication, an encrypted channel is established using negotiated session keys.
-    \item The proxy extracts the client identity (e.g., Common Name) and passes it to the policy engine for authorization decisions.
-    \item Traffic is forwarded to the database over a separate mTLS connection, where the proxy authenticates as a trusted service.
-\end{enumerate}
+Radix UI provides unstyled, accessibility-compliant primitive components (Dialogs, Dropdowns, Tooltips, Select menus, Toggle Groups) that implement the WAI-ARIA 1.2 design patterns~\cite{wai-aria}. Using Radix primitives ensures that the dashboard is navigable by keyboard and by screen readers out of the box, satisfying Web Content Accessibility Guidelines (WCAG) 2.1 Level AA. The Radix primitives are wrapped with Tailwind utility classes to match the zGate design system.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/mtls_connection_flow.png}
-    \caption{mTLS Connection Flow: Client-to-Proxy and Proxy-to-Database Handshake}
-    \label{fig:mtls-flow}
-\end{figure}
+\subsection{FingerprintJS for Device Binding}
 
-\subsection{Migration Strategy}
+The dashboard uses \texttt{@fingerprintjs/fingerprintjs} to generate a stable, privacy-preserving browser fingerprint. This fingerprint is embedded in the login request and bound to the issued session token, so that a stolen session cookie cannot be replayed from a different browser without triggering a fingerprint mismatch. This mechanism supplements the server-side \texttt{iron-session} cookie encryption with a second factor that cannot be forged by an attacker who only has access to the cookie value.
 
-The transition from plain TCP to mTLS follows a controlled migration path to minimize operational risk while maintaining development velocity:
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Bubble Tea TUI and Cobra for the Developer CLI}
+\label{sec:cli}
+% ──────────────────────────────────────────────────────────────────────────────
+
+The zGate CLI (\texttt{zGate-CLI/}) is the primary interface for database developers and data engineers who need to request database connections, list accessible databases, and monitor active sessions from the terminal. The CLI is built on Cobra for command-line argument parsing and Bubble Tea for the interactive terminal user interface (TUI).
+
+\subsection{Cobra: Standard-Library-Quality CLI Infrastructure}
+
+Cobra is the de facto standard for Go CLI applications, used by Kubernetes (\texttt{kubectl}), Helm, GitHub CLI (\texttt{gh}), and Hugo, among others~\cite{cobra-docs}. It provides POSIX-compliant flag parsing, automatic usage generation, shell autocompletion scripts (Bash, Zsh, Fish), and a composable command hierarchy. zGate's CLI commands---\texttt{login}, \texttt{connect}, \texttt{list}, \texttt{logout}, \texttt{status}, and \texttt{active-logins}---are each implemented as Cobra \texttt{Command} objects with strongly typed flag definitions, enabling consistent behaviour across operating systems without platform-specific parsing code.
+
+\subsection{Bubble Tea: The Elm Architecture for Terminal UIs}
+
+Bubble Tea implements the Elm Architecture (Model-Update-View) for terminal applications~\cite{bubbletea-docs}. The Model holds immutable application state; the Update function applies messages (key presses, API responses, timer ticks) to produce a new Model; the View function renders the Model to a string that replaces the terminal output. This unidirectional data flow makes the TUI's behaviour deterministic and straightforward to test---the test suite simulates key events and API responses as messages and asserts on the resulting Model state without requiring a real terminal.
+
+The interactive \texttt{connect} command, for example, presents a searchable list of databases the user is permitted to access, a dropdown for connection parameters, a real-time status indicator showing handshake progress, and a live SQL prompt with command history---all implemented as Bubble Tea components. The Bubble Tea and Lipgloss libraries are maintained by Charm~\cite{bubbletea-docs}, a company with a track record of long-term maintenance and semantic-versioned releases.
+
+\subsection{OS Keyring for Credential Storage}
+
+JWT access and refresh tokens are stored in the operating system's native credential store via \texttt{github.com/zalando/go-keyring}: Keychain on macOS, Secret Service (GNOME Keyring or KWallet) on Linux, and Windows Credential Manager on Windows. This approach keeps tokens out of plain-text files on disk (preventing credentials from appearing in accidental \texttt{cat} output, shell history, or backup snapshots) while supporting single-sign-on across terminal sessions. The go-keyring library provides a unified API across all three platforms, eliminating platform-specific credential management code in the CLI.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Docker Compose for Reproducible Deployment}
+\label{sec:docker}
+% ──────────────────────────────────────────────────────────────────────────────
+
+The full zGate stack comprises nine services: Vault, Keycloak, MySQL, the zGate server, the TSQL parser microservice, the WebUI, the OTel Collector, Jaeger, and Prometheus. Coordinating these services manually would require operator-specific startup scripts and introduce environment drift between development, staging, and production. Docker Compose addresses this through a declarative \texttt{docker-compose.yml} that specifies image versions, environment variable injection, health check conditions, inter-service dependency ordering, and network isolation in a single file committed to source control.
+
+\subsection{Service Dependency and Health Check Orchestration}
+
+Docker Compose's \texttt{depends\_on.condition: service\_healthy} ensures that Keycloak does not start until Vault and MySQL pass their health checks, and that the zGate server does not start until Keycloak has completed its realm import. This ordering prevents race conditions where a service starts before its dependencies are ready to accept connections---a common source of startup failures in multi-container deployments.
+
+\subsection{OCI Container Standard}
+
+All container images are built to the Open Container Initiative (OCI) Image Specification~\cite{oci-spec}, ensuring that images built for Docker Compose can be deployed on any OCI-compliant runtime (containerd, CRI-O, Podman) without modification. The Go server and WebUI images use multi-stage builds to produce minimal production images. The distroless base image for the Go server contains no shell, no package manager, and no C library beyond what Go's \texttt{net} package requires, reducing the number of CVE-relevant packages to near zero.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{Technology Stack Summary}
+\label{sec:tech-summary}
+% ──────────────────────────────────────────────────────────────────────────────
+
+Table~\ref{tab:tech-summary} consolidates all major technology choices, their rationale, and the international standard or specification each satisfies.
 
 \begin{table}[H]
+\small
 \centering
-\caption{mTLS Migration Phases}
-\label{tab:mtls-migration}
-\begin{tabular}{|c|l|l|}
+\renewcommand{\arraystretch}{1.35}
+\caption{zGate Technology Stack: Choices, Rationale, and Standards Alignment}
+\label{tab:tech-summary}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|p{3.2cm}|X|}
 \hline
-\textbf{Phase} & \textbf{Configuration} & \textbf{Environment} \\
+\rowcolor{lightGray}
+\textbf{Technology} & \textbf{Primary Role} & \textbf{Standard / Rationale} \\
 \hline
-1 & Plain TCP (no encryption) & Development \\
-2 & TLS with server-only authentication & Staging \\
-3 & Full mTLS (mutual authentication) & Production \\
-4 & mTLS with enterprise PKI integration & Enterprise \\
+Go 1.26 & Backend server, gateway proxy & Memory safety, goroutines, static binary; no CVE class from memory corruption \\
 \hline
-\end{tabular}
+MySQL 8 & Encrypted control-plane store & ACID transactions, \texttt{SELECT FOR UPDATE} row locking, AES-256-GCM field encryption (FIPS 197~\cite{fips-197}, SC-28) \\
+\hline
+HashiCorp Vault & Secrets management & AppRole auth, dynamic secrets, lease expiry; NIST SP 800-53 IA-5, SC-12~\cite{nist-controls} \\
+\hline
+Keycloak + OIDC & Federated identity & OpenID Connect Core 1.0~\cite{oidc-core}; NIST SP 800-53 IA-8 \\
+\hline
+TOTP (RFC 6238) & Admin MFA & RFC 6238~\cite{rfc-6238}; NIST SP 800-53 IA-2(1) \\
+\hline
+ALTCHA PoW & Anti-bot / rate limiting & HMAC-SHA256 challenge; NIST SP 800-53 AC-7~\cite{nist-controls} \\
+\hline
+ECDSA P-256 PKI & Internal CA and mTLS & FIPS 186-4~\cite{fips-186-4}; 128-bit security, low handshake latency \\
+\hline
+TLS 1.3 (mTLS) & Gateway transport security & RFC 8446~\cite{tls13}; NIST SP 800-52 Rev.\ 2~\cite{nist-tls} \\
+\hline
+Vitess (MySQL) & SQL parsing and AST & Full MySQL grammar; prevents parser-divergence bypass \\
+\hline
+pg\_query\_go (PG) & PostgreSQL query parsing & Uses official PG parser binary; provably no divergence \\
+\hline
+OpenTelemetry & Traces, metrics, logs & CNCF OTel Spec~\cite{otel-spec}; vendor-neutral OTLP/gRPC; NIST SP 800-53 AU-2, AU-3~\cite{nist-controls} \\
+\hline
+Prometheus & Metrics aggregation & CNCF standard; 15-second scrape interval; ISO/IEC 27001 A.8.16~\cite{iso27001-2022} \\
+\hline
+Jaeger & Distributed tracing & CNCF standard; waterfall trace visualisation \\
+\hline
+Next.js 15 (App Router) & Admin WebUI framework & SSR + RSC reduce XSS attack surface; \texttt{iron-session} cookie encryption~\cite{nextjs-docs} \\
+\hline
+React 19 & Component UI library & Server Components; minimal client bundle; WAI-ARIA via Radix UI~\cite{wai-aria} \\
+\hline
+TypeScript 5 & Frontend type safety & Compile-time API contract enforcement; mirrors Go's static typing~\cite{typescript-docs} \\
+\hline
+Tailwind CSS 4 & Utility-first styling & Scoped styles; no global CSS conflicts; WCAG 2.1 AA via Radix~\cite{tailwind-docs} \\
+\hline
+Zod 3 & Schema validation & Single-source-of-truth for runtime validators and TypeScript types \\
+\hline
+Cobra & CLI command parsing & POSIX flags, autocompletion, used by kubectl/Helm~\cite{cobra-docs} \\
+\hline
+Bubble Tea & CLI TUI framework & Elm architecture; deterministic, testable; used by Charm toolchain~\cite{bubbletea-docs} \\
+\hline
+go-keyring & OS credential storage & Keychain/Secret Service/WCM; prevents plain-text token storage on disk \\
+\hline
+Docker Compose & Service orchestration & OCI Image Spec~\cite{oci-spec}; declarative dependency ordering; distroless images \\
+\hline
+\end{tabularx}
 \end{table}
-
-\subsubsection{Phase 1: Development (Current)}
-Plain TCP connections enable rapid development iteration. Developers focus on protocol parsing, query interception, and policy logic without certificate management overhead.
-
-\subsubsection{Phase 2: Staging with Server TLS}
-Server-side TLS is enabled, encrypting traffic and authenticating the proxy to clients. This phase validates TLS configuration and certificate deployment procedures without requiring client certificates.
-
-\subsubsection{Phase 3: Production mTLS}
-Full mutual TLS is enforced. All clients must present valid certificates. Certificate provisioning is automated through internal tooling or integration with certificate management platforms such as HashiCorp Vault PKI or AWS Private CA.
-
-\subsubsection{Phase 4: Enterprise PKI Integration}
-For enterprise deployments, zGate integrates with existing PKI infrastructure. Features include:
-
-\begin{itemize}
-    \item Automatic certificate rotation before expiration
-    \item Certificate Revocation List (CRL) or Online Certificate Status Protocol (OCSP) checking
-    \item Integration with enterprise identity providers for certificate-to-identity mapping
-    \item Hardware Security Module (HSM) support for private key protection
-\end{itemize}
-
-This phased approach ensures that core proxy functionality is thoroughly validated before introducing certificate management complexity, while maintaining a clear trajectory toward production-grade Zero Trust security.
-
