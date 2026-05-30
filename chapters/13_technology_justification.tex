@@ -301,17 +301,29 @@ All container images are built to the Open Container Initiative (OCI) Image Spec
 
 Table~\ref{tab:tech-summary} consolidates all major technology choices, their rationale, and the international standard or specification each satisfies.
 
-\begin{table}[H]
-\small
-\centering
-\renewcommand{\arraystretch}{1.35}
+\renewcommand{\arraystretch}{1.25}
+\footnotesize
+\setlength\LTleft\fill
+\setlength\LTright\fill
+\begin{longtable}{|p{2.6cm}|p{3.2cm}|p{\dimexpr\linewidth-2.6cm-3.2cm-6\tabcolsep-4\arrayrulewidth\relax}|}
 \caption{zGate Technology Stack: Choices, Rationale, and Standards Alignment}
-\label{tab:tech-summary}
-\begin{tabularx}{\textwidth}{|p{2.6cm}|p{3.2cm}|X|}
+\label{tab:tech-summary} \\
 \hline
 \rowcolor{lightGray}
 \textbf{Technology} & \textbf{Primary Role} & \textbf{Standard / Rationale} \\
 \hline
+\endfirsthead
+\multicolumn{3}{l}{\scriptsize\itshape (Continued from previous page)} \\[2pt]
+\hline
+\rowcolor{lightGray}
+\textbf{Technology} & \textbf{Primary Role} & \textbf{Standard / Rationale} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{r}{\scriptsize\itshape (Continued on next page)}
+\endfoot
+\hline
+\endlastfoot
 Go 1.26 & Backend server, gateway proxy & Memory safety, goroutines, static binary; no CVE class from memory corruption \\
 \hline
 MySQL 8 & Encrypted control-plane store & ACID transactions, \texttt{SELECT FOR UPDATE} row locking, AES-256-GCM field encryption (FIPS 197~\cite{fips-197}, SC-28) \\
@@ -330,7 +342,7 @@ TLS 1.3 (mTLS) & Gateway transport security & RFC 8446~\cite{tls13}; NIST SP 800
 \hline
 Vitess (MySQL) & SQL parsing and AST & Full MySQL grammar; prevents parser-divergence bypass \\
 \hline
-pg\_query\_go (PG) & PostgreSQL query parsing & Uses official PG parser binary; provably no divergence \\
+pg\_query\_go (PG) & PostgreSQL query parsing & Official PG parser binary; provably no grammar divergence \\
 \hline
 OpenTelemetry & Traces, metrics, logs & CNCF OTel Spec~\cite{otel-spec}; vendor-neutral OTLP/gRPC; NIST SP 800-53 AU-2, AU-3~\cite{nist-controls} \\
 \hline
@@ -338,7 +350,7 @@ Prometheus & Metrics aggregation & CNCF standard; 15-second scrape interval; ISO
 \hline
 Jaeger & Distributed tracing & CNCF standard; waterfall trace visualisation \\
 \hline
-Next.js 15 (App Router) & Admin WebUI framework & SSR + RSC reduce XSS attack surface; \texttt{iron-session} cookie encryption~\cite{nextjs-docs} \\
+Next.js 15 & Admin WebUI framework & SSR + RSC reduce XSS attack surface; \texttt{iron-session} cookie encryption~\cite{nextjs-docs} \\
 \hline
 React 19 & Component UI library & Server Components; minimal client bundle; WAI-ARIA via Radix UI~\cite{wai-aria} \\
 \hline
@@ -346,15 +358,15 @@ TypeScript 5 & Frontend type safety & Compile-time API contract enforcement; mir
 \hline
 Tailwind CSS 4 & Utility-first styling & Scoped styles; no global CSS conflicts; WCAG 2.1 AA via Radix~\cite{tailwind-docs} \\
 \hline
-Zod 3 & Schema validation & Single-source-of-truth for runtime validators and TypeScript types \\
+Zod 3 & Schema validation & Single source of truth for runtime validators and TypeScript types \\
 \hline
 Cobra & CLI command parsing & POSIX flags, autocompletion, used by kubectl/Helm~\cite{cobra-docs} \\
 \hline
-Bubble Tea & CLI TUI framework & Elm architecture; deterministic, testable; used by Charm toolchain~\cite{bubbletea-docs} \\
+Bubble Tea & CLI TUI framework & Elm architecture; deterministic, testable~\cite{bubbletea-docs} \\
 \hline
-go-keyring & OS credential storage & Keychain/Secret Service/WCM; prevents plain-text token storage on disk \\
+go-keyring & OS credential storage & Keychain/Secret Service/WCM; prevents plain-text token files on disk \\
 \hline
 Docker Compose & Service orchestration & OCI Image Spec~\cite{oci-spec}; declarative dependency ordering; distroless images \\
 \hline
-\end{tabularx}
-\end{table}
+\end{longtable}
+\renewcommand{\arraystretch}{1}

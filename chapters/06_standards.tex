@@ -55,15 +55,29 @@ The assume-breach pillar is addressed by layered controls that operate even when
 
 NIST SP 800-53 Revision 5 provides a comprehensive catalogue of security and privacy controls for federal information systems and organisations~\cite{nist-controls}. Table~\ref{tab:nist-controls} maps zGate's implementation to the relevant control families.
 
-\begin{table}[H]
+\renewcommand{\arraystretch}{1.3}
 \small
-\centering
-\renewcommand{\arraystretch}{1.4}
-\begin{tabularx}{\textwidth}{|p{1.6cm}|p{4.0cm}|X|}
+\setlength\LTleft\fill
+\setlength\LTright\fill
+\begin{longtable}{|p{1.6cm}|p{4.0cm}|p{\dimexpr\linewidth-1.6cm-4.0cm-6\tabcolsep-4\arrayrulewidth\relax}|}
+\caption{zGate implementation mapped to NIST SP 800-53 Rev.\ 5 controls}
+\label{tab:nist-controls} \\
 \hline
 \rowcolor{lightGray}
 \textbf{Control} & \textbf{Family} & \textbf{zGate Implementation} \\
 \hline
+\endfirsthead
+\multicolumn{3}{l}{\footnotesize\itshape (Continued from previous page)} \\[2pt]
+\hline
+\rowcolor{lightGray}
+\textbf{Control} & \textbf{Family} & \textbf{zGate Implementation} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{r}{\footnotesize\itshape (Continued on next page)}
+\endfoot
+\hline
+\endlastfoot
 AC-2 & Account Management & Admin accounts provisioned with mandatory role and tier assignment; service accounts issued with configurable certificate validity \\
 \hline
 AC-3 & Access Enforcement & Policy Engine performs per-request live permission lookup; stale cached claims are never trusted \\
@@ -94,16 +108,14 @@ SC-8 & Transmission Confidentiality & All gateway connections enforce TLS~1.3; s
 \hline
 SC-12 & Cryptographic Key Management & CA private key encrypted with store master key; secrets loaded from HashiCorp Vault via AppRole \\
 \hline
-SC-28 & Protection of Information at Rest & SQLite control-plane store encrypted AES-256-GCM with 128-bit random nonce per operation \\
+SC-28 & Protection of Information at Rest & MySQL control-plane store encrypted AES-256-GCM with 128-bit random nonce per operation \\
 \hline
 SI-4 & System Monitoring & Anomaly detection flags suspicious patterns; OpenTelemetry metrics export continuous observability data \\
 \hline
 SI-10 & Information Input Validation & All API inputs pass through the validation layer; SQL queries are AST-parsed before forwarding \\
 \hline
-\end{tabularx}
-\caption{zGate implementation mapped to NIST SP 800-53 Rev.\ 5 controls}
-\label{tab:nist-controls}
-\end{table}
+\end{longtable}
+\renewcommand{\arraystretch}{1}
 
 % ──────────────────────────────────────────────────────────────────────────────
 \section{Payment Card Industry Data Security Standard (PCI DSS v4.0)}
