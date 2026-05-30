@@ -1604,9 +1604,7 @@ In zGate, administrator accounts on the WebUI use TOTP as a second factor implem
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: TOTP time-step diagram — Unix timestamp divided into 30-second intervals, each yielding a distinct OTP code]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/totp_timeslot.png}
     \caption{TOTP 30-second time-step derivation: each interval produces a unique code from the shared secret and the current time counter $T$.}
     \label{fig:totp-timeslot}
 \end{figure}
@@ -1655,9 +1653,7 @@ In zGate, the ALTCHA open-source PoW specification is implemented on the admin l
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: ALTCHA challenge–response sequence diagram — server issues challenge with HMAC signature → client iterates SHA-256 → server verifies HMAC then SHA-256]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/altcha_pow.png}
     \caption{ALTCHA SHA-256 proof-of-work challenge–response protocol with HMAC-signed challenge to prevent forgery.}
     \label{fig:altcha-pow}
 \end{figure}
@@ -1740,9 +1736,7 @@ Applying Zero Trust principles to database access requires:
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: Zero Trust database access model — client presents identity token to PEP (gateway), PDP evaluates policy, JIT credential issued, gateway proxies to backend DB; backend DB not reachable directly]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/zero_trust_db.png}
     \caption{Zero Trust database access model: every connection traverses the policy enforcement gateway; backend database ports are not directly reachable from client networks.}
     \label{fig:zero-trust-db}
 \end{figure}
@@ -1838,9 +1832,7 @@ Keycloak is an open-source Identity and Access Management server. Its architectu
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: OIDC device authorization flow — CLI requests device\_code → user opens verification\_uri on browser → CLI polls token endpoint → access + ID tokens returned]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/oidc_device_flow.png}
     \caption{OAuth 2.0 Device Authorization Flow (RFC~8628): the CLI client receives a user code and polls for tokens while the user completes authorisation in a browser.}
     \label{fig:oidc-device-flow}
 \end{figure}
@@ -1942,9 +1934,7 @@ This mechanism implements dynamic secrets at the database layer: credentials exi
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: Vault AppRole authentication flow — server presents role\_id + secret\_id → Vault returns token → server reads K/V secret (DB credentials, encryption keys)]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/vault_approle.png}
     \caption{HashiCorp Vault AppRole authentication and K/V secret retrieval: the application authenticates with non-secret role\_id and ephemeral secret\_id to obtain a scoped Vault token.}
     \label{fig:vault-approle}
 \end{figure}
@@ -2089,9 +2079,7 @@ A proxy can traverse this tree to identify all referenced tables and columns, de
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: PostgreSQL Extended Query Protocol sequence — Parse $\to$ ParseComplete $\to$ Bind $\to$ BindComplete $\to$ Execute $\to$ DataRow* $\to$ CommandComplete $\to$ Sync $\to$ ReadyForQuery]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/postgres_extended_query.png}
     \caption{PostgreSQL Extended Query Protocol message sequence showing the Parse/Bind/Execute/Sync pipeline.}
     \label{fig:postgres-extended-query}
 \end{figure}
@@ -2181,9 +2169,7 @@ A critical implementation detail is that the packet length field must be updated
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: Data masking pipeline — (1) parse column definitions, (2) look up masking rules, (3) intercept DataRow/Row packets, (4) apply masking function, (5) reconstruct packet with updated length, (6) forward to client]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/masking_pipeline.png}
     \caption{Protocol-layer data masking pipeline: the proxy intercepts result-set packets, identifies masked columns from metadata, applies the configured masking strategy, and reconstructs the packet before forwarding.}
     \label{fig:masking-pipeline}
 \end{figure}
@@ -2273,9 +2259,7 @@ An exemplar links an aggregate metric observation to a specific trace. When a hi
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: OpenTelemetry trace spanning CLI $\to$ API $\to$ Gateway $\to$ DB — root span at CLI, child spans for HTTP call, JWT validation, proxy session, query interception, DB round-trip; each service propagates traceparent]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/otel_trace.png}
     \caption{Example distributed trace across all zGate components: context propagates via W3C \texttt{traceparent} from the CLI through the REST API, gateway, and database round-trip.}
     \label{fig:otel-trace}
 \end{figure}
@@ -2388,9 +2372,7 @@ The \texttt{go-keyring} library provides a uniform API across all three platform
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: Bubble Tea event loop — terminal events $\to$ tea.Msg $\to$ Update() returns (Model, Cmd) $\to$ runtime executes Cmd $\to$ result delivered as new Msg $\to$ View() renders updated state]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/bubbletea_loop.png}
     \caption{Bubble Tea (Elm Architecture) event loop: the runtime delivers terminal events as messages, Update produces new state and commands, the runtime executes commands and feeds results back as messages.}
     \label{fig:bubbletea-loop}
 \end{figure}
@@ -2549,9 +2531,7 @@ Content Security Policy (CSP) is an HTTP response header that instructs the brow
 
 \begin{figure}[H]
     \centering
-    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
-    \textit{[Placeholder: Next.js App Router rendering model — Server Components render on the server and stream RSC Payload; Client Components are bundled and hydrated in the browser; Suspense boundaries stream progressive HTML]}
-    \vspace{1.8cm}\end{minipage}}
+    \includegraphics[width=0.82\textwidth]{images/nextjs_rendering.png}
     \caption{Next.js App Router rendering model: Server Components produce an RSC Payload streamed to the client; Client Components are hydrated in the browser; Suspense enables incremental streaming.}
     \label{fig:nextjs-rendering}
 \end{figure}
