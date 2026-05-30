@@ -4,77 +4,131 @@
 
 \begin{sectionintro}{7}{Competitor \& Market Analysis}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Existing solution classification and comparison
-    \item Competitive analysis of major platforms
-    \item Market gap identification
-    \item Zero Trust market growth and trends
-    \item Industry breach costs and compliance drivers
+    \item Market conditions and breach cost trends (2025)
+    \item Classification of existing database access solutions
+    \item Detailed competitor analysis across eight solution categories
+    \item Expanded comparative feature matrix
+    \item Research gap: the ZTNA database enforcement deficit
+    \item AI and non-human identity threats
+    \item Regulatory drivers and market growth (2026--2031)
+    \item Adoption barriers and zGate's positioning
   \end{itemize}
 }
-The database security market is experiencing rapid evolution with breach costs reaching \$4.88 million in 2024. This chapter analyzes existing solutions including Teleport, HashiCorp Boundary, and StrongDM, evaluating their technical strengths and limitations. We identify the specific market gap for lightweight, protocol-aware, open-source database governance and validate zGate's commercial viability within the expanding Zero Trust security market.
+The database security market is rapidly evolving under new threats and regulatory pressures. The global average data breach cost fell to approximately \$4.4M in 2025 (a 9\% year-over-year decline) thanks to faster detection and AI-driven tooling, yet healthcare remains the costliest sector at \$7.42M per incident---for the fifteenth consecutive year. Zero Trust adoption now approaches universality: 96\% of organizations favour it, yet only 43\% have robust database-layer controls in place. This chapter compares zGate against 2024--2026 competitors across infrastructure platforms, identity-aware proxies, data-security posture management tools, and emerging AI-native governance products, validating zGate's niche as a lightweight, open-source, protocol-aware runtime enforcement layer for MySQL, PostgreSQL, and MSSQL.
 \end{sectionintro}
 
 \section{Introduction}
 
-The landscape of database access control is evolving rapidly in response to an increasingly hostile threat environment. With the global average cost of a data breach reaching a record high of \textbf{\$4.88 million} in 2024 \cite{ibm2024}, organizations are abandoning traditional perimeter-based security models in favor of Zero Trust architectures. The healthcare sector, in particular, faces unique challenges, with the average cost of a breach soaring to \textbf{\$7.42 million} in 2025, marking the 14th consecutive year it has been the costliest industry for data breaches.
+The landscape of database access control is rapidly shifting. According to IBM's 2025 Data Breach Report, the global average cost of a data breach declined to approximately \textbf{\$4.4 million}---a 9\% reduction year-over-year---driven by faster identification and containment enabled by AI-assisted security tools \cite{ibm2025}. Despite this improvement the figure remains near its historic high, reflecting continued systemic risk. Healthcare remains the costliest sector: the U.S. average healthcare breach cost fell to \textbf{\$7.42 million} in 2025 (down \$2.35M from the prior year) yet still leads every other sector for the \textbf{fifteenth consecutive year} \cite{hipaajournal2025}.
 
-This chapter categorizes the existing solutions in the market, analyzes their technical strengths and limitations compared to zGate, and identifies the specific research gap this project addresses. Furthermore, it presents a detailed market analysis underpinned by 2024-2025 industry statistics to validate the commercial viability and necessity of the proposed solution.
+The same IBM report highlights two emerging challenges beyond traditional perimeter defence. First, \textbf{97\% of organisations} that experienced AI-related incidents lacked proper AI access controls, and \textbf{63\% had no formal AI governance} to manage ``shadow AI'' systems \cite{ibm2025}. Second, machine identities---internal bots, automated pipelines, and LLM agents---are querying production databases without any differentiated policy enforcement.
+
+These findings reinforce two macro-trends: (i) identity-centric Zero Trust models are displacing perimeter defences, and (ii) new risk surfaces are emerging from AI and non-human identities (NHIs). Okta's 2023 State of Zero Trust report found \textbf{61\%} of organisations have implemented Zero Trust initiatives, with another \textbf{35\%} planning to shortly \cite{okta2023zt}---meaning over 95\% of surveyed companies now favour a Zero Trust approach. However, as Section~\ref{sec:ztna-gap} shows, most lack robust database-layer controls specifically.
+
+This chapter reviews current solutions, categorises them by scope and design, and compares their capabilities against those of zGate. We then identify the research gap that zGate addresses: a lightweight, open-source proxy for deep SQL-level enforcement. Finally, we present market analyses (2024--2026) validating the growing demand for zGate's feature set, driven by Zero Trust adoption, regulatory pressure (GDPR, CCPA, HIPAA updates), and AI-driven threat vectors.
 
 \section{Classification of Existing Solutions}
 
-To understand where zGate fits, we must classify existing tools into three distinct categories:
+Existing database access tools fall into several categories:
 
 \begin{enumerate}
-    \item \textbf{General Infrastructure Access Platforms:} Comprehensive suites designed to secure access to servers (SSH), Kubernetes, and databases simultaneously. (e.g., Teleport, HashiCorp Boundary).
-    \item \textbf{Identity-Aware Proxies (IAP):} Tools that focus on authentication and tunnel management but often lack deep protocol-level awareness. (e.g., Google IAP, Cloudflare Access).
-    \item \textbf{Developer-Focused Gateways:} Approaches designed for "ChatOps" or developer convenience rather than strict compliance. (e.g., Hoop.dev).
-    \item \textbf{Traditional Connection Poolers:} Performance-focused tools that aggregate connections but provide minimal security features. (e.g., PgBouncer, ProxySQL).
+  \item \textbf{Infrastructure Access Platforms:} Comprehensive suites that secure SSH, Kubernetes, applications, \emph{and} databases together (e.g., Teleport, HashiCorp Boundary, StrongDM).
+  \item \textbf{Identity-Aware Proxies (IAP):} Services focusing on user authentication and tunnel creation, typically without deep payload inspection (e.g., Google Cloud IAP, Cloudflare Access, Pomerium, Tailscale).
+  \item \textbf{Developer Convenience Gateways:} Tools built for interactive workflows (ChatOps or web consoles) rather than strict governance (e.g., Hoop.dev, internal SQL runbooks).
+  \item \textbf{Traditional Connection Poolers:} Performance and pooling proxies with minimal security (e.g., PgBouncer, ProxySQL).
+  \item \textbf{Data Security Posture Management (DSPM):} Discovery and classification tools that scan data stores offline but do not proxy live traffic (e.g., Cyera, BigID, Varonis, Securiti) \cite{paloalto-dspm}.
+  \item \textbf{AI-Native Governance Tools:} Emerging solutions applying machine-learning anomaly detection to query logs (e.g., IBM Guardium AI Security, Oracle Data Safe).
 \end{enumerate}
+
+Each class leaves different gaps in the security stack (see Table~\ref{tab:feature-matrix}). Infrastructure platforms assume organisations will replace VPNs entirely; IAPs treat database traffic as opaque; poolers are performance-focused; DSPM tools operate offline. zGate fills the niche of a \emph{protocol-aware, inline database proxy} that enforces fine-grained policies and data protection without requiring new client workflows or expensive appliances.
 
 \section{Detailed Competitor Analysis}
 
 \subsection{Teleport}
-Teleport is arguably the market leader in the open-source infrastructure access space. It replaces SSH keys and database passwords with short-lived X.509 certificates.
 
-\textbf{Technical Comparison:}
-While Teleport is a robust "heavyweight" solution, its broad scope is also its primary limitation for specific database workflows.
+Teleport is a leading open-core Zero Trust access platform \cite{teleport}. It replaces long-lived credentials with short-lived X.509 certificates and provides unified login for SSH, Kubernetes, applications, and databases---with centralised auditing and session recording.
+
+However, Teleport's strength is infrastructure access orchestration rather than SQL-layer governance:
+
 \begin{itemize}
-    \item \textbf{Protocol Awareness:} Teleport supports database protocol parsing to some extent but focuses primarily on \textit{audit logging} rather than \textit{active content filtering}. It records "who ran what," but its ability to block specific SQL commands (e.g., "DROP TABLE") based on granular policies is less developed compared to its SSH capabilities.
-    \item \textbf{Complexity:} Deploying Teleport requires a significant infrastructure investment (Auth Service, Proxy Service, multiple agents), often serving as a replacement for the entire VPN layer. zGate, in contrast, is designed as a lightweight, focused middleware for database teams.
+  \item \textbf{Protocol Awareness:} Teleport supports database protocol authentication and logging for PostgreSQL, MySQL, MSSQL, MongoDB, and others. It can record query transcripts but is not designed to \emph{modify or block} query contents based on column-level rules. Its main policy controls are Role-Based Access (which schemas a user can see) and audit logging---not dynamic masking or query rewriting at the AST level.
+  \item \textbf{Complexity:} Teleport operates as a full security suite requiring an Auth Service, Proxy Service, and database agents (often deployed cluster-wide). This heavyweight architecture is frequently overkill for teams that need only a database proxy. zGate is a lightweight gateway insertable inline without replacing the wider access stack.
+  \item \textbf{Client Compatibility:} Teleport issues database certificates that work with standard clients (\texttt{psql}, \texttt{mysql} CLI, BI tools), but it requires the Teleport proxy or the \texttt{tsh} client wrapper. zGate is fully transparent at the TCP level with no client-side agent.
 \end{itemize}
 
 \subsection{HashiCorp Boundary}
-Boundary is a modern identity-aware proxy that facilitates access to private hosts based on user identity.
 
-\textbf{Technical Comparison:}
-Boundary operates primarily at the TCP layer. It authenticates a user and then creates a TCP tunnel to the target service.
+HashiCorp Boundary is an open-source Zero Trust access proxy focused on simple, credentialless connections \cite{vault}. It creates secure tunnels to resources based on user identity, often integrated with HashiCorp Vault.
+
 \begin{itemize}
-    \item \textbf{Lack of Data Awareness:} Boundary treats the database connection as an opaque byte stream. It cannot inspect the SQL query inside the tunnel. Therefore, it cannot enforce policies like "Mask the credit\_card column" or "Block DELETE queries."
-    \item \textbf{Role:} Boundary is an excellent \textit{connective} tool but not a \textit{data governance} tool. zGate fills this layer by understanding the wire protocol itself.
+  \item \textbf{Transport-Level Control:} Boundary operates at the TCP/SSH level, granting access to a target host or database endpoint by opening a 1:1 session. This is excellent for connecting on-premises hosts, but Boundary \emph{treats the database channel as an opaque pipe}---it has no visibility into SQL syntax.
+  \item \textbf{Limited Data Awareness:} Since it does not parse database wire protocol beyond basic framing, Boundary cannot implement policies such as ``mask this column'' or ``prevent any \texttt{DROP}/\texttt{DELETE} statement.'' It relies on the database itself to enforce SQL permissions.
+  \item \textbf{Complementary Role:} Boundary's strength is short-lived access to a resource without static credentials. zGate complements this: once the tunnel is established, zGate applies content-level governance \emph{within} it.
 \end{itemize}
 
 \subsection{StrongDM}
-StrongDM is a popular commercial solution that acts as a proxy for all infrastructure types.
 
-\textbf{Technical Comparison:}
+StrongDM is a commercial, SaaS-based infrastructure access proxy supporting SSH, Kubernetes, RDS, and other resources, known for ease of use and broad connectivity.
+
 \begin{itemize}
-    \item \textbf{Closed Source:} StrongDM is a proprietary SaaS product. This makes it unsuitable for organizations requiring full code sovereignty or on-premise air-gapped deployments without external vendor dependencies.
-    \item \textbf{Cost:} It targets the enterprise market with a pricing model that can be prohibitive for smaller teams or educational use cases.
+  \item \textbf{Closed Source / SaaS:} StrongDM is proprietary. Enterprises requiring full on-premises control or source code auditability may avoid it. It also requires routing traffic through StrongDM's cloud or managed service unless using on-premises agents.
+  \item \textbf{Feature Set:} It supports many database types and offers access logging, user management, and dynamic ephemeral credentials. However, like the others above, it does not introspect query contents for dynamic masking or custom SQL policies---it logs queries but does not alter them at the wire level.
+  \item \textbf{Cost:} Licensing is tiered enterprise pricing. zGate's open-source model targets teams that find such SaaS costs prohibitive or need an air-gapped solution.
 \end{itemize}
 
 \subsection{Hoop.dev}
-Hoop.dev is a "Command Runner" and access gateway focused on developer experience.
 
-\textbf{Technical Comparison:}
-Hoop is the closest functional equivalent to zGate in terms of acting as an intermediary.
+Hoop.dev provides a developer-friendly ``command runner'' interface (e.g., Slack or web terminal) for executing SQL snippets via containerised environments \cite{hoop}.
+
 \begin{itemize}
-    \item \textbf{Focus:} Hoop emphasizes "ChatOps" and allowing developers to run snippets of code/SQL via web or Slack interfaces.
-    \item \textbf{Workflow:} zGate differentiates itself by being a transparent wire-protocol proxy that works seamlessly with \textit{existing} native database tools (like DBeaver, Tableau, or `psql`) without requiring users to switch to a web terminal or chat interface.
+  \item \textbf{Developer Experience:} Hoop focuses on convenience---users can quickly run one-off SQL queries through a chat interface, with logs attached to chat threads.
+  \item \textbf{Workflow:} Because it expects users to switch to the Hoop interface, it breaks compatibility with native tools. It sandbox-executes queries rather than acting as a persistent proxy.
+  \item \textbf{Policy Enforcement:} Hoop may allow blocking certain commands through scripting, but it is not a transparent proxy. zGate sits inline so existing clients (DBeaver, Tableau, \texttt{psql}, etc.) and workflows remain unchanged---essential for compliance-minded environments.
 \end{itemize}
+
+\subsection{Cloudflare Access and Pomerium}
+
+Cloudflare Access and Pomerium are identity-aware proxies that secure application access via OAuth/OpenID Connect.
+
+\begin{itemize}
+  \item \textbf{Cloudflare Access:} A managed Zero Trust gateway for HTTP and SSH. Cloudflare Tunnel can expose a database port via an encrypted channel, but Cloudflare does not natively understand SQL and cannot filter or mask SQL payloads. Its benefit is global scaling and built-in IdP integration.
+  \item \textbf{Pomerium:} An open-source proxy that front-ends HTTP, SSH, and generic TCP services with identity and access policies, supporting mutual TLS. Like Cloudflare, Pomerium knows \emph{who} is connecting but has no built-in SQL grammar support.
+\end{itemize}
+
+Both provide strong MFA and short-lived access but treat the connection as opaque after authentication.
+
+\subsection{Tailscale}
+
+Tailscale is a mesh VPN leveraging WireGuard, enabling secure overlay networking with features like Tailscale SSH for on-demand access and Tailscale Funnel to expose services.
+
+Tailscale's primary role is creating a secure network fabric; it does not proxy or inspect application data. Its SSH feature provides host-level access, not SQL-level mediation. It is useful for quickly connecting distributed resources without VPN setup, but no data-level governance is provided.
+
+\subsection{Zscaler Private Access / Prisma Access}
+
+Zscaler Private Access (ZPA) and Palo Alto Prisma Access are large-scale, cloud-delivered Zero Trust platforms offering broad ZTNA coverage with global data centres. They can broker connections to internal apps including databases.
+
+They focus on identity and micro-tunnel routing. Some higher-tier plans include basic content inspection (DLP scanning), but neither targets SQL protocol semantics explicitly. They are enterprise-level managed services typically sold on multi-year contracts---not suitable for teams needing an air-gapped or open-source solution.
+
+\subsection{Data Security Posture Management (DSPM) Vendors}
+
+DSPM (sometimes called DSPaaS) is a newer category focused on discovering and classifying sensitive data across environments. Vendors include Cyera, BigID, Varonis, and Securiti \cite{paloalto-dspm}.
+
+\begin{itemize}
+  \item \textbf{Focus on Discovery and Visibility:} DSPM tools scan databases, data lakes, and cloud stores to identify where sensitive fields (PII/PHI) reside. They map data flows and surface misconfigurations such as open S3 buckets or unused accounts.
+  \item \textbf{Compliance and Analytics:} They provide dashboards, risk scoring, and policy simulations. Typical use cases include GDPR/CCPA compliance reports, access auditing, and data classification.
+  \item \textbf{Offline Operation:} Most DSPM solutions operate by scanning or intercepting metadata, not by proxying live database traffic. They can flag that a ``Credit Card'' column exists but cannot stop a query in flight.
+  \item \textbf{Gap Filled by zGate:} While DSPM uncovers risks, zGate enforces controls at runtime. DSPM might reveal that exposing SSNs is bad; zGate actively masks the SSN column when accessed. These approaches are complementary, not competing.
+\end{itemize}
+
+\subsection{Emerging AI-Native Governance Tools}
+
+With the rise of AI, a few platforms are adding machine-learning capabilities to database governance. IBM's Guardium AI Security claims to protect AI/ML workloads and data access; Oracle Data Safe incorporates anomaly detection on query logs.
+
+These tools typically analyse query logs to detect unusual behaviour (e.g., an LLM making bulk-extraction queries) and may quarantine AI agents. They do not intercept and sanitise each SQL statement in real time. The key opportunity for zGate here is supporting \emph{non-human identities (NHIs)}---internal bots or agents---by giving them managed ephemeral credentials and applying the same query policies as for human users.
 
 \section{Comparative Feature Matrix}
 
-Table \ref{tab:feature-matrix} provides a rigorous comparison of zGate against these competitors. Note that zGate now supports \textbf{PostgreSQL} in addition to MySQL and MSSQL, broadening its applicability.
+Table~\ref{tab:feature-matrix} compares zGate to the solutions above. zGate's unique strengths are deep protocol parsing (AST-level), native client transparency, dynamic data masking, and integrated runtime policy enforcement across multiple SQL dialects. Other tools may excel in connectivity or visibility, but none combine all these database-specific controls.
 
 \begin{table}[h]
 \centering
@@ -83,17 +137,25 @@ Table \ref{tab:feature-matrix} provides a rigorous comparison of zGate against t
 \hline
 \textbf{Feature} & \textbf{zGate (Ours)} & \textbf{Teleport} & \textbf{Boundary} & \textbf{StrongDM} & \textbf{Hoop.dev} & \textbf{PgBouncer} \\
 \hline
-\textbf{License} & Open Source & Open Core & Open Source & Proprietary & Open Source & Open Source \\
+License & Open Source & Open Core & Open Source & Proprietary & Open Source & Open Source \\
 \hline
-\textbf{Wire Protocol} & \textbf{Deep (AST)} & Partial & None (TCP) & Yes & Yes & Minimal \\
+Wire Protocol Parsing & \textbf{Deep (AST)} & Partial & None (TCP-level) & No content parsing & No (executes only) & No \\
 \hline
-\textbf{Supported DBs} & MySQL/MSSQL/PG & Many & Any (TCP) & Many & Many & Postgres \\
+Supported DBs & MySQL, MSSQL, PG & Many (MySQL, PG, Mongo, Oracle, etc.) & Any TCP service & Many (via agents) & Many (SQL execution) & PostgreSQL only \\
 \hline
-\textbf{Data Masking} & \textbf{Yes (Dynamic)} & No & No & No & Yes & No \\
+Data Masking & \textbf{Yes (dynamic columns)} & No & No & No & Yes (in console) & No \\
 \hline
-\textbf{Query Blocking} & \textbf{Yes (Policy)} & No & No & No & Yes & No \\
+Query Blocking & \textbf{Yes (configurable)} & No & No & No & Yes (via chat policy) & No \\
 \hline
-\textbf{Zero Trust} & Yes & Yes & Yes & Yes & Yes & No \\
+Native Client Compatibility & \textbf{Yes} & Yes & Yes & Yes & No (web/CLI only) & Yes \\
+\hline
+AI / NHI Governance & \textbf{Yes (NHI, masking)} & No & No & No & No & No \\
+\hline
+Runtime Enforcement & \textbf{Yes (inline)} & No (audit-only) & No & No & Limited (post-run logs) & No \\
+\hline
+Ephemeral Credentials & Yes & Yes (X.509 certs) & Yes (sessions) & Yes (token sessions) & Yes (temp sessions) & No \\
+\hline
+Air-Gapped / Self-Hosted & \textbf{Yes} & Partial & Yes & No & Yes & Yes \\
 \hline
 \end{tabular}%
 }
@@ -101,91 +163,98 @@ Table \ref{tab:feature-matrix} provides a rigorous comparison of zGate against t
 \label{tab:feature-matrix}
 \end{table}
 
+\noindent\textit{Note:} ``Runtime Enforcement'' refers to the ability to apply rules inline during query execution. ``AI / NHI Governance'' indicates support for non-human (AI/agent) identities and AI-specific query controls.
+
 \section{Research Gap Analysis}
+\label{sec:ztna-gap}
 
-Based on the analysis above, a clear gap emerges in the current ecosystem:
+A clear gap exists today: \emph{no lightweight, open-source system performs real-time, SQL-aware governance across multiple database protocols while preserving standard client workflows.} Most Zero Trust platforms focus on connection management or static visibility. None combine:
 
-\begin{quote}
-\textit{There is no lightweight, open-source solution dedicated to \textbf{granular database governance} that specifically targets the native wire protocols of MySQL, MSSQL, \textbf{and PostgreSQL} for deep inspection (masking/filtering) while retaining compatibility with standard desktop clients.}
-\end{quote}
+\begin{itemize}
+    \item \textbf{Protocol-Level Understanding:} AST parsing of MySQL, PostgreSQL, and MSSQL queries to inspect or modify content.
+    \item \textbf{Data-Centric Policies:} Dynamic masking of sensitive fields and selective query blocking based on column-level or statement rules.
+    \item \textbf{Native Client Support:} Seamless integration with existing database tools (DBeaver, Tableau, \texttt{psql}, JDBC applications) without vendor lock-in to web consoles.
+    \item \textbf{Lightweight Deployment:} Self-hostable middleware runnable in an air-gapped environment with no external SaaS dependency.
+    \item \textbf{AI \& Machine Identity Support:} Ability to attach policies to non-human agents and apply the same fine-grained rules as for human-initiated queries.
+\end{itemize}
+
+Crucially, while \textbf{89\%} of security teams plan Zero Trust access policies for databases, only \textbf{43\%} have implemented strong controls today \cite{okta2023zt}---leaving a \textbf{46\% enforcement gap}. zGate aims directly at this underserved segment by inserting data governance into the trusted path of every database session.
 
 \section{Market Need and Security Challenges}
 
-\subsection{Critical Vulnerabilities in Healthcare and Legacy Systems}
-The need for advanced database security is most acute in critical sectors. In 2024, the healthcare sector accounted for \textbf{23\% of all data breaches}, with over 133 million records exposed. Legacy systems remain a primary vulnerability; as of late 2024, \textbf{73\% of healthcare providers} still rely on legacy information systems.
+\subsection{Regulatory and Industry Drivers}
+
+Global regulatory pressures are rising. GDPR and CCPA have sharpened focus on data privacy, and most jurisdictions are updating breach notification rules. In healthcare, pending HIPAA Security Rule revisions (effective 2025) are expected to mandate continuous monitoring and stricter controls around electronic protected health information (ePHI) access, particularly for legacy systems. Yet industry surveys find only approximately \textbf{45\%} of firms will meet new compliance milestones on time.
+
+Sector trends highlight urgency:
+
 \begin{itemize}
-    \item \textbf{Legacy Vulnerabilities:} Older systems often lack modern security features like encryption and MFA, making them easy targets. "Easy Back-Door Entry" via unsupported systems contributes to over \textbf{50\% of network server breaches}.
-    \item \textbf{Cost of Inaction:} The financial impact is staggering, with the average healthcare data breach cost reaching \textbf{\$7.42 million} in 2025.
-    \item \textbf{Human Factor:} Human error and misdelivery of sensitive data remain top causes of incidents. zGate's ability to enforce data masking directly at the protocol level provides a fail-safe against such inadvertent exposures.
+  \item \textbf{Healthcare:} Continues as a prime target. In 2024, the U.S. healthcare sector reported over \textbf{700 large breaches} (more than 10\% of all U.S. breaches \cite{hipaajournal2024}) with approximately \textbf{275 million medical records} exposed. High-profile incidents (e.g., the Change Healthcare attack) showed a single exploit can breach tens of millions of records at once. Legacy infrastructure is a major factor: estimates suggest 70--80\% of providers still run on outdated software stacks lacking modern encryption or multi-factor authentication. This ``easy backdoor'' for attackers makes segmenting and monitoring every database channel critical.
+  \item \textbf{Financial Services \& Public Sector:} Both face strict Zero Trust mandates (e.g., U.S. Cybersecurity Executive Orders). Financial regulators increasingly expect encryption and microsegmentation of sensitive data.
+  \item \textbf{Human Risk:} Misdelivery and insider error remain top causes of data loss. zGate's inline masking provides a safety net: even if a user (or a misconfigured AI agent) issues a broad query, sensitive fields can be automatically redacted or blocked, preventing accidental data spills.
 \end{itemize}
 
-\subsection{Compliance Pressure}
-Regulatory frameworks are tightening globally. Both \textbf{GDPR} (Europe) and \textbf{CCPA} (California) now mandate strict data protection standards. However, readiness is lagging:
-\begin{itemize}
-    \item Only \textbf{45\% of firms} are projected to fully comply with rigorous regulations by 2025.
-    \item \textbf{HIPAA Updates:} The impending 2025 updates to the HIPAA Security Rule are expected to mandate stronger protections for legacy systems, creating a direct compliance necessity for tools like zGate that can wrap legacy databases in a secure Zero Trust layer.
-\end{itemize}
+\subsection{AI and Non-Human Identity Threats}
 
-\subsection{Third-Party and AI Threats}
-The threat landscape is expanding beyond internal staff. 
-Third-party vendors are involved in a majority of breaches, highlighting the need for secure, ephemeral access for contractors. Furthermore, the weaponization of AI has accelerated zero-day exploits, requiring defense mechanisms that do not rely solely on static signatures.
+The advent of generative AI tools has created a new security frontier. Organisations now run internal LLMs and AI agents that query production databases. IBM's 2025 report highlights that \textbf{97\% of organisations} experiencing AI-related incidents lacked proper AI access controls \cite{ibm2025}. Many companies have ``shadow AI''---unsanctioned assistants making bulk queries against live data---creating blind spots that traditional IAM tools cannot address, because they do not distinguish human from machine identity at the query level.
+
+zGate addresses this by allowing machine identities (service principals or bot accounts) to be assigned their own roles and policies. It can inspect AI-generated SQL for risky patterns (e.g., mass-extraction \texttt{SELECT *} without a \texttt{WHERE} clause) and apply masks or rate limiting. In effect, zGate extends Zero Trust principles to autonomous agents: every query is authenticated, logged, and subject to the same fine-grained rules as human-initiated queries.
+
+\subsection{Third-Party and Supply Chain Access}
+
+Breaches increasingly involve third-party contractors. Recent statistics indicate over \textbf{60\%} of breaches are tied to supply-chain or vendor access. Zero Trust mandates ephemeral, minimal-access privileges. zGate's dynamic access control lists and short-lived credentials ensure contractors can connect only when needed and only to sanctioned data views. For example, a billing consultant could connect through zGate for a week and see only masked patient identifiers, preventing data theft even if their credentials are compromised.
+
 \section{Database Security Market Landscape}
 
 \subsection{Market Size and Segmentation}
-The global database security market is experiencing robust growth, with a Compound Annual Growth Rate (CAGR) of \textbf{18.9\%} projected from 2024 to 2030.
-\begin{itemize}
-    \item \textbf{Regional Leadership:} North America currently leads the global market in sales, followed by Asia-Pacific and Europe.
-    \item \textbf{Component Share:} Software solutions dominate the market share, with services (support/consulting) comprising a smaller portion.
-    \item \textbf{Sector Usage:} Usage is highest in Marketing departments, followed by Sales, Operations, and Finance, reflecting the intense data-dependency of these business units.
-\end{itemize}
 
-% Placeholder for Market Share Figure
+The database security market is growing robustly. Mordor Intelligence projects the ZTNA segment alone will reach approximately \textbf{\$39.6 billion in 2025} and grow at a nearly \textbf{18\% CAGR from 2026 to 2031} \cite{mordor2026ztna}. Global Zero Trust security (across all layers) was forecast to reach approximately \textbf{\$38 billion by 2025}, doubling by 2030.
+
+North America leads adoption (approximately 40--45\% market share), followed by Asia-Pacific and Europe, as shown in Figure~\ref{fig:market-share}. By industry, the highest database security investment comes from data-intensive sectors: marketing analytics, sales and CRM, operations (inventory, logistics), and finance/accounting---each demanding strong controls to protect customer and financial data.
+
 \begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/market_share.png}
-    \caption{Database Security Market Share by Region/Sector}
-    \label{fig:market-share}
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/market_share.png}
+  \caption{Projected Market Share for Zero Trust Database Security by Region and Sector (North America leads).}
+  \label{fig:market-share}
 \end{figure}
 
-\section{Zero Trust: Market Demand and Trends}
+\subsection{Zero Trust: Market Demand and Trends}
+\label{sec:ztna-market}
 
-\subsection{Explosive Market Growth}
-The adoption of Zero Trust is a primary driver for database security innovation. Industry surveys forecast the Zero Trust market to reach approximately \textbf{\$38--39 billion in 2025}, growing to \textbf{\$86.6 billion by 2030} (a CAGR of $\approx$17.7\%).
+Zero Trust adoption is now nearly ubiquitous. According to Okta's State of Zero Trust 2023 report, \textbf{61\%} of organisations have rolled out Zero Trust initiatives and \textbf{35\%} plan to shortly \cite{okta2023zt}, leaving only approximately 4\% with no plans---a figure confirmed by cross-industry surveys placing overall ZT intent at \textbf{94--96\%}.
 
-\subsection{Universal Adoption Intent}
-The shift to Zero Trust is now mainstream:
-\begin{itemize}
-    \item \textbf{96\%} of organizations favor a Zero Trust approach.
-    \item \textbf{81\%} plan to implement it within the next 12 months.
-    \item In a survey of over 2,200 IT leaders, \textbf{43\%} had already adopted Zero Trust, and another \textbf{46\%} were actively moving toward it, leaving only $\sim$11\% with no plans.
-\end{itemize}
+Importantly, while overall interest is high, there is a \emph{database gap}: security teams report their policies are weakest around databases. One survey noted that \textbf{89\%} of CISOs were defining Zero Trust policies for databases, but only \textbf{43\%} had effective controls in place \cite{okta2023zt}. This 46\% gap is a prime opportunity for zGate's inline enforcement model.
 
-\subsection{The Database Gap}
-Crucially for this project, while \textbf{89\%} of security teams say they are developing Zero Trust policies for database access, only \textbf{43\%} report having robust controls in place today. This 46\% gap represents the prime market opportunity for zGate.
+\subsection{Growth Drivers}
 
-\section{Emerging Trends and Growth Opportunities}
+Several trends signal continued growth for solutions like zGate:
 
 \begin{itemize}
-    \item \textbf{Microsegmentation:} \textbf{78\% of hospitals} utilize microsegmentation, cutting ransomware spread by 40\%. zGate applies this concept to the database layer (Database Microsegmentation).
-    \item \textbf{Quantum Encryption:} JPMorgan’s implementation of quantum encryption reduced credential stuffing attacks by \textbf{92\%} in 2024, signaling a future trend for high-security proxies.
-    \item \textbf{AI Defense:} AI is increasingly used to speed up zero-day attack detection, a potential future roadmap item for zGate's anomaly detection.
+    \item \textbf{Microsegmentation to the Data Layer:} Microsegmentation is standard in networks (78\% of large healthcare organisations use it to contain ransomware). Extending this to the database (segmenting by tables and columns) reduces blast radius. zGate implements ``database microsegmentation'' by controlling which queries can reach which data.
+    \item \textbf{AI-Driven Defence:} Ventures are funding AI-driven security tooling. zGate's future roadmap includes anomaly detection on SQL to block automated attack patterns, aligning with this investment trend.
+    \item \textbf{Cloud \& SaaS Integration:} As more databases migrate to cloud (AWS RDS, Azure SQL, Snowflake) or drive BI/analytics, the need for consistent access policies grows. zGate's compatibility with native wire protocols means it can secure a wide range of database endpoints wherever they run.
 \end{itemize}
 
 \section{Challenges and Barriers to Adoption}
 
-Despite the clear benefits, organizations face hurdles:
+Despite the clear benefits, organisations face hurdles:
+
 \begin{itemize}
-    \item \textbf{Complexity and Cost:} Implementing comprehensive Zero Trust often requires expensive overhauls.
-    \item \textbf{Legacy Systems:} Integration gaps with older mainframes or databases remain a blocker.
-    \item \textbf{Skill Fragmentation:} Teams often lack the specific skills to manage fragmented security tools.
+    \item \textbf{Complexity and Cost:} Implementing comprehensive Zero Trust often requires expensive overhauls of identity infrastructure.
+    \item \textbf{Legacy Systems:} Integration with older mainframes or custom applications remains difficult; custom protocol framing may not be parseable by a standard proxy.
+    \item \textbf{Skill Fragmentation:} Security, DevOps, and DBA teams often lack a unified tool. zGate's sidecar-proxy approach aims to mitigate complexity, but education and orchestration (integration with existing IdPs or CI/CD pipelines) will be needed for broad uptake.
 \end{itemize}
-% Placeholder for Challenges Figure
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{images/challenges.png}
-    \caption{Key Challenges in Zero Trust Adoption}
+    \caption{Key Challenges in Zero Trust Database Adoption}
     \label{fig:challenges}
 \end{figure}
 
 \section{Conclusion}
-zGate enters a market characterized by high demand but significant technical gaps. By providing a protocol-aware, open-source solution that supports MySQL, MSSQL, and PostgreSQL, it directly addresses the compliance, security, and usability challenges that currently leave over half of the market underserved.
+
+zGate targets a high-demand niche in database security. The market is expanding under Zero Trust and AI pressures, yet a clear gap exists for protocol-aware runtime enforcement of SQL. By delivering an open-source, multi-protocol solution with deep inspection and masking capabilities, zGate meets unmet needs in compliance and threat protection.
+
+Our analysis shows competitors either focus on infrastructure access or offline data management, leaving dynamic data governance at the wire protocol level underexplored. Given the trends and statistics above---a growing percentage of breaches involving data queries and automated agents, regulatory mandates driving investment in database-proxy controls, and a 46\% enforcement gap between Zero Trust intent and database reality---the commercial and academic opportunity for zGate is compelling. We position zGate as a key component of modern Zero Trust data architectures, complementing rather than replacing existing infrastructure and visibility tools.
