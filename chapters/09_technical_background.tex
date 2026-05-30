@@ -1475,3 +1475,1083 @@ The internal SQLite datastore is encrypted using AES-256-GCM. The system uses:
         \item Old keys archived securely for decryption of historical data
     \end{itemize}
 \end{itemize}
+
+% ------------------------------------------------------------
+% 4.3  JSON Web Tokens (JWT)
+% ------------------------------------------------------------
+\subsection{JSON Web Tokens (RFC~7519)}
+
+JSON Web Tokens (JWT) are an open standard (RFC~7519) for representing claims securely between two parties as a compact, URL-safe string. JWTs have become the predominant mechanism for stateless authentication in REST APIs, replacing older server-side session stores.
+
+\paragraph{Structure}
+
+A JWT consists of three Base64URL-encoded segments separated by periods:
+
+\begin{verbatim}
+<Base64URL(header)>.<Base64URL(payload)>.<Signature>
+\end{verbatim}
+
+\begin{itemize}
+    \item \textbf{Header}: A JSON object specifying the token type (\texttt{typ: "JWT"}) and the signing algorithm (\texttt{alg}). Common values are \texttt{HS256} (HMAC-SHA256, symmetric) and \texttt{RS256} (RSA with SHA-256, asymmetric).
+
+    \item \textbf{Payload}: A JSON object containing \emph{claims} — statements about an entity and additional metadata. Registered claim names standardised by the RFC include:
+    \begin{itemize}
+        \item \texttt{iss} (issuer): identifies the principal that issued the token
+        \item \texttt{sub} (subject): the entity the token refers to (usually a user ID)
+        \item \texttt{aud} (audience): intended recipients
+        \item \texttt{exp} (expiration time): Unix timestamp after which the token must be rejected
+        \item \texttt{iat} (issued at): Unix timestamp of token creation
+        \item \texttt{jti} (JWT ID): unique identifier enabling revocation tracking
+    \end{itemize}
+    Private claims (e.g., \texttt{roles}, \texttt{session\_id}) carry application-specific data.
+
+    \item \textbf{Signature}: Produced by signing the concatenated header and payload with the chosen algorithm. For HMAC-SHA256:
+    \begin{verbatim}
+HMAC-SHA256(
+  Base64URL(header) + "." + Base64URL(payload),
+  secret
+)
+    \end{verbatim}
+    The signature guarantees that the token was issued by a party holding the secret and that neither the header nor the payload has been tampered with after issuance.
+\end{itemize}
+
+\paragraph{Stateless Verification}
+
+A server that holds the signing key can verify any token without querying a database: decode the header, select the appropriate key, recompute the signature, and compare. This property enables horizontally scaled services to authenticate requests independently. The trade-off is that a token cannot be invalidated before its \texttt{exp} claim without additional server-side state.
+
+\paragraph{Access and Refresh Token Pattern}
+
+To balance security and usability, systems typically issue two tokens simultaneously:
+
+\begin{itemize}
+    \item \textbf{Access token}: Short-lived (typically 5--15 minutes); included in every API request as a \texttt{Bearer} token in the \texttt{Authorization} header; validated purely by signature without database lookup.
+    \item \textbf{Refresh token}: Long-lived (hours to days); opaque (not a JWT) or a JWT with \texttt{jti} stored server-side; exchanged at a dedicated endpoint to obtain a new access token; can be revoked by deleting its server-side record.
+\end{itemize}
+
+When a refresh token is used to issue a new access token, \emph{refresh token rotation} replaces the old refresh token with a new one, limiting the exposure window if a refresh token is stolen.
+
+\paragraph{Security Considerations}
+
+Known attack vectors include:
+\begin{itemize}
+    \item \textbf{Algorithm confusion (\texttt{alg: none})}: early libraries accepted unsigned tokens if the header declared \texttt{alg: none}; mitigated by explicitly allowlisting permitted algorithms server-side.
+    \item \textbf{Key confusion (RS256 $\to$ HS256)}: an attacker crafts an HS256 token signed with the server's \emph{public} RSA key; mitigated by binding the expected algorithm to each key identifier.
+    \item \textbf{Insecure storage}: storing JWTs in \texttt{localStorage} exposes them to XSS; storing in HttpOnly cookies prevents JavaScript access.
+\end{itemize}
+
+In zGate, access tokens carry a 5-minute expiry and embed the user's roles; refresh tokens are stored server-side with their \texttt{jti}, enabling immediate revocation when an administrator terminates an active session.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: JWT three-part structure diagram and access/refresh token lifecycle flow]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{JWT structure (header.payload.signature) and the access/refresh token refresh lifecycle.}
+    \label{fig:jwt-structure}
+\end{figure}
+
+% ------------------------------------------------------------
+% 4.4  Time-Based One-Time Passwords (TOTP — RFC~6238)
+% ------------------------------------------------------------
+\subsection{Time-Based One-Time Passwords (RFC~6238)}
+
+Multi-factor authentication (MFA) adds a second verification factor beyond a static password. The Time-Based One-Time Password (TOTP) algorithm, standardised in RFC~6238, generates short-lived numeric codes that an authenticator application (e.g., Google Authenticator, Authy) produces without network connectivity.
+
+\paragraph{HMAC-Based OTP Foundation (HOTP — RFC~4226)}
+
+TOTP builds on HOTP. Given a shared secret key $K$ and a counter $C$, HOTP produces a code as follows:
+
+\begin{enumerate}
+    \item Compute $HS = \text{HMAC-SHA1}(K,\,C)$ — a 20-byte hash.
+    \item Apply \emph{dynamic truncation}: extract a 4-byte subset starting at the byte offset indicated by the last nibble of $HS$.
+    \item Interpret those 4 bytes as a 31-bit unsigned integer $P$.
+    \item Return $P \bmod 10^d$ where $d$ is the desired digit length (typically 6).
+\end{enumerate}
+
+\paragraph{Time-Step Derivation in TOTP}
+
+TOTP replaces the counter $C$ with a time-derived value:
+
+\[
+T = \left\lfloor \frac{t - T_0}{X} \right\rfloor
+\]
+
+where $t$ is the current Unix time, $T_0 = 0$ is the epoch, and $X = 30$\,s is the step duration. The resulting integer $T$ increments every 30 seconds, ensuring that the one-time code changes frequently while remaining stable within its window.
+
+\paragraph{Shared Secret Provisioning}
+
+During enrolment:
+\begin{enumerate}
+    \item The server generates a cryptographically random secret (typically 160 bits / 20 bytes).
+    \item The secret is Base32-encoded and embedded in an \texttt{otpauth://totp/} URI alongside the issuer name and account identifier.
+    \item The URI is rendered as a QR code; the user scans it with their authenticator application.
+    \item After provisioning, the secret is stored server-side (ideally in a secrets manager) and \emph{never transmitted again}.
+\end{enumerate}
+
+\paragraph{Clock Skew Tolerance}
+
+Minor clock differences between client and server can cause a valid code to be rejected. Implementations typically accept codes for the windows $T-1$, $T$, and $T+1$ (a $\pm$30-second tolerance), balancing usability against replay-attack exposure.
+
+\paragraph{Security Properties}
+
+\begin{itemize}
+    \item \textbf{Replay resistance}: each code is valid for a single 30-second window; a captured code is useless immediately after its window closes.
+    \item \textbf{No credential transmission}: after initial provisioning, authentication requires only the time-derived code — the secret itself is never sent over the network.
+    \item \textbf{Phishing limitation}: TOTP does not bind the code to a specific origin; it is susceptible to real-time phishing attacks that relay the code to the legitimate server within the 30-second window. This limitation motivates stronger second factors such as FIDO2/WebAuthn for high-assurance contexts.
+\end{itemize}
+
+In zGate, administrator accounts on the WebUI use TOTP as a second factor implemented with the \texttt{pquerna/otp} Go library; CLI users authenticate via Keycloak's OIDC device flow, which handles TOTP verification within the Keycloak realm.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: TOTP time-step diagram — Unix timestamp divided into 30-second intervals, each yielding a distinct OTP code]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{TOTP 30-second time-step derivation: each interval produces a unique code from the shared secret and the current time counter $T$.}
+    \label{fig:totp-timeslot}
+\end{figure}
+
+% ------------------------------------------------------------
+% 4.5  Proof-of-Work Anti-Bot Mechanisms (ALTCHA)
+% ------------------------------------------------------------
+\subsection{Proof-of-Work Anti-Bot Mechanisms}
+
+Proof-of-Work (PoW) is a class of protocol in which one party (the prover) demonstrates that it has expended a quantifiable amount of computational effort. PoW was first formalised by Dwork and Naor (1992) as a mechanism to deter email spam, and later popularised by Bitcoin's Hashcash-derived mining algorithm. Applied to web authentication, PoW discourages automated credential-stuffing and brute-force attacks by imposing a computational cost on every submission.
+
+\paragraph{SHA-256 Proof-of-Work}
+
+The challenge–response protocol operates as follows:
+
+\begin{enumerate}
+    \item \textbf{Challenge issuance}: the server generates a random \texttt{salt} and selects a difficulty parameter \texttt{maxNumber}. It returns the challenge object \texttt{\{algorithm, salt, maxNumber\}}.
+    \item \textbf{Solution search}: the client iterates a nonce $n$ from 0 upward, computing $h = \text{SHA-256}(\texttt{salt} \,\|\, n)$ at each step, until $h$ satisfies the target condition. The expected number of iterations before success is approximately $\texttt{maxNumber} / 2$.
+    \item \textbf{Solution submission}: the client returns $n$.
+    \item \textbf{Verification}: the server recomputes $\text{SHA-256}(\texttt{salt} \,\|\, n)$ and checks the target condition — a single hash operation, regardless of the difficulty level.
+\end{enumerate}
+
+The asymmetry is the key security property: verification is $O(1)$ while solution search is $O(\texttt{maxNumber}/2)$.
+
+\paragraph{HMAC Signature on the Challenge}
+
+Without integrity protection, a malicious client could fabricate a challenge with a trivial target, solve it instantly, and submit a valid-looking response. To prevent this, the server signs the challenge parameters with HMAC-SHA256 using a private key:
+
+\[
+\text{signature} = \text{HMAC-SHA256}(\texttt{secret},\;\texttt{algorithm} \,\|\, \texttt{salt} \,\|\, \texttt{maxNumber})
+\]
+
+The signature is included in the challenge object returned to the client. The server verifies this signature upon receiving the solution before checking the PoW; any tampered or fabricated challenge is rejected outright.
+
+\paragraph{Comparison with CAPTCHA}
+
+Traditional CAPTCHA systems require users to interpret distorted images or identify objects — tasks that rely on human perception. PoW shifts the burden to computation:
+\begin{itemize}
+    \item No user interaction required; computation runs in the background (JavaScript Web Worker).
+    \item No third-party service dependencies that introduce privacy concerns.
+    \item Difficulty scales linearly with \texttt{maxNumber}, enabling server-side tuning without changing the client.
+    \item Modern GPU/ASIC hardware can solve SHA-256 PoW faster than consumer CPUs; difficulty must be calibrated accordingly.
+\end{itemize}
+
+In zGate, the ALTCHA open-source PoW specification is implemented on the admin login endpoint and integrated as a Keycloak SPI (Service Provider Interface) plugin that fronts the Keycloak login form. The HMAC key is shared between both components via environment configuration.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: ALTCHA challenge–response sequence diagram — server issues challenge with HMAC signature → client iterates SHA-256 → server verifies HMAC then SHA-256]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{ALTCHA SHA-256 proof-of-work challenge–response protocol with HMAC-signed challenge to prevent forgery.}
+    \label{fig:altcha-pow}
+\end{figure}
+% ============================================================
+% 5. Zero Trust Security Architecture
+% ============================================================
+\section{Zero Trust Security Architecture}
+
+Zero Trust is a security model predicated on the principle that no actor, system, or network should be implicitly trusted — regardless of whether it originates inside or outside the traditional network perimeter. The term was coined by John Kindervag at Forrester Research in 2010 and subsequently formalised in NIST Special Publication 800-207 (2020).
+
+\subsection{Origins and Motivation}
+
+The classical perimeter security model partitions networks into trusted internal zones (protected by firewalls and VPNs) and untrusted external zones. Once a connection is established inside the perimeter, it typically receives broad lateral access. This model presents a fundamental vulnerability: a single compromised internal host — whether through phishing, credential theft, or supply-chain attack — can move laterally across the network with minimal resistance. The 2013 Target breach, the 2020 SolarWinds attack, and numerous subsequent incidents all exploited this trust boundary.
+
+Modern environments further erode perimeter assumptions:
+\begin{itemize}
+    \item Workforce mobility: users connect from personal devices and untrusted networks.
+    \item Cloud workloads: resources reside outside any physical perimeter.
+    \item Microservices: service-to-service communication bypasses traditional network controls.
+    \item Third-party integrations: supply-chain partners require access without full trust.
+\end{itemize}
+
+Zero Trust responds by eliminating the concept of a trusted zone entirely.
+
+\subsection{Core Tenets}
+
+NIST SP 800-207 identifies seven tenets of Zero Trust:
+
+\begin{enumerate}
+    \item \textbf{All data sources and computing services are considered resources.} No device category is inherently trusted.
+    \item \textbf{All communication is secured regardless of network location.} Traffic on internal networks receives the same scrutiny as external traffic; encryption and authentication are mandatory on every hop.
+    \item \textbf{Access to individual resources is granted per-session.} Trust is not persistent; each access request is evaluated independently.
+    \item \textbf{Access to resources is determined by dynamic policy.} Policy considers identity, device health, geolocation, time, and behavioural signals.
+    \item \textbf{The enterprise monitors and measures the integrity and security posture of all assets.}
+    \item \textbf{All resource authentication and authorisation are dynamic and strictly enforced before access is allowed.}
+    \item \textbf{The enterprise collects as much information as possible about the current state of assets, network infrastructure, and communications.}
+\end{enumerate}
+
+\subsection{Architectural Components}
+
+Zero Trust architecture introduces two logical planes:
+
+\paragraph{Policy Enforcement Point (PEP)}
+
+The PEP sits in the data path between the subject (user or workload) and the protected resource. Every access request must pass through the PEP. The PEP does not make access decisions itself; it forwards the request context to the Policy Decision Point and enforces the resulting decision.
+
+\paragraph{Policy Decision Point (PDP)}
+
+The PDP evaluates the request context against the active policy. Context includes:
+\begin{itemize}
+    \item \textbf{Identity signals}: verified identity of the requesting subject, role memberships, authentication method and assurance level.
+    \item \textbf{Device signals}: device health, patch level, managed vs. unmanaged status.
+    \item \textbf{Behavioural signals}: time of day, geographic location, deviation from normal access patterns.
+    \item \textbf{Resource sensitivity}: classification of the target resource.
+\end{itemize}
+
+The PDP returns an allow, deny, or step-up (require additional authentication) decision. In practice the PDP is often composed of a Policy Engine (rule evaluator) and a Policy Administrator (credential and session issuer).
+
+\subsection{Contrast with Perimeter Security}
+
+\begin{itemize}
+    \item \textbf{Perimeter model}: authenticate once at the boundary; trust everywhere inside; network location as a proxy for trustworthiness.
+    \item \textbf{Zero Trust}: authenticate every request; assume the internal network is hostile; resource access based on identity + context, not network location.
+    \item \textbf{Lateral movement resistance}: in Zero Trust, compromising one internal host grants no additional access to other resources because each resource independently verifies the accessor's identity and permissions.
+\end{itemize}
+
+\subsection{Zero Trust Applied to Database Access}
+
+Databases are high-value targets: they aggregate PII, financial records, intellectual property, and credentials. Traditional database access controls rely on network-level trust (only hosts on the internal VLAN may connect to port 3306), which is easily bypassed once an attacker gains a foothold inside the network.
+
+Applying Zero Trust principles to database access requires:
+\begin{itemize}
+    \item \textbf{Identity-based authentication at the gateway}: every connection request carries a verifiable identity token; the network address of the client is irrelevant.
+    \item \textbf{Just-In-Time (JIT) credential provisioning}: database credentials are issued only for the duration of an active session; ephemeral accounts are created at session start and destroyed at session end, eliminating persistent credentials that could be exfiltrated.
+    \item \textbf{Credential separation}: end users authenticate to the gateway layer with their own credentials; the gateway then uses its own privileged credentials to connect to the backend database. Users never possess or observe real database passwords.
+    \item \textbf{Continuous session monitoring}: active sessions are tracked in a server-side registry. Administrators can revoke sessions in real time, even before the underlying access token expires.
+    \item \textbf{Microsegmentation}: backend database ports are accessible only from the gateway host; clients reach databases exclusively through the gateway's TCP port. Network-level access to the database is removed even for internal hosts.
+    \item \textbf{Comprehensive audit logging}: every query, connection event, and policy decision is logged with the verified identity of the requestor and the full query text (or hash).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: Zero Trust database access model — client presents identity token to PEP (gateway), PDP evaluates policy, JIT credential issued, gateway proxies to backend DB; backend DB not reachable directly]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{Zero Trust database access model: every connection traverses the policy enforcement gateway; backend database ports are not directly reachable from client networks.}
+    \label{fig:zero-trust-db}
+\end{figure}
+
+% ============================================================
+% 6. Identity and Access Management
+% ============================================================
+\section{Identity and Access Management}
+
+Identity and Access Management (IAM) encompasses the policies, technologies, and processes that ensure the right entities have appropriate access to the right resources under the right conditions.
+
+\subsection{Role-Based Access Control}
+
+Role-Based Access Control (RBAC) is an access control model in which permissions are assigned to roles rather than directly to individual users. The formal model was standardised in NIST INCITS 359-2004.
+
+\paragraph{Formal Model}
+
+RBAC defines four core sets and their relationships:
+
+\begin{itemize}
+    \item $U$: the set of users (human or service accounts).
+    \item $R$: the set of roles (named groups of permissions).
+    \item $P$: the set of permissions (operations on protected objects).
+    \item $S$: the set of sessions (each session activates a subset of a user's assigned roles).
+    \item $UA \subseteq U \times R$: user–role assignment relation.
+    \item $PA \subseteq P \times R$: permission–role assignment relation.
+\end{itemize}
+
+A user's effective permissions in a session are the union of permissions associated with all active roles in that session.
+
+\paragraph{Role Hierarchy}
+
+Hierarchical RBAC (RBAC1) extends the model with a partial order $\geq$ on roles. If $r_1 \geq r_2$, role $r_1$ \emph{inherits} all permissions of $r_2$. This reduces administrative overhead: a senior role automatically accumulates permissions from subordinate roles without explicit re-assignment. For example, a \textsc{DBA} role inheriting from \textsc{Developer} inherits all developer permissions plus its own elevated permissions (e.g., schema modification).
+
+\paragraph{Separation of Duties}
+
+Separation of Duties (SoD) prevents a single user from accumulating conflicting privileges. Static SoD constrains role assignments ($UA$) so that certain role pairs can never be simultaneously assigned to the same user. Dynamic SoD constrains active sessions so that certain role pairs cannot be simultaneously activated. Both forms prevent fraud scenarios such as a single actor who can both initiate and approve financial transactions.
+
+\paragraph{Enforcement at the Policy Layer}
+
+A key architectural property of RBAC systems is that enforcement occurs at the access control layer — a policy enforcement point external to the individual resources. This enables uniform enforcement across heterogeneous backends: a single RBAC policy can govern access to MySQL, PostgreSQL, and MSSQL databases without configuring native grants on each.
+
+\subsection{OAuth 2.0 and OpenID Connect}
+
+OAuth 2.0 (RFC~6749) and OpenID Connect (OIDC 1.0) are the dominant standards for delegated authorisation and federated identity in modern systems.
+
+\paragraph{OAuth 2.0}
+
+OAuth 2.0 is an authorisation framework that enables a \emph{resource owner} (user) to grant a \emph{client} application limited access to a \emph{resource server} on the owner's behalf, without exposing the owner's credentials to the client. The framework defines four roles:
+
+\begin{itemize}
+    \item \textbf{Resource Owner}: the entity (typically a user) capable of granting access.
+    \item \textbf{Client}: the application requesting access.
+    \item \textbf{Resource Server}: the server hosting protected resources.
+    \item \textbf{Authorisation Server}: issues access tokens after authenticating the resource owner and obtaining consent.
+\end{itemize}
+
+RFC~6749 defines several grant types suited to different client contexts:
+\begin{itemize}
+    \item \textbf{Authorisation Code} (with PKCE, RFC~7636): browser-based clients redirect the user to the authorisation server; a short-lived code is exchanged for tokens at the token endpoint. PKCE prevents code-interception attacks by binding the request to a cryptographic verifier.
+    \item \textbf{Client Credentials}: machine-to-machine; client authenticates with its own credentials; no user interaction.
+    \item \textbf{Device Authorization Flow} (RFC~8628): for input-constrained clients (CLI tools, set-top boxes) — described in detail below.
+    \item \textbf{Implicit} and \textbf{Resource Owner Password Credentials}: both deprecated in OAuth 2.1 due to security weaknesses.
+\end{itemize}
+
+\paragraph{OpenID Connect}
+
+OpenID Connect layers an identity protocol on top of OAuth 2.0. It introduces the \emph{ID Token} — a JWT issued by the authorisation server alongside the access token — that asserts the identity of the authenticated user. Standard claims in the ID Token include \texttt{sub} (subject identifier), \texttt{name}, \texttt{email}, \texttt{iss} (issuer URL), \texttt{aud} (intended audience), and \texttt{exp}. The \texttt{UserInfo} endpoint allows the client to retrieve additional claims using the access token.
+
+OIDC defines standardised scopes: \texttt{openid} (mandatory; triggers ID Token issuance), \texttt{profile} (name, picture, locale), \texttt{email} (email address and verification status).
+
+\paragraph{Device Authorization Flow (RFC~8628)}
+
+The Device Authorization Flow solves authentication for devices that cannot conveniently display a browser or accept keyboard input:
+
+\begin{enumerate}
+    \item The client sends a request to the \texttt{device\_authorization\_endpoint}, receiving a \texttt{device\_code}, a \texttt{user\_code}, and a \texttt{verification\_uri}.
+    \item The device displays the \texttt{user\_code} and \texttt{verification\_uri} to the user (e.g., printed to the terminal).
+    \item The user visits \texttt{verification\_uri} on any browser-capable device and enters the \texttt{user\_code}, then authenticates and grants consent.
+    \item Concurrently, the device polls the \texttt{token\_endpoint} with the \texttt{device\_code} at the interval specified by the server.
+    \item Once the user grants consent, the next poll returns the access and ID tokens.
+\end{enumerate}
+
+\paragraph{Keycloak as Identity Provider}
+
+Keycloak is an open-source Identity and Access Management server. Its architectural concepts include:
+\begin{itemize}
+    \item \textbf{Realm}: an isolated IAM domain with its own users, roles, clients, and identity providers. Different realms share a Keycloak instance but are fully isolated.
+    \item \textbf{Client}: a registered application; can be \emph{confidential} (holds a client secret) or \emph{public} (no secret; uses PKCE). Each client defines allowed redirect URIs, scopes, and protocol (OIDC or SAML).
+    \item \textbf{Identity Brokering}: Keycloak federates to upstream Identity Providers (Google OAuth 2.0, SAML providers) and maps external identities to local realm users. This enables "Sign in with Google" without granting Google direct access to application resources.
+    \item \textbf{Role Mapping}: realm roles and client roles can be included in tokens via protocol mappers; downstream services read the \texttt{roles} claim to make authorisation decisions without querying Keycloak on every request.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: OIDC device authorization flow — CLI requests device\_code → user opens verification\_uri on browser → CLI polls token endpoint → access + ID tokens returned]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{OAuth 2.0 Device Authorization Flow (RFC~8628): the CLI client receives a user code and polls for tokens while the user completes authorisation in a browser.}
+    \label{fig:oidc-device-flow}
+\end{figure}
+
+% ============================================================
+% 7. Secrets Management
+% ============================================================
+\section{Secrets Management}
+
+\subsection{Secrets and Their Lifecycle}
+
+A \emph{secret} is any piece of information that grants access to a protected resource: passwords, API keys, TLS private keys, symmetric encryption keys, database credentials, or OAuth client secrets. Secrets are distinct from configuration data — a database hostname is configuration; the password to authenticate to it is a secret.
+
+\paragraph{Secrets Anti-Patterns}
+
+Common mismanagement practices that create security vulnerabilities:
+\begin{itemize}
+    \item \textbf{Hardcoded secrets}: embedding credentials directly in source code or compiled binaries; discoverable through repository history even after deletion.
+    \item \textbf{Repository storage}: committing \texttt{.env} files or configuration files containing secrets to version control; accessible to all contributors and in perpetuity through git history.
+    \item \textbf{Plaintext log output}: logging secret values during startup or debugging; secrets appear in log aggregation systems accessible to many parties.
+    \item \textbf{Long-lived static credentials}: database passwords that never rotate; a single exfiltration event grants indefinite access.
+\end{itemize}
+
+\paragraph{Secrets Lifecycle}
+
+Proper secrets management covers the full lifecycle:
+\begin{enumerate}
+    \item \textbf{Generation}: secrets produced by a Cryptographically Secure Pseudo-Random Number Generator (CSPRNG) with sufficient entropy.
+    \item \textbf{Distribution}: delivered through an encrypted channel; never embedded in deployment artifacts.
+    \item \textbf{Storage}: encrypted at rest; access controlled; audit-logged.
+    \item \textbf{Rotation}: periodic replacement (e.g., every 90 days) and on-demand rotation following a suspected compromise.
+    \item \textbf{Revocation}: immediate invalidation without waiting for the next rotation cycle.
+    \item \textbf{Audit}: comprehensive log of every secret access, including the requesting identity and timestamp.
+\end{enumerate}
+
+\paragraph{Dynamic Secrets}
+
+Dynamic secrets are generated on-demand for a specific requesting client, carry a short TTL, and are automatically revoked when the TTL expires. Unlike static long-lived credentials, dynamic secrets:
+\begin{itemize}
+    \item Limit the damage of exfiltration to the TTL window (minutes to hours, not months or years).
+    \item Eliminate the shared-secret problem: each client has a unique credential, so revoking one does not affect others.
+    \item Enable automated rotation without application changes, since the application always requests fresh credentials on startup.
+\end{itemize}
+
+\subsection{HashiCorp Vault}
+
+HashiCorp Vault is an open-source secrets management system designed for centralized secrets storage, dynamic secret generation, and fine-grained access control.
+
+\paragraph{Architecture and Storage Model}
+
+Vault consists of a server process backed by a configurable \emph{storage backend} (file system, Consul, cloud object stores). Secrets are \emph{never} written to the storage backend in plaintext: Vault encrypts all data with a master key before persisting it. The master key itself is protected by the seal/unseal mechanism.
+
+\paragraph{Seal and Unseal}
+
+When Vault starts, it is in a \emph{sealed} state: the master key is not held in memory, making all secrets inaccessible. To transition to the \emph{unsealed} state, a quorum of key shares must be presented:
+
+\begin{enumerate}
+    \item During initialisation, Vault generates a master key and splits it using Shamir's Secret Sharing into $N$ key shares. Access to any $M$ of the $N$ shares (where $M \leq N$) is sufficient to reconstruct the master key. For example, a 3-of-5 configuration requires any three of five key shares.
+    \item Key shares are distributed to different operators; no single operator holds a sufficient quorum.
+    \item On restart, $M$ operators each submit their share via the unseal API; Vault reconstructs the master key in memory only after receiving the quorum.
+    \item The master key in memory decrypts the encryption key, which decrypts all stored secrets on demand.
+\end{enumerate}
+
+This design prevents a single compromised operator or storage breach from exposing secrets.
+
+\paragraph{Authentication Methods}
+
+Vault requires each client to authenticate before issuing a token that grants secret access. The AppRole method is designed for machine-to-machine authentication:
+
+\begin{itemize}
+    \item An \emph{AppRole} is defined in Vault with an associated \texttt{role\_id} (non-secret identifier) and a \texttt{secret\_id} (short-lived, randomly-generated credential).
+    \item The client presents both to the Vault \texttt{/auth/approle/login} endpoint and receives a Vault token with a defined TTL and associated policies.
+    \item \texttt{secret\_id} values can be single-use or use-limited, minimising exposure if intercepted.
+    \item Policies attached to the role determine which secret paths the resulting token can read, write, or delete.
+\end{itemize}
+
+\paragraph{K/V v2 Secrets Engine}
+
+The Key/Value version 2 secrets engine provides versioned secret storage:
+
+\begin{itemize}
+    \item Secrets are stored at hierarchical paths (e.g., \texttt{secret/data/zgate/server}).
+    \item Each write creates a new version; previous versions are retained and accessible by version number.
+    \item Soft delete marks a version as deleted without removing its data; hard delete permanently removes it.
+    \item Check-and-Set (CAS) parameter prevents concurrent overwrites by requiring the current version number on writes.
+\end{itemize}
+
+\paragraph{Dynamic Database Secrets}
+
+The Database secrets engine generates database credentials on demand:
+\begin{enumerate}
+    \item Vault is configured with a privileged database connection (DBA credentials stored securely in Vault itself).
+    \item When a client requests credentials for a defined role, Vault executes a configurable SQL statement (e.g., \texttt{CREATE USER '\{\{name\}\}' IDENTIFIED BY '\{\{password\}\}'} followed by \texttt{GRANT} statements).
+    \item The generated username and password are returned to the client with a TTL lease.
+    \item When the lease expires, Vault automatically executes the revocation statement (\texttt{DROP USER}).
+\end{enumerate}
+
+This mechanism implements dynamic secrets at the database layer: credentials exist only while needed and are automatically reclaimed.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: Vault AppRole authentication flow — server presents role\_id + secret\_id → Vault returns token → server reads K/V secret (DB credentials, encryption keys)]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{HashiCorp Vault AppRole authentication and K/V secret retrieval: the application authenticates with non-secret role\_id and ephemeral secret\_id to obtain a scoped Vault token.}
+    \label{fig:vault-approle}
+\end{figure}
+
+% ============================================================
+% 8. PostgreSQL Wire Protocol
+% ============================================================
+\section{Database Wire Protocols (PostgreSQL)}
+
+PostgreSQL uses a message-based, frontend/backend wire protocol that differs architecturally from MySQL's packet-framed design. Understanding it is essential for building transparent proxies that intercept PostgreSQL traffic.
+
+\subsection{Protocol Architecture}
+
+\paragraph{Message Format}
+
+All PostgreSQL messages after the startup phase share a common structure:
+\begin{verbatim}
++--------+-------------------------------+
+| Type   | Length                        | Payload ...
+| (1B)   | (4B, includes itself, big-end)|
++--------+-------------------------------+
+\end{verbatim}
+
+The 1-byte type tag identifies the message kind. The 4-byte length (big-endian) includes itself but excludes the type byte. Unlike MySQL's 3-byte payload length, PostgreSQL's 4-byte field supports messages up to approximately 4\,GB.
+
+\paragraph{Frontend vs Backend Messages}
+
+The same type byte can refer to different messages depending on direction:
+\begin{itemize}
+    \item \textbf{Frontend messages} are sent by the client (e.g., \texttt{Q} = Query, \texttt{P} = Parse, \texttt{B} = Bind, \texttt{E} = Execute, \texttt{X} = Terminate).
+    \item \textbf{Backend messages} are sent by the server (e.g., \texttt{T} = RowDescription, \texttt{D} = DataRow, \texttt{C} = CommandComplete, \texttt{Z} = ReadyForQuery, \texttt{E} = ErrorResponse).
+\end{itemize}
+
+A proxy must track the direction of traffic to correctly interpret the type byte.
+
+\subsection{Connection Establishment and Authentication}
+
+\paragraph{SSL Negotiation}
+
+Before sending the startup message, a client may request TLS by sending an \texttt{SSLRequest} message (a special 8-byte packet with no type byte). The server responds with a single byte: \texttt{S} to accept TLS (the TLS handshake then proceeds over the same connection) or \texttt{N} to decline. A proxy intercepting PostgreSQL traffic must handle this negotiation before forwarding the startup message.
+
+\paragraph{StartupMessage}
+
+The \texttt{StartupMessage} also lacks a type byte; it consists of a 4-byte length, a 4-byte protocol version (integer 196608 = \texttt{0x00030000}, protocol 3.0), followed by a sequence of null-terminated key-value pairs encoding session parameters:
+\begin{itemize}
+    \item \texttt{user}: the database username
+    \item \texttt{database}: the target database name
+    \item \texttt{application\_name}: client application identifier (visible in \texttt{pg\_stat\_activity})
+    \item \texttt{client\_encoding}: character set (typically \texttt{UTF8})
+\end{itemize}
+The list terminates with an additional null byte.
+
+\paragraph{Authentication Exchange}
+
+The server responds to the startup message with one of:
+\begin{itemize}
+    \item \texttt{AuthenticationOk (R, 0)}: no further authentication required.
+    \item \texttt{AuthenticationMD5Password (R, 5)}: server includes a 4-byte random salt; client responds with \texttt{PasswordMessage} containing \texttt{md5(md5(password + user) + salt)}.
+    \item \texttt{AuthenticationSASL (R, 10)}: initiates a SCRAM-SHA-256 exchange (RFC~7677); more secure than MD5 hashing, supports channel binding.
+\end{itemize}
+
+After successful authentication the server sends one or more \texttt{ParameterStatus (S)} messages (server version, encoding, timezone settings) and a \texttt{BackendKeyData (K)} message (process ID and secret key for cancellation), then \texttt{ReadyForQuery (Z)}.
+
+\paragraph{ReadyForQuery}
+
+\texttt{ReadyForQuery} is the PostgreSQL synchronisation primitive. It carries a single byte indicating the current transaction status:
+\begin{itemize}
+    \item \texttt{I}: idle (not in a transaction)
+    \item \texttt{T}: inside a transaction block
+    \item \texttt{E}: inside a failed transaction (commands ignored until \texttt{ROLLBACK})
+\end{itemize}
+The client must wait for \texttt{ReadyForQuery} after every synchronisation point before sending the next command.
+
+\subsection{Simple Query Protocol}
+
+The Simple Query Protocol is the most straightforward execution path:
+
+\begin{enumerate}
+    \item Client sends \texttt{Query (Q)} with a SQL string. Multiple statements separated by semicolons are permitted; each is executed in sequence.
+    \item For a \texttt{SELECT}, the server responds with:
+    \begin{itemize}
+        \item \texttt{RowDescription (T)}: describes the result set columns — for each column: name (null-terminated string), table OID, column attribute number, data type OID, data type size, type modifier, and format code (0 = text, 1 = binary).
+        \item One \texttt{DataRow (D)} per result row: a 2-byte column count followed by one length-prefixed byte sequence per column (length = -1 represents NULL).
+        \item \texttt{CommandComplete (C)}: tag string (e.g., \texttt{SELECT 42}) indicating the command type and affected row count.
+    \end{itemize}
+    \item For non-SELECT statements (\texttt{INSERT}, \texttt{UPDATE}, \texttt{DELETE}): \texttt{CommandComplete} directly (no \texttt{RowDescription} or \texttt{DataRow}).
+    \item \texttt{ReadyForQuery (Z)}: signals the client can send the next command.
+    \item On error: \texttt{ErrorResponse (E)}: structured set of fields including severity, SQLSTATE code (5-character string per SQL standard), human-readable message, position in query, and schema/table/column context.
+\end{enumerate}
+
+\subsection{Extended Query Protocol}
+
+The Extended Query Protocol separates the preparation and execution stages, enabling typed parameter binding, binary data transfer, and cursor-based result pagination.
+
+\paragraph{Protocol Messages}
+
+\begin{itemize}
+    \item \textbf{Parse (P)}: contains a statement name (empty string for unnamed), a SQL string with \texttt{\$1}, \texttt{\$2}, \ldots{} parameter placeholders, and an optional array of parameter type OIDs. Server responds with \texttt{ParseComplete (1)}.
+
+    \item \textbf{Bind (B)}: binds a named or unnamed prepared statement to a named or unnamed \emph{portal}. Contains: statement name, portal name, parameter format codes (one per parameter: 0 = text, 1 = binary), parameter values (length-prefixed), and result column format codes. Server responds with \texttt{BindComplete (2)}.
+
+    \item \textbf{Describe (D)}: requests metadata about a statement (\texttt{ParameterDescription} listing parameter type OIDs) or portal (\texttt{RowDescription} listing result columns) before execution.
+
+    \item \textbf{Execute (E)}: runs a portal; accepts an optional maximum row count (0 = unlimited). Server responds with \texttt{DataRow} messages up to the row limit, then either \texttt{CommandComplete} or \texttt{PortalSuspended (s)} if the limit was reached. A suspended portal can be resumed by sending another \texttt{Execute}.
+
+    \item \textbf{Close (C)}: deallocates a statement or portal and releases its server-side resources. Server responds with \texttt{CloseComplete (3)}.
+
+    \item \textbf{Sync (S)}: a pipeline flush. The server processes all pending messages and then sends \texttt{ReadyForQuery}. If any message in the pipeline caused an error, the server enters an error-recovery mode and discards subsequent pipeline messages until \texttt{Sync} is received.
+
+    \item \textbf{Flush (H)}: similar to Sync but does not trigger \texttt{ReadyForQuery}; forces the server to flush buffered output without ending the pipeline.
+\end{itemize}
+
+\paragraph{Portal Concept}
+
+A portal is a named, server-side execution context that encapsulates a bound prepared statement along with its parameter values and a cursor position into the result set. Portals enable the DECLARE/FETCH cursor semantics of SQL: execute a query, retrieve rows in batches, and release the portal when done. Named portals persist until explicitly closed or the session ends.
+
+\subsection{AST Parsing via libpg\_query}
+
+\texttt{libpg\_query} is a C library that extracts the official PostgreSQL parser directly from the PostgreSQL server source tree and exposes it as a standalone shared library. This approach guarantees that any SQL accepted or rejected by the parser is identical to what PostgreSQL itself would accept or reject — a property no independent SQL grammar can fully replicate given PostgreSQL's extensive dialect extensions.
+
+\paragraph{pg\_query\_go}
+
+\texttt{pg\_query\_go} provides Go bindings to \texttt{libpg\_query} via CGo. The primary API call is:
+
+\begin{verbatim}
+result, err := pg_query.Parse("SELECT name FROM users WHERE id = $1")
+\end{verbatim}
+
+The returned \texttt{ParseResult} contains a list of \texttt{RawStmt} nodes serialised as protobuf. Common parse tree node types include:
+\begin{itemize}
+    \item \texttt{SelectStmt}: root of a SELECT query; contains \texttt{targetList} (projected columns), \texttt{fromClause} (table references), \texttt{whereClause}, \texttt{groupClause}, \texttt{havingClause}, \texttt{sortClause}, \texttt{limitCount}.
+    \item \texttt{RangeVar}: a table reference; fields \texttt{schemaname}, \texttt{relname}, \texttt{alias}.
+    \item \texttt{ResTarget}: a SELECT target; contains an expression and an optional alias.
+    \item \texttt{ColumnRef}: reference to a column; contains \texttt{fields} (schema, table, column name chain).
+    \item \texttt{A\_Const}: a literal constant (integer, float, string, boolean, null).
+    \item \texttt{JoinExpr}: a JOIN expression; \texttt{jointype} (inner, left, right, full), \texttt{larg}, \texttt{rarg}, \texttt{quals}.
+    \item \texttt{CommonTableExpr}: a Common Table Expression (CTE / WITH clause).
+    \item \texttt{BoolExpr}: logical AND/OR/NOT; \texttt{args} contains sub-expressions.
+\end{itemize}
+
+A proxy can traverse this tree to identify all referenced tables and columns, determine the query type, and inject additional predicates (e.g., row-level security filters) before regenerating the SQL for forwarding to the backend.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: PostgreSQL Extended Query Protocol sequence — Parse $\to$ ParseComplete $\to$ Bind $\to$ BindComplete $\to$ Execute $\to$ DataRow* $\to$ CommandComplete $\to$ Sync $\to$ ReadyForQuery]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{PostgreSQL Extended Query Protocol message sequence showing the Parse/Bind/Execute/Sync pipeline.}
+    \label{fig:postgres-extended-query}
+\end{figure}
+
+% ============================================================
+% 9. Data Masking and Privacy Techniques
+% ============================================================
+\section{Data Masking and Privacy Techniques}
+
+Data masking is the process of transforming sensitive data values to protect them from unauthorised disclosure while preserving their usability for legitimate purposes. It is a foundational technique in privacy-by-design architectures and a common control required by regulatory frameworks such as GDPR (Article~32) and PCI DSS (Requirement~3).
+
+\subsection{Masking vs Encryption vs Anonymisation}
+
+Three related but distinct concepts are often conflated:
+\begin{itemize}
+    \item \textbf{Encryption}: reversible transformation using a key; ciphertext is useless without the key but fully recoverable with it; data is not usable in its encrypted form.
+    \item \textbf{Masking}: transforms data into a form that retains some utility (format, type, statistical distribution) but is not reversible without additional information (e.g., a token vault or original dataset). Depending on the strategy, may or may not be reversible.
+    \item \textbf{Anonymisation}: irreversible transformation that makes it impossible to re-identify the data subject; compliant with GDPR's exemption from data subject rights. Achieving true anonymisation is significantly harder than masking due to re-identification through data linkage.
+\end{itemize}
+
+\subsection{Static vs Dynamic Masking}
+
+\begin{itemize}
+    \item \textbf{Static masking}: applied once to a dataset copy (e.g., a development or test database copy). The masked dataset replaces the original; no masking occurs at query time. Simpler to implement; does not protect the production dataset.
+    \item \textbf{Dynamic masking}: applied at query time in the data access layer; the production dataset remains unmodified; different users may see different levels of masking based on their roles. More complex but provides real-time, role-aware access control over sensitive data.
+\end{itemize}
+
+\subsection{Masking Strategies}
+
+\paragraph{Redaction}
+
+The simplest strategy: replace the entire value with a fixed constant (\texttt{"REDACTED"}, \texttt{"[HIDDEN]"}, \texttt{"***"}). No format preservation; the replacement value carries no relationship to the original. Appropriate for opaque identifiers or fields where even format leaks sensitive information.
+
+\paragraph{Partial Masking (Format-Preserving)}
+
+Mask a subset of characters while preserving the structural format of the original value:
+\begin{itemize}
+    \item Social Security Number: \texttt{123-45-6789} $\to$ \texttt{XXX-XX-6789} (preserves suffix for verification)
+    \item Credit card: \texttt{4111 1111 1111 1111} $\to$ \texttt{**** **** **** 1111} (preserves last four digits, industry standard)
+    \item Email: \texttt{alice@example.com} $\to$ \texttt{a***@example.com}
+\end{itemize}
+Format preservation is important when masked values are displayed in UIs that validate format (e.g., a customer service agent verifying the last four digits of a card).
+
+\paragraph{Deterministic Hashing}
+
+Apply a one-way hash function (SHA-256, SHA-3) to the value. The masked output is consistent for the same input across all occurrences in the dataset, which preserves the ability to:
+\begin{itemize}
+    \item Join masked tables on the masked column (if the same salt is used consistently).
+    \item Group and count without revealing individual values.
+\end{itemize}
+Limitations: deterministic hashing is vulnerable to precomputation attacks (rainbow tables) when the input space is small (e.g., dates, postcodes, gender). Salting mitigates this but breaks cross-table join capability.
+
+\paragraph{Tokenisation}
+
+Replace the sensitive value with an opaque, randomly-generated token stored in a separate \emph{token vault}. The original value is retrievable only by querying the vault with the token — an operation restricted to authorised services. Tokenisation is the dominant strategy for PCI DSS compliance (card number tokenisation) because:
+\begin{itemize}
+    \item The token has no mathematical relationship to the original (unlike hashing).
+    \item Token lookup requires vault access, which is a separately controlled security boundary.
+    \item Format-preserving tokenisation (FPT) generates tokens that pass validation checks (e.g., a token that resembles a valid credit card number and passes Luhn algorithm validation).
+\end{itemize}
+
+\paragraph{Nulling}
+
+Replace the value with SQL NULL. Maximum safety — the value is completely absent from query results. Breaks any application logic that assumes non-null values. Appropriate for archival scenarios or fields that must be fully suppressed for a given role.
+
+\paragraph{Data Substitution}
+
+Replace with a realistic synthetic value drawn from a reference dataset (e.g., replace a real name with a randomly selected name from a census name corpus). Preserves semantic plausibility: the masked dataset looks realistic, reducing the risk of developers making incorrect assumptions about data structure. Used in test data generation and analytics on masked datasets.
+
+\paragraph{Shuffling}
+
+Randomly permute values within a column across rows. The set of values is preserved, but the assignment of values to rows is destroyed. Statistical distributions are maintained; individual records are de-identified. Only effective when the column is not functionally dependent on any identifier remaining in the dataset.
+
+\subsection{Applying Masking at the Protocol Layer}
+
+Proxy-level dynamic masking intercepts result sets between the database and the client:
+
+\begin{enumerate}
+    \item \textbf{Column definition phase}: the proxy reads the column metadata packets (MySQL \texttt{Field} packets or PostgreSQL \texttt{RowDescription}) before any row data arrives. This phase produces a mapping of column positions to column names, table names, and data types.
+    \item \textbf{Policy lookup}: for each column in the result, the proxy consults the masking rule store to determine whether the authenticated user's role requires masking, and if so, which strategy applies.
+    \item \textbf{Row interception}: as each row arrives, the proxy parses the value at each masked column's position. For MySQL text protocol, values are length-encoded strings; for MySQL binary protocol, values are natively typed binary data; for PostgreSQL, values are length-prefixed byte sequences.
+    \item \textbf{Masking function application}: the strategy function transforms the extracted value.
+    \item \textbf{Packet reconstruction}: the modified value is serialised back into the protocol encoding, the packet payload length field is recalculated (the masked value may be a different byte length than the original), and the reconstructed packet is forwarded to the client.
+\end{enumerate}
+
+A critical implementation detail is that the packet length field must be updated to reflect the new payload size after masking. Failure to do so produces a malformed packet that the client's driver will reject.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: Data masking pipeline — (1) parse column definitions, (2) look up masking rules, (3) intercept DataRow/Row packets, (4) apply masking function, (5) reconstruct packet with updated length, (6) forward to client]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{Protocol-layer data masking pipeline: the proxy intercepts result-set packets, identifies masked columns from metadata, applies the configured masking strategy, and reconstructs the packet before forwarding.}
+    \label{fig:masking-pipeline}
+\end{figure}
+
+% ============================================================
+% 10. Observability and Distributed Tracing
+% ============================================================
+\section{Observability and Distributed Tracing}
+
+\subsection{Observability vs Monitoring}
+
+\emph{Monitoring} answers predetermined questions about known failure modes: "Is service X responding?", "Is disk usage above 90\%?". Monitors emit alerts when predefined thresholds are crossed but cannot answer questions that were not anticipated at instrumentation time.
+
+\emph{Observability} is the property of a system that allows its internal state to be inferred from its external outputs. An observable system allows engineers to ask \emph{novel} questions — questions not anticipated when the system was built — and derive answers from telemetry. Observability is achieved through three complementary \emph{signals}.
+
+\subsection{The Three Pillars of Observability}
+
+\paragraph{Traces}
+
+A \emph{distributed trace} is a record of a single request's causal execution path as it traverses multiple services and processes. It is represented as a directed acyclic graph (DAG) of \emph{spans}.
+
+A \emph{span} is the atomic unit of a trace. Each span records:
+\begin{itemize}
+    \item \texttt{trace\_id}: 128-bit identifier shared by all spans in the same trace.
+    \item \texttt{span\_id}: 64-bit identifier unique within the trace.
+    \item \texttt{parent\_span\_id}: links this span to its parent (absent for the root span).
+    \item Operation name: human-readable description (e.g., \texttt{http.GET /api/sessions}).
+    \item Start timestamp and duration.
+    \item Status: OK, ERROR, or UNSET.
+    \item Attributes: key-value pairs carrying contextual metadata (e.g., \texttt{db.system = mysql}, \texttt{user.id = alice}).
+    \item Events: timestamped annotations within the span's lifetime (e.g., cache miss, retry).
+    \item Links: references to spans in other traces (e.g., a message consumer linking back to the producer's span).
+\end{itemize}
+
+\paragraph{Metrics}
+
+Metrics are numeric measurements aggregated over time. They answer quantitative questions: "What is the 99th-percentile query latency?", "How many sessions are currently active?". Metrics are efficient to store and query because they discard individual data points in favour of aggregates.
+
+Instrument types:
+\begin{itemize}
+    \item \textbf{Counter}: a monotonically increasing value reset to zero on restart; suitable for total event counts (e.g., \texttt{queries\_total}).
+    \item \textbf{Gauge}: a value that can increase or decrease; suitable for instantaneous measurements (e.g., \texttt{active\_sessions}).
+    \item \textbf{Histogram}: samples a distribution; produces bucket counts, sum, and count; enables percentile estimation (e.g., \texttt{query\_duration\_seconds}).
+\end{itemize}
+
+Metrics must have bounded \emph{cardinality}: the set of distinct label value combinations. High-cardinality labels (individual user IDs, full query text) cause memory and storage explosion in time-series databases and must instead be placed in traces or logs.
+
+\paragraph{Logs}
+
+Logs are discrete, timestamped records of events. Structured logs encode fields as key-value pairs (JSON or logfmt), enabling machine parsing and filtering. Structured logging replaces string-formatted messages that require regex parsing.
+
+\subsection{Trace Context Propagation}
+
+For a trace to span multiple services, the trace context (trace\_id and parent span\_id) must be propagated alongside requests. The W3C TraceContext specification (a Recommendation since 2021) defines the \texttt{traceparent} HTTP header:
+
+\begin{verbatim}
+traceparent: 00-{trace-id-32hex}-{parent-span-id-16hex}-{flags-2hex}
+\end{verbatim}
+
+The \texttt{tracestate} header carries vendor-specific context. When a downstream service receives a request containing \texttt{traceparent}, it extracts the trace\_id and parent\_span\_id, creates a child span with the extracted parent, and propagates updated context to any further downstream calls. Services that initiate new traces (root spans) generate a fresh trace\_id and omit the parent\_span\_id.
+
+\paragraph{Sampling}
+
+Recording every span in a high-throughput system is cost-prohibitive. Sampling strategies reduce volume while preserving diagnostic value:
+
+\begin{itemize}
+    \item \textbf{Head-based sampling}: the sampling decision is made at the root span, before any child spans are created. A simple random fraction (e.g., 1\%) is common. The decision is propagated in the \texttt{flags} byte of \texttt{traceparent} so all downstream services make the same decision consistently.
+    \item \textbf{Tail-based sampling}: the decision is deferred until the entire trace is assembled. This allows always-sampling error traces and slow traces while dropping fast successful ones. Requires a collector that buffers trace data until the trace is complete.
+\end{itemize}
+
+\subsection{OpenTelemetry}
+
+OpenTelemetry (OTel) is a Cloud Native Computing Foundation (CNCF) graduated project that provides a vendor-neutral, language-agnostic API, SDK, and wire protocol for all three observability signals.
+
+\paragraph{Architecture}
+
+\begin{itemize}
+    \item \textbf{OTel API}: defines the interfaces for creating spans, recording metrics, and emitting log records. Application code instruments against the API. The API has a no-op default implementation, so uninitialised SDKs impose zero overhead.
+    \item \textbf{OTel SDK}: implements the API with configurable exporters, samplers, and processors. The SDK is injected at startup; the application code does not need to change when switching from one observability backend to another.
+    \item \textbf{OTLP (OpenTelemetry Protocol)}: a protobuf-over-gRPC (or protobuf-over-HTTP) protocol for exporting telemetry from the SDK to a collector or backend. A single protocol replaces the proliferation of vendor-specific agents (Jaeger agent, Prometheus exporter, Datadog forwarder).
+    \item \textbf{OTel Collector}: an optional intermediary that receives OTLP telemetry, applies transformations (filtering, attribute addition/removal, tail-based sampling), and exports to one or more backends.
+\end{itemize}
+
+\paragraph{Exemplars}
+
+An exemplar links an aggregate metric observation to a specific trace. When a histogram records a high-latency sample, it can embed the trace\_id of the request that caused that sample. Observability platforms use exemplars to navigate from a metric anomaly (high p99 latency spike) directly to the individual trace that exemplifies it — collapsing the investigation from minutes to seconds.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: OpenTelemetry trace spanning CLI $\to$ API $\to$ Gateway $\to$ DB — root span at CLI, child spans for HTTP call, JWT validation, proxy session, query interception, DB round-trip; each service propagates traceparent]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{Example distributed trace across all zGate components: context propagates via W3C \texttt{traceparent} from the CLI through the REST API, gateway, and database round-trip.}
+    \label{fig:otel-trace}
+\end{figure}
+
+% ============================================================
+% 11. Terminal User Interface Programming
+% ============================================================
+\section{Terminal User Interface Programming}
+
+Command-line interfaces typically operate in a request-response mode: the user types a command, presses Enter, the program outputs a result, and the shell prompt returns. A Terminal User Interface (TUI) replaces this model with a persistent, stateful application that occupies the full terminal screen, processes individual keystrokes in real time, and continuously re-renders its display.
+
+\subsection{Terminal Modes}
+
+The Unix terminal subsystem operates in two principal input modes:
+
+\begin{itemize}
+    \item \textbf{Cooked mode} (canonical mode): the kernel's line discipline buffers input character-by-character and only delivers a line to the application when the user presses Enter. Backspace, Ctrl-C, and other special characters are processed by the kernel before the application sees them. This is the default mode for shell prompts and standard CLI tools.
+    \item \textbf{Raw mode}: the line discipline is disabled; every keystroke is delivered to the application immediately, without buffering or special-character processing. The application is responsible for handling all control characters (Ctrl-C, Ctrl-D, backspace). TUIs require raw mode to respond to navigation keys and real-time input.
+\end{itemize}
+
+Transitioning to raw mode is performed via the \texttt{tcsetattr()} system call (POSIX) or the Windows Console API. Applications must restore the original terminal mode on exit — failure to do so leaves the terminal in an unusable state.
+
+\subsection{ANSI Escape Sequences}
+
+ANSI escape sequences are byte sequences embedded in the output stream that instruct the terminal emulator to perform actions beyond printing characters. They are standardised in ECMA-48 (ISO/IEC 6429).
+
+Common sequences relevant to TUI rendering:
+\begin{itemize}
+    \item \textbf{Cursor positioning}: \texttt{ESC[row;colH} moves the cursor to a specific cell.
+    \item \textbf{Erase}: \texttt{ESC[2J} clears the entire screen; \texttt{ESC[K} erases from cursor to end of line.
+    \item \textbf{Select Graphic Rendition (SGR)}: \texttt{ESC[}$\langle$\textit{params}$\rangle$\texttt{m} sets text attributes:
+    \begin{itemize}
+        \item Bold: \texttt{ESC[1m}; reset: \texttt{ESC[0m}
+        \item 4-bit foreground colors: \texttt{ESC[30m} – \texttt{ESC[37m} (black through white)
+        \item 8-bit color: \texttt{ESC[38;5;}$n$\texttt{m} where $n \in [0, 255]$
+        \item 24-bit (true color) RGB: \texttt{ESC[38;2;}$R$\texttt{;}$G$\texttt{;}$B$\texttt{m}
+    \end{itemize}
+    \item \textbf{Alternate screen buffer}: \texttt{ESC[?1049h} switches to a secondary screen (preserving the user's original terminal content); \texttt{ESC[?1049l} restores it on exit. TUIs use the alternate buffer to avoid corrupting the shell session history.
+\end{itemize}
+
+\subsection{The Elm Architecture}
+
+The Elm Architecture is a software design pattern for interactive applications, originating in the Elm programming language (Czaplicki, 2012). It decomposes an application into three pure functions:
+
+\begin{itemize}
+    \item \textbf{Model}: an immutable value representing the complete application state at a given instant. Since the model is immutable, every state transition produces a new model value rather than mutating in place.
+    \item \textbf{Update}: a pure function \texttt{(Model, Msg) $\to$ (Model, Cmd)}. Given the current state and an incoming message (event), it produces a new state and an optional \emph{command} describing a side effect to perform. Update contains no I/O; it only transforms state.
+    \item \textbf{View}: a pure function \texttt{Model $\to$ Output}. Given the current state, produces the rendered output (HTML in Elm; a string of ANSI-annotated text in terminal frameworks). View contains no side effects.
+\end{itemize}
+
+\paragraph{Commands and the Runtime}
+
+A \emph{Cmd} is a declarative description of a side effect — an HTTP request, a timer, a file read, a system call. The \emph{runtime} (the framework's main loop) executes Cmds and feeds the results back into Update as new messages. Application code never performs I/O directly; it only describes what I/O it wants. This separation makes Update and View deterministic and testable: given any (Model, Msg) pair, Update always returns the same (Model, Cmd).
+
+\subsection{Bubble Tea Framework}
+
+Bubble Tea is a Go implementation of the Elm Architecture for terminal user interfaces, developed by Charm (2020). The core interface is \texttt{tea.Model}:
+
+\begin{verbatim}
+type Model interface {
+    Init()                   tea.Cmd
+    Update(tea.Msg) (Model, tea.Cmd)
+    View()                   string
+}
+\end{verbatim}
+
+\texttt{Init()} returns the initial command (e.g., a command to fetch data on startup). \texttt{Update()} processes incoming messages and returns the updated model and an optional command. \texttt{View()} renders the current model as a string, which Bubble Tea forwards to the terminal (applying a diff against the previous frame to minimise writes).
+
+\paragraph{Event Types}
+
+The runtime delivers terminal events as typed \texttt{tea.Msg} values:
+\begin{itemize}
+    \item \texttt{tea.KeyMsg}: a keypress; provides the key rune and key type (e.g., \texttt{tea.KeyEnter}, \texttt{tea.KeyCtrlC}, \texttt{tea.KeyUp}).
+    \item \texttt{tea.MouseMsg}: a mouse event (click, wheel, motion) if mouse reporting is enabled.
+    \item \texttt{tea.WindowSizeMsg}: fires when the terminal is resized; provides new width and height.
+    \item Custom message types: the application defines its own \texttt{Msg} values for asynchronous results (e.g., an HTTP response arriving via a \texttt{tea.Cmd}).
+\end{itemize}
+
+\paragraph{Component Composition}
+
+Bubble Tea encourages nesting \texttt{tea.Model} values: a top-level model holds sub-models for different UI panels (sidebar, main content, modal). The top-level \texttt{Update} delegates messages to the appropriate sub-model and embeds sub-model views within the top-level \texttt{View}. This compositional pattern scales to arbitrarily complex UIs without losing the deterministic, unidirectional data flow property.
+
+\subsection{Terminal Styling and Platform Credential Storage}
+
+\paragraph{Lipgloss}
+
+Lipgloss is a Go library for declarative terminal layout and styling. Styles are first-class values:
+
+\begin{verbatim}
+primaryStyle := lipgloss.NewStyle().
+    Bold(true).
+    Foreground(lipgloss.AdaptiveColor{Light: "236", Dark: "248"}).
+    Border(lipgloss.RoundedBorder()).
+    Padding(0, 1)
+\end{verbatim}
+
+\texttt{AdaptiveColor} selects different color values based on whether the terminal background is light or dark (detected via \texttt{lipgloss.HasDarkBackground()}). Layout is computed with \texttt{Width()}, \texttt{MaxWidth()}, \texttt{Height()}, and \texttt{Align()} methods, enabling responsive panels that adapt to window resize events.
+
+\paragraph{OS Keyring Integration}
+
+Storing JWT refresh tokens in plaintext files on disk exposes them to any process with file-system read access. Operating systems provide platform-native, encrypted credential stores that restrict access to the storing application:
+
+\begin{itemize}
+    \item \textbf{macOS}: Keychain Services (Security framework); credentials encrypted with the user's login password; access prompts presented by the OS.
+    \item \textbf{Windows}: Windows Credential Manager backed by the Data Protection API (DPAPI); credentials encrypted with a key derived from the user's Windows account password.
+    \item \textbf{Linux}: libsecret over D-Bus, implemented by GNOME Keyring or KDE Wallet; credentials encrypted in the user's session keyring, unlocked at login.
+\end{itemize}
+
+The \texttt{go-keyring} library provides a uniform API across all three platforms: \texttt{keyring.Set(service, username, password)} stores a credential; \texttt{keyring.Get(service, username)} retrieves it. The underlying platform storage handles encryption, access control, and OS-level user prompting transparently.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: Bubble Tea event loop — terminal events $\to$ tea.Msg $\to$ Update() returns (Model, Cmd) $\to$ runtime executes Cmd $\to$ result delivered as new Msg $\to$ View() renders updated state]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{Bubble Tea (Elm Architecture) event loop: the runtime delivers terminal events as messages, Update produces new state and commands, the runtime executes commands and feeds results back as messages.}
+    \label{fig:bubbletea-loop}
+\end{figure}
+
+% ============================================================
+% 12. Modern Frontend Technologies
+% ============================================================
+\section{Modern Frontend Technologies}
+
+\subsection{React Component Model and Rendering}
+
+React is a declarative JavaScript library for building user interfaces, released by Meta in 2013. Its programming model centres on the \emph{component}: a function or class that accepts a \emph{props} object and returns a description of UI (a \emph{React element}). Components compose hierarchically to form a component tree.
+
+\paragraph{Reconciliation and the Fiber Architecture}
+
+React maintains a \emph{virtual DOM}: an in-memory tree of React elements that mirrors the intended state of the actual browser DOM. When component state changes, React rerenders the affected subtree into a new virtual DOM tree, \emph{reconciles} (diffs) it against the previous tree, and applies the minimal set of mutations to the actual DOM. This batched, diffed update strategy avoids expensive full-page repaints.
+
+React 18 introduced the \emph{Fiber} architecture, replacing the prior synchronous recursive reconciler with an incremental, interruptible one. Fiber assigns each unit of work a priority level and allows the scheduler to pause and resume reconciliation, preventing long renders from blocking user interaction.
+
+\paragraph{Hooks}
+
+React Hooks, introduced in React 16.8, provide stateful logic in function components:
+\begin{itemize}
+    \item \texttt{useState}: associates local state with a component; returns a value and a setter; calling the setter schedules a re-render.
+    \item \texttt{useEffect}: declares a side effect (data fetching, subscription, DOM mutation) tied to the component lifecycle; the effect runs after render; the optional cleanup function runs before the next effect and on unmount.
+    \item \texttt{useRef}: holds a mutable value that persists across renders without causing re-renders; commonly used to hold DOM node references.
+    \item \texttt{useCallback} / \texttt{useMemo}: memoize a function or computed value; prevent unnecessary child re-renders when the parent re-renders with the same props.
+    \item \texttt{useContext}: reads a context value propagated through the component tree without prop drilling.
+\end{itemize}
+
+\paragraph{Concurrent Rendering (React 18+)}
+
+React 18's concurrent features allow the renderer to interrupt a low-priority render and process a high-priority update (e.g., user input) first:
+\begin{itemize}
+    \item \texttt{startTransition}: wraps a state update as non-urgent; React may defer it to keep the UI responsive.
+    \item \texttt{useDeferredValue}: returns a lagging version of a value; the UI updates with the current value while React concurrently prepares the deferred update.
+    \item \texttt{Suspense}: a component boundary that shows a fallback while a child component awaits asynchronous data; enables declarative loading states without imperative loading flags.
+\end{itemize}
+
+\subsection{Next.js App Router and React Server Components}
+
+Next.js is a React meta-framework that adds server-side rendering (SSR), static site generation (SSG), file-system routing, and API routes to React. Version 13 introduced the \emph{App Router}, which replaces the older Pages Router with a new model built on React Server Components.
+
+\paragraph{React Server Components}
+
+React Server Components (RSC) are components that render exclusively on the server. Unlike classical SSR (which renders the entire page to HTML and then rehydrates the full React tree on the client), RSC renders individual components on the server and streams a serialized \emph{React Server Component Payload} (RSC Payload) to the client. Key properties:
+
+\begin{itemize}
+    \item No JavaScript is shipped to the browser for server components themselves; only the rendered output is sent.
+    \item Server components can directly access server-side resources (databases, file systems, environment variables) without exposing those resources to the client.
+    \item Server components cannot use hooks or browser APIs; they are pure rendering functions over server-accessible data.
+    \item The RSC Payload is streamed, enabling incremental rendering: the browser can display already-rendered parts of the page while the server is still computing later parts.
+\end{itemize}
+
+\paragraph{Client Components}
+
+Client Components are marked with the \texttt{"use client"} directive at the top of the module. They:
+\begin{itemize}
+    \item Are bundled and shipped to the browser.
+    \item Can use hooks (\texttt{useState}, \texttt{useEffect}, \texttt{useRef}, etc.) and browser APIs.
+    \item Are hydrated in the browser: the server pre-renders them to HTML for fast initial paint; the browser then attaches React's event handlers to the existing DOM nodes.
+\end{itemize}
+
+The App Router enforces a clear boundary: server components are the default; the \texttt{"use client"} boundary marks where the server/client split occurs.
+
+\paragraph{Streaming and Suspense}
+
+Next.js App Router integrates React's \texttt{Suspense} with HTTP streaming (HTTP chunked transfer encoding). The server sends the initial HTML shell immediately, including fallback content for unresolved \texttt{Suspense} boundaries. As each component resolves (e.g., after a database query completes), the server streams the rendered HTML for that component, and React on the client patches it into place. This approach achieves a low Time to First Byte (TTFB) even for data-heavy pages.
+
+\subsection{Radix UI Primitive Component System}
+
+Radix UI is a collection of unstyled, accessible React component primitives. Unlike component libraries that bundle styling, Radix provides only behaviour and accessibility semantics, leaving all visual design to the consumer.
+
+\paragraph{WAI-ARIA Compliance}
+
+All Radix components implement the \emph{Web Accessibility Initiative — Accessible Rich Internet Applications} (WAI-ARIA) specification. ARIA defines roles (e.g., \texttt{dialog}, \texttt{listbox}, \texttt{combobox}), states (e.g., \texttt{aria-expanded}, \texttt{aria-checked}, \texttt{aria-disabled}), and properties (e.g., \texttt{aria-labelledby}) that expose the semantic meaning of UI elements to assistive technologies such as screen readers.
+
+\paragraph{Composition Pattern}
+
+Radix components follow a composition pattern where complex widgets are built from named sub-parts:
+\begin{verbatim}
+<Dialog.Root>
+  <Dialog.Trigger asChild><Button>Open</Button></Dialog.Trigger>
+  <Dialog.Portal>
+    <Dialog.Overlay />
+    <Dialog.Content>
+      <Dialog.Title>Title</Dialog.Title>
+      <Dialog.Description>Description</Dialog.Description>
+      <Dialog.Close />
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+\end{verbatim}
+
+Each sub-part renders a specific DOM element with appropriate ARIA attributes. The consumer can apply styles via \texttt{className}, CSS-in-JS, or Tailwind CSS utilities. The \texttt{asChild} prop merges Radix behaviour onto the consumer's element, avoiding extra DOM nodes.
+
+\paragraph{Focus Management}
+
+Radix manages focus automatically for overlay patterns: when a Dialog opens, focus moves to the first focusable element inside; a \emph{focus trap} prevents Tab from escaping the dialog while it is open; closing the dialog restores focus to the trigger element. This behaviour is required by WCAG 2.1 Success Criterion 2.1.2 (No Keyboard Trap) when adapted for modal dialogs.
+
+\subsection{Schema Validation with Zod}
+
+Zod is a TypeScript-first schema declaration and runtime validation library.
+
+\paragraph{Schema Definition}
+
+Schemas are built by composing primitive validators:
+\begin{verbatim}
+const DatabaseSchema = z.object({
+    name:     z.string().min(1).max(128),
+    host:     z.string().hostname(),
+    port:     z.number().int().min(1).max(65535),
+    protocol: z.enum(["mysql", "postgres", "mssql"]),
+    tls:      z.boolean().optional().default(true),
+});
+\end{verbatim}
+
+\paragraph{Type Inference}
+
+\texttt{z.infer<typeof DatabaseSchema>} derives a TypeScript type from the schema definition. The inferred type is the single source of truth: the schema validates runtime data; the inferred type annotates compile-time code. Changes to the schema automatically propagate to the type without manual synchronisation.
+
+\paragraph{Parsing}
+
+\texttt{schema.parse(data)} runs all validators; on failure it throws a \texttt{ZodError} containing a structured list of issues, each specifying the path to the invalid field, the expected type, and the received value. \texttt{schema.safeParse(data)} returns a discriminated union \texttt{\{success: true, data\} | \{success: false, error\}} without throwing.
+
+\paragraph{Integration with React Hook Form}
+
+React Hook Form manages form state with uncontrolled inputs, minimising re-renders. The \texttt{@hookform/resolvers/zod} integration converts \texttt{ZodError} into React Hook Form's field-error format, mapping each issue's path to the corresponding form field:
+\begin{verbatim}
+const { register, handleSubmit, formState: { errors } } =
+    useForm({ resolver: zodResolver(DatabaseSchema) });
+\end{verbatim}
+On submit, React Hook Form runs \texttt{schema.safeParse()} on the form values; if validation fails, \texttt{errors.port?.message} contains the human-readable error from the Zod validator for display to the user.
+
+\subsection{Session Management and Security in Single-Page Applications}
+
+\paragraph{HttpOnly Cookie Storage}
+
+JWTs stored in \texttt{localStorage} or \texttt{sessionStorage} are accessible via \texttt{document.cookie} / \texttt{localStorage} APIs from any JavaScript on the page — including injected scripts from XSS attacks. Storing the session token in an \texttt{HttpOnly} cookie prevents JavaScript from reading it at all; the browser attaches it automatically to same-origin requests, and the server reads it from the \texttt{Cookie} header.
+
+\paragraph{iron-session}
+
+\texttt{iron-session} is a server-side session library that seals a JSON session object into a cryptographically protected cookie. The cookie payload is AES-256-GCM encrypted with a server-held password; the server decrypts and verifies the session on each request. This approach avoids a server-side session store for most data while retaining the security properties of HttpOnly cookie storage.
+
+\paragraph{CSRF Protection}
+
+Cross-Site Request Forgery (CSRF) exploits the fact that browsers automatically attach cookies to cross-origin requests that match the cookie's domain. Two mitigations apply:
+\begin{itemize}
+    \item \textbf{SameSite=Strict}: the browser withholds the cookie from all cross-site requests, not just those that the user initiated by following a link from another site. This effectively eliminates CSRF without requiring synchroniser tokens.
+    \item \textbf{Origin header validation}: the API server verifies that the \texttt{Origin} header of the request matches the expected origin; requests without a matching Origin are rejected. This provides defence-in-depth when \texttt{SameSite} is unavailable or misconfigured.
+\end{itemize}
+
+\paragraph{Content Security Policy}
+
+Content Security Policy (CSP) is an HTTP response header that instructs the browser to restrict the sources from which it may load scripts, styles, images, and other resources. A strict policy such as \texttt{default-src 'self'} prevents the browser from executing injected inline scripts or loading scripts from untrusted external origins, significantly reducing the impact of an XSS vulnerability even if injection occurs.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\begin{minipage}{0.82\textwidth}\centering\vspace{1.8cm}
+    \textit{[Placeholder: Next.js App Router rendering model — Server Components render on the server and stream RSC Payload; Client Components are bundled and hydrated in the browser; Suspense boundaries stream progressive HTML]}
+    \vspace{1.8cm}\end{minipage}}
+    \caption{Next.js App Router rendering model: Server Components produce an RSC Payload streamed to the client; Client Components are hydrated in the browser; Suspense enables incremental streaming.}
+    \label{fig:nextjs-rendering}
+\end{figure}
