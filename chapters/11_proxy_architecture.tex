@@ -111,7 +111,7 @@ The zGate platform follows a modern multi-tier architecture with clear separatio
 \resizebox{0.9\textwidth}{!}{%
 \begin{tikzpicture}[
     node distance=2.5cm,
-    box/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1.5cm, text centered, draw=black, fill=blue!20, drop shadow, font=\small},
+    box/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1.5cm, align=center, draw=black, fill=blue!20, drop shadow, font=\small},
     arrow/.style={thick,->,>=stealth}
 ]
 
@@ -156,8 +156,8 @@ Next.js 16 employs a file-system based routing architecture where the folder str
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    folder/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.9cm, text centered, draw=black, fill=yellow!30, font=\small\bfseries},
-    file/.style={rectangle, minimum width=2.8cm, minimum height=0.7cm, text centered, draw=black, fill=green!20, font=\small},
+    folder/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.9cm, align=center, draw=black, fill=yellow!30, font=\small\bfseries},
+    file/.style={rectangle, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=green!20, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
@@ -262,8 +262,8 @@ React enables the Admin Panel to be built from modular, reusable components—an
 \centering
 \begin{tikzpicture}[
     node distance=2cm,
-    component/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=1cm, text centered, draw=black, fill=blue!20, font=\small\bfseries},
-    subcomp/.style={rectangle, rounded corners, minimum width=3cm, minimum height=0.8cm, text centered, draw=black, fill=green!20, font=\small},
+    component/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=1cm, align=center, draw=black, fill=blue!20, font=\small\bfseries},
+    subcomp/.style={rectangle, rounded corners, minimum width=3cm, minimum height=0.8cm, align=center, draw=black, fill=green!20, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
@@ -437,8 +437,8 @@ The following diagram illustrates the end-to-end authentication process from use
 \centering
 \begin{tikzpicture}[
     node distance=1.2cm,
-    action/.style={rectangle, rounded corners, minimum width=4.5cm, minimum height=0.75cm, text centered, draw=black, fill=blue!20, font=\small},
-    decision/.style={diamond, aspect=2, minimum width=2.8cm, minimum height=0.75cm, text centered, draw=black, fill=yellow!20, font=\small},
+    action/.style={rectangle, rounded corners, minimum width=4.5cm, minimum height=0.75cm, align=center, draw=black, fill=blue!20, font=\small},
+    decision/.style={diamond, aspect=2, minimum width=2.8cm, minimum height=0.75cm, align=center, draw=black, fill=yellow!20, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
@@ -483,7 +483,7 @@ The complete request-response cycle with automatic token refresh:
 \centering
 \begin{tikzpicture}[
     node distance=1.5cm,
-    box/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.9cm, text centered, draw=black, fill=blue!20, font=\footnotesize},
+    box/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.9cm, align=center, draw=black, fill=blue!20, font=\footnotesize},
     arrow/.style={thick,->,>=stealth}
 ]
 
@@ -583,21 +583,21 @@ Let's trace a complete request: \textbf{Fetching Users List}
 \centering
 \begin{tikzpicture}[
     node distance=1.2cm,
-    step/.style={rectangle, rounded corners, minimum width=5cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15, font=\small},
+    stepbox/.style={rectangle, rounded corners, minimum width=5cm, minimum height=0.8cm, align=center, draw=black, fill=blue!15, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
-\node (1) [step, fill=green!20] {1. User clicks "Users" in sidebar};
-\node (2) [step, below of=1] {2. UsersPage component mounts};
-\node (3) [step, below of=2] {3. useEffect() calls fetchUsers()};
-\node (4) [step, below of=3] {4. fetchUsers() calls authenticatedFetch()};
-\node (5) [step, below of=4] {5. Add Authorization header with token};
-\node (6) [step, below of=5] {6. Send GET request to backend};
-\node (7) [step, below of=6] {7. Backend validates JWT token};
-\node (8) [step, below of=7] {8. Backend queries database};
-\node (9) [step, below of=8] {9. Backend returns JSON response};
-\node (10) [step, below of=9] {10. Frontend updates state with data};
-\node (11) [step, below of=10] {11. React re-renders with user list};
+\node (1) [stepbox, fill=green!20] {1. User clicks "Users" in sidebar};
+\node (2) [stepbox, below of=1] {2. UsersPage component mounts};
+\node (3) [stepbox, below of=2] {3. useEffect() calls fetchUsers()};
+\node (4) [stepbox, below of=3] {4. fetchUsers() calls authenticatedFetch()};
+\node (5) [stepbox, below of=4] {5. Add Authorization header with token};
+\node (6) [stepbox, below of=5] {6. Send GET request to backend};
+\node (7) [stepbox, below of=6] {7. Backend validates JWT token};
+\node (8) [stepbox, below of=7] {8. Backend queries database};
+\node (9) [stepbox, below of=8] {9. Backend returns JSON response};
+\node (10) [stepbox, below of=9] {10. Frontend updates state with data};
+\node (11) [stepbox, below of=10] {11. React re-renders with user list};
 
 \draw[arrow] (1) -- (2);
 \draw[arrow] (2) -- (3);
@@ -811,8 +811,8 @@ In React, when state changes, the UI updates automatically to reflect the new da
 \centering
 \begin{tikzpicture}[
     node distance=2cm,
-    component/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!20, drop shadow},
-    data/.style={rectangle, minimum width=2cm, minimum height=0.7cm, text centered, draw=black, fill=green!20},
+    component/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=blue!20, drop shadow},
+    data/.style={rectangle, minimum width=2cm, minimum height=0.7cm, align=center, draw=black, fill=green!20},
     arrow/.style={thick,->,>=stealth}
 ]
 
@@ -857,21 +857,21 @@ Complete flow of the User Management feature from navigation to data display:
 \centering
 \begin{tikzpicture}[
     node distance=1cm,
-    step/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.7cm, text centered, draw=black, fill=blue!15, font=\small},
+    stepbox/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.7cm, align=center, draw=black, fill=blue!15, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
-\node (1) [step, fill=green!20] {Admin clicks "Users" in sidebar};
-\node (2) [step, below of=1] {Navigate to /admin/users};
-\node (3) [step, below of=2] {UsersPage component renders};
-\node (4) [step, below of=3] {useEffect triggers fetchUsers()};
-\node (5) [step, below of=4] {GET /api/admin/users with JWT};
-\node (6) [step, below of=5] {Backend validates token};
-\node (7) [step, below of=6] {Backend queries database};
-\node (8) [step, below of=7] {Returns JSON array of users};
-\node (9) [step, below of=8] {Frontend updates state};
-\node (10) [step, below of=9] {Table re-renders with data};
-\node (11) [step, below of=10] {Admin sees user list};
+\node (1) [stepbox, fill=green!20] {Admin clicks "Users" in sidebar};
+\node (2) [stepbox, below of=1] {Navigate to /admin/users};
+\node (3) [stepbox, below of=2] {UsersPage component renders};
+\node (4) [stepbox, below of=3] {useEffect triggers fetchUsers()};
+\node (5) [stepbox, below of=4] {GET /api/admin/users with JWT};
+\node (6) [stepbox, below of=5] {Backend validates token};
+\node (7) [stepbox, below of=6] {Backend queries database};
+\node (8) [stepbox, below of=7] {Returns JSON array of users};
+\node (9) [stepbox, below of=8] {Frontend updates state};
+\node (10) [stepbox, below of=9] {Table re-renders with data};
+\node (11) [stepbox, below of=10] {Admin sees user list};
 
 \draw[arrow] (1) -- (2);
 \draw[arrow] (2) -- (3);
@@ -894,22 +894,22 @@ Complete flow of the User Management feature from navigation to data display:
 \centering
 \begin{tikzpicture}[
     node distance=1cm,
-    step/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.7cm, text centered, draw=black, fill=blue!15, font=\small},
+    stepbox/.style={rectangle, rounded corners, minimum width=4cm, minimum height=0.7cm, align=center, draw=black, fill=blue!15, font=\small},
     arrow/.style={->,>=stealth,thick}
 ]
 
-\node (1) [step, fill=yellow!20] {Admin clicks "Add User" button};
-\node (2) [step, below of=1] {CreateUserDialog opens (modal)};
-\node (3) [step, below of=2] {Admin fills form (username, password)};
-\node (4) [step, below of=3] {Admin clicks "Create"};
-\node (5) [step, below of=4] {Form validation runs (Zod)};
-\node (6) [step, below of=5] {POST /api/admin/users with data};
-\node (7) [step, below of=6] {Backend validates JWT \& data};
-\node (8) [step, below of=7] {Backend creates user in database};
-\node (9) [step, below of=8] {Returns success response};
-\node (10) [step, below of=9] {Close dialog, show toast};
-\node (11) [step, below of=10] {Refresh user list};
-\node (12) [step, below of=11] {New user appears in table};
+\node (1) [stepbox, fill=yellow!20] {Admin clicks "Add User" button};
+\node (2) [stepbox, below of=1] {CreateUserDialog opens (modal)};
+\node (3) [stepbox, below of=2] {Admin fills form (username, password)};
+\node (4) [stepbox, below of=3] {Admin clicks "Create"};
+\node (5) [stepbox, below of=4] {Form validation runs (Zod)};
+\node (6) [stepbox, below of=5] {POST /api/admin/users with data};
+\node (7) [stepbox, below of=6] {Backend validates JWT \& data};
+\node (8) [stepbox, below of=7] {Backend creates user in database};
+\node (9) [stepbox, below of=8] {Returns success response};
+\node (10) [stepbox, below of=9] {Close dialog, show toast};
+\node (11) [stepbox, below of=10] {Refresh user list};
+\node (12) [stepbox, below of=11] {New user appears in table};
 
 \draw[arrow] (1) -- (2);
 \draw[arrow] (2) -- (3);
