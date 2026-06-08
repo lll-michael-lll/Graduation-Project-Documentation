@@ -59,7 +59,7 @@ The system architecture follows a clear separation of concerns:
     \item \textbf{API Layer:} RESTful API server handles authentication, authorization, and session management
     \item \textbf{Gateway Layer:} Protocol-aware proxy intercepts and controls database traffic
     \item \textbf{Data Layer:} Target databases are accessed through the gateway with enforced security policies
-    \item \textbf{Storage Layer:} SQLite database stores users, roles, permissions, and audit logs
+    \item \textbf{Storage Layer:} MySQL database stores users, roles, permissions, and audit logs
     \item \textbf{Policy Engine:} Safety templates, masking policies, and rate limits are evaluated per query
     \item \textbf{Compliance Layer:} Built-in regulatory frameworks automate policy configuration
     \item \textbf{AI Service Layer:} LLM integration powers column classification, anomaly detection, and the admin chat assistant
@@ -142,7 +142,7 @@ The Server component (\texttt{internal/gateway/server.go}) serves as the orchest
     \item \textbf{Resource Sharing:} Provides thread-safe access to shared handlers across multiple sessions
 \end{itemize}
 
-\textbf{Input:} Database configurations from SQLite store, TLS certificate paths\\
+\textbf{Input:} Database configurations from MySQL store, TLS certificate paths\\
 \textbf{Output:} Initialized handlers for each database type\\
 \textbf{Communication:} Provides handlers to Manager component via GetHandler() method
 
@@ -325,7 +325,7 @@ Figure~\ref{fig:config-flow} illustrates the system initialization and configura
 The configuration process ensures all components are properly initialized before accepting client connections:
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Store Initialization:} SQLite database is opened and schema migrations are applied
+    \item \textbf{Store Initialization:} MySQL database is opened and schema migrations are applied
     \item \textbf{PKI Initialization:} Internal CA is loaded or generated; revocation cache is populated
     \item \textbf{Gateway Server Creation:} All database type handlers are pre-initialized
     \item \textbf{TLS Configuration:} Certificates are loaded for end-to-end encryption
@@ -1677,7 +1677,7 @@ The API server provides a RESTful interface for all platform operations, impleme
 % ============================================================
 \subsection{Data Storage Architecture}
 
-The system utilises SQLite as the embedded database for configuration, credentials, and audit data. SQLite was chosen for its zero-configuration deployment, ACID compliance, and sufficient performance for the access patterns.
+The system utilises MySQL as the database for configuration, credentials, and audit data. MySQL was chosen for its ACID compliance, row-level locking support (required for the shared account concurrency model), and proven performance for the access patterns.
 
 \subsubsection{Database Schema}
 
@@ -1766,7 +1766,7 @@ The system implements defence-in-depth security with multiple layers of protecti
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{User Passwords:} bcrypt hashing with salt (cost factor 10)
-    \item \textbf{Database Credentials:} Stored encrypted in SQLite (AES-256-GCM), decrypted only in memory during connection
+    \item \textbf{Database Credentials:} Stored encrypted in MySQL (AES-256-GCM), decrypted only in memory during connection
     \item \textbf{JWT Tokens:} HS256 signing with secret key, 15-minute access token expiration
     \item \textbf{Refresh Tokens:} Cryptographically random, stored hashed, single-use (rotation on every refresh)
     \item \textbf{LLM API Keys:} AES-256-GCM encrypted at rest in \texttt{llm\_config}
@@ -1832,7 +1832,7 @@ The zGate platform is engineered with six foundational quality attributes that d
 \textbf{Scaling Characteristics:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Stateless API:} JWT-based authentication enables load balancer distribution without session affinity
-    \item \textbf{Shared Session State:} Centralized SQLite/PostgreSQL store allows multiple gateway instances
+    \item \textbf{Shared Session State:} Centralized MySQL store allows multiple gateway instances
     \item \textbf{Efficient Protocol Handling:} Go goroutines provide lightweight concurrency (10,000+ simultaneous connections)
     \item \textbf{Minimal Per-Connection Overhead:} $<$5 MB memory per active session
     \item \textbf{Dynamic Port Allocation:} Operating system manages ephemeral port pool
@@ -1863,7 +1863,7 @@ The zGate platform is engineered with six foundational quality attributes that d
     \item \textbf{LLM Provider:} New AI providers added by implementing the LLM client interface (currently: Ollama, OpenAI, Anthropic, Gemini, Azure)
     \item \textbf{Compliance Frameworks:} New regulatory frameworks registered by implementing the framework interface with predefined templates
     \item \textbf{Authentication Providers:} Extensible to LDAP, SAML via AuthService interface (OIDC already implemented)
-    \item \textbf{Storage Backends:} SQLite, PostgreSQL, MySQL supported via unified Store interface
+    \item \textbf{Storage Backends:} MySQL is the active storage backend; the unified Store interface is designed to support additional backends
     \item \textbf{Middleware Stack:} HTTP middleware chain for cross-cutting concerns
 \end{itemize}
 

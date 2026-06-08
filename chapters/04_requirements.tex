@@ -114,7 +114,7 @@ Requirements engineering forms the foundation of successful software development
 \subsection{NFR-6: Maintainability}
 \begin{itemize}
     \item Go best practices
-    \item Configuration persisted in SQLite (not YAML)
+    \item Configuration persisted in MySQL (not YAML)
     \item Structured logging
     \item Health check endpoints
 \end{itemize}
@@ -342,7 +342,7 @@ Requirements engineering forms the foundation of successful software development
     \item Server validates admin token
     \item Server tests connection to backend database
     \item Server adds database configuration
-    \item Server persists configuration to databases.yaml
+    \item Server persists configuration to the MySQL store
     \item Server returns success response
     \item WebUI displays updated database list
 \end{enumerate}
@@ -371,7 +371,7 @@ Requirements engineering forms the foundation of successful software development
     \item Server validates admin token
     \item Server hashes password using bcrypt
     \item Server adds user configuration with assigned roles
-    \item Server persists configuration to users.yaml
+    \item Server persists configuration to the MySQL store
     \item Server returns success response
     \item WebUI displays updated user list
 \end{enumerate}
@@ -399,7 +399,7 @@ Requirements engineering forms the foundation of successful software development
     \item WebUI sends create role request to zGate Server API
     \item Server validates admin token
     \item Server adds role configuration
-    \item Server persists configuration to roles.yaml
+    \item Server persists configuration to the MySQL store
     \item Server returns success response
     \item WebUI displays updated role list
 \end{enumerate}
@@ -759,7 +759,7 @@ users can access additional data sources
     \item I can provide: name, type (MSSQL/MySQL), backend address, admin credentials
     \item I can specify available permission levels for the database
     \item Connection is tested before saving
-    \item Configuration is persisted to databases.yaml
+    \item Configuration is persisted to the MySQL store
     \item Database appears in user lists immediately
     \item Clear error shown if connection test fails
 \end{itemize}

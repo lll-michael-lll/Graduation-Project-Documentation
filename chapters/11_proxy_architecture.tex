@@ -119,7 +119,7 @@ The zGate platform follows a modern multi-tier architecture with clear separatio
 \node (browser) [box, fill=cyan!20] {Browser\\(React UI)};
 \node (nextjs) [box, right of=browser, xshift=2.5cm, fill=green!20] {Next.js\\(Port 3000)};
 \node (backend) [box, right of=nextjs, xshift=2.5cm, fill=orange!20] {Go Backend\\(Port 8080)};
-\node (db) [box, right of=backend, xshift=2.5cm, fill=red!20] {SQLite\\Database};
+\node (db) [box, right of=backend, xshift=2.5cm, fill=red!20] {MySQL\\Database};
 
 % Arrows
 \draw[arrow, <->] (browser) -- node[above, font=\tiny] {React State} (nextjs);
@@ -151,7 +151,7 @@ The architecture demonstrates clear data flow from user interface through applic
 
 \subsubsection{Framework Architecture: Next.js App Router}
 
-Next.js 16 employs a file-system based routing architecture where the folder structure directly maps to URL routes. This approach provides intuitive navigation and automatic code splitting for optimal performance.
+Next.js 15 employs a file-system based routing architecture where the folder structure directly maps to URL routes. This approach provides intuitive navigation and automatic code splitting for optimal performance.
 
 \begin{figure}[H]
 \centering
@@ -497,10 +497,10 @@ The complete request-response cycle with automatic token refresh:
 \node (backend) [box, below of=nextjs, fill=orange!20] {zGate Backend (Port 8080)\\Verify JWT Token};
 
 % Row 4: Database query
-\node (db) [box, below of=backend, fill=red!20] {SQLite DB\\Query User Data};
+\node (db) [box, below of=backend, fill=red!20] {MySQL DB\\Query User Data};
 
 % Row 5: Response path
-\node (dbresponse) [box, below of=db, fill=red!20] {SQLite DB\\Return User Data};
+\node (dbresponse) [box, below of=db, fill=red!20] {MySQL DB\\Return User Data};
 
 % Row 6: Backend formats response
 \node (backendresponse) [box, below of=dbresponse, fill=orange!20] {zGate Backend\\Format JSON Response};
@@ -821,7 +821,7 @@ In React, when state changes, the UI updates automatically to reflect the new da
 \node (state) [data, below of=page, yshift=-0.5cm] {State:\\users = []};
 \node (api) [component, below of=state, yshift=-0.8cm] {API Call:\\fetchUsers()};
 \node (backend) [component, below of=api, yshift=-0.5cm] {Backend\\/api/admin/users};
-\node (db) [component, below of=backend, yshift=-0.5cm] {Database\\(SQLite)};
+\node (db) [component, below of=backend, yshift=-0.5cm] {Database\\(MySQL)};
 
 % Right side - update flow
 \node (update) [data, right of=state, xshift=5cm] {setState(newData)};

@@ -133,13 +133,13 @@ The server exposes comprehensive RESTful APIs for platform management:
 
 \subsubsection{Data Store}
 
-The backend utilizes SQLite for persistent storage with the following security characteristics:
+The backend utilizes MySQL for persistent storage with the following security characteristics:
 
 \begin{itemize}
     \item \textbf{AES-256-GCM Encryption:} All sensitive data (database credentials) encrypted at rest
     \item \textbf{bcrypt Password Hashing:} User passwords stored as one-way hashes
     \item \textbf{Token Cleanup:} Background task automatically removes expired tokens
-    \item \textbf{Single-File Database:} Entire metadata store in \texttt{data/zgate.db}
+    \item \textbf{Automatic Migrations:} Schema migrations applied on startup via the built-in migration system
 \end{itemize}
 
 %-----------------------------------------------------------
@@ -373,11 +373,11 @@ UI Components & Radix UI + Tailwind & Accessible components, rapid styling \\
 
 \subsection{Data Storage}
 
-\textbf{Decision:} SQLite with AES-256-GCM encryption for sensitive data.
+\textbf{Decision:} MySQL with AES-256-GCM encryption for sensitive data.
 
 \textbf{Rationale:}
 \begin{itemize}
-    \item SQLite: Zero-configuration, embedded, sufficient for metadata workload
+    \item MySQL: Row-level locking (InnoDB) required for safe shared-account concurrency model
     \item AES-256-GCM: Industry-standard authenticated encryption
     \item Encryption key from environment variable (not in codebase)
     \item User passwords: bcrypt (one-way hash, not reversible)
