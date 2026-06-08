@@ -55,6 +55,22 @@ The Admin Panel WebUI is designed around three core principles:
 \end{itemize}
 \end{mdframed}
 
+\subsubsection{Control Plane vs Data Plane Separation}
+Crucially, the WebUI itself possesses no inherent database privileges and never executes SQL directly against target databases. It operates purely as a configuration hub, translating human intent into zero-trust configuration states synced to the core zGate Go proxy. By isolating the control plane from the data plane, the architecture ensures that even a catastrophic compromise of the WebUI would not immediately grant an attacker direct data exfiltration capabilities.
+
+\subsubsection{Administrative Domains and Routing}
+The application is structured into tightly bounded administrative domains mapped to specific Next.js App Router paths:
+\begin{itemize}
+    \item \textbf{Identity \& Access (\texttt{app/admin/users}, \texttt{app/admin/access-control}):} Maps human SSO identities to database permissions and policy templates.
+    \item \textbf{Database Fleet (\texttt{app/admin/databases}):} Manages backend targets and their TLS validation requirements.
+    \item \textbf{Audit \& Compliance (\texttt{app/admin/activity-audit}, \texttt{app/admin/sessions}):} Ingests real-time NDJSON logs from the Go backend for observability.
+    \item \textbf{Automation (\texttt{app/admin/service-accounts}):} Provisions machine-to-machine identities via Vault AppRole integrations.
+\end{itemize}
+
+\subsubsection{Operator Experience Flow}
+When a new developer joins, a security administrator does not manually provision a database user. The admin opens the WebUI, navigates to User Provisioning, and assigns the developer a pre-defined role (e.g., "ReadOnly-Production"). The WebUI delegates the actual database account creation to the zGate core, abstracting the complexity and securely isolating the administrator from raw credentials.
+
+
 \subsection{Technology Stack and Architectural Foundation}
 
 The zGate Admin Panel leverages a carefully curated technology stack optimized for modern enterprise web application development. Each technology was selected based on rigorous market analysis, community support, and alignment with industry best practices.
@@ -211,6 +227,35 @@ Next.js 15 employs a file-system based routing architecture where the folder str
     \item \textbf{Server Components:} Pages can fetch data on the server before rendering, improving initial page load performance
     \item \textbf{Built-in API Proxying:} Next.js rewrites frontend API calls to backend server, solving CORS (Cross-Origin Resource Sharing) issues
 \end{itemize}
+
+\subsubsection{Runtime Zones and Trust Boundaries}
+The architecture is divided into three primary zones. The \textbf{Client Zone} (React 19 / Radix UI) handles rendering and client-side validation. The \textbf{DMZ} (Next.js server-side) handles session decryption, CSP generation, and proxying. Finally, the \textbf{Internal Zone} contains the core ZGate Go backend, Keycloak, and HashiCorp Vault. The architecture forces all traffic through the DMZ; the browser is structurally incapable of contacting the Go backend directly.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/ui_new_content/system_architecture_diagram_ui.png}
+    \caption{ZGate WebUI System Architecture and Trust Boundaries}
+\end{figure}
+
+\subsubsection{Core Server-Side Components}
+\begin{itemize}
+    \item \textbf{Security Middleware (\texttt{middleware.ts}):} Runs on every incoming request. It generates a cryptographic 16-byte nonce for CSP and applies strict headers.
+    \item \textbf{Universal Proxy (\texttt{app/api/[...path]/route.ts}):} The chokepoint for all data leaving the DMZ. It translates browser cookie sessions into HTTP Bearer tokens and scrubs caching headers.
+    \item \textbf{Startup Telemetry \& Vault (\texttt{instrumentation.ts}):} Runs exactly once when the Node server boots to initialize external dependencies.
+\end{itemize}
+
+\subsubsection{Startup Telemetry and Secrets Initialization}
+At boot, \texttt{instrumentation.ts} calls \texttt{loadVaultSecrets()} and configures OpenTelemetry (\texttt{OTLPLogExporter}). This sequence is designed to fail closed: if Vault is unreachable or access is denied, it deliberately crashes the Node process to prevent the server from accepting traffic in an unconfigured, potentially insecure state.
+
+\subsubsection{Next.js Standalone and React Architecture}
+Next.js 15 was selected for its robust App Router and its \texttt{standalone} output mode, which enables highly optimized, single-image Docker deployments without requiring a bloated \texttt{node\_modules} directory at runtime. The frontend utilizes React 19 alongside Radix UI for unstyled, accessibility-first primitives (dialogs, select menus). Tailwind CSS 4 enforces a consistent utility-based design language without the footprint of traditional CSS frameworks.
+
+\subsubsection{Secure Session State via Iron-Session}
+The application uses \texttt{iron-session} instead of traditional JWTs in \texttt{localStorage}. Session state is stored in an AES-256 encrypted, \texttt{HttpOnly} cookie. The tradeoff requires slightly more server-side processing to decrypt the cookie on every proxy request, but it completely eliminates the risk of malicious client-side JavaScript exfiltrating the admin session.
+
+\subsubsection{Vault AppRole and OpenTelemetry Integration}
+HashiCorp Vault handles dynamic secret provisioning. Using short-lived AppRole credentials prevents the persistence of long-lived static secrets in configuration files. Concurrently, \texttt{@opentelemetry/*} packages standardize observability, ensuring the WebUI's traces seamlessly integrate with the Go backend's spans in Jaeger for holistic request tracking.
+
 
 \subsubsection{Next.js Configuration and Proxy Setup}
 
@@ -525,6 +570,25 @@ The complete request-response cycle with automatic token refresh:
 \end{tikzpicture}
 \caption{Complete Request-Response Cycle with Authentication}
 \end{figure}
+
+\subsubsection{Session Lifecycle from Login to Logout}
+The login flow begins with an OIDC/PKCE exchange against Keycloak, returning Access, Refresh, and ID Tokens. This session data is wrapped by \texttt{iron-session} and encrypted using \texttt{SESSION\_SECRET}. The cookie's \texttt{maxAge} is strictly aligned to the 8-hour Keycloak refresh token lifespan. Crucially, the Access Token is stored in a module-scoped variable (\texttt{\_accessToken}) on the server; it never touches \texttt{localStorage} or \texttt{sessionStorage}.
+
+\subsubsection{Token Storage, Refreshing, and Race Conditions}
+When the Universal Proxy encounters a \texttt{401 Unauthorized} from the Go backend, it calls \texttt{refreshAccessToken()} (via \texttt{/api/auth/refresh}). If multiple parallel API requests trigger a \texttt{401} simultaneously, a race condition could invalidate the new refresh token (triggering Keycloak's Refresh Token Rotation protections). To mitigate this, \texttt{lib/auth.ts} uses a singleton \texttt{\_refreshPromise} ensuring only one refresh sequence occurs, with all pending requests awaiting its resolution before retrying.
+
+\subsubsection{Device Fingerprinting and Replay Resistance}
+\texttt{initFingerprint()} (via FingerprintJS) generates a stable \texttt{\_visitorId} on the client. The proxy injects this into the \texttt{X-Device-Fingerprint} header. The backend validates that the token being used was issued to the device making the request, effectively neutralizing replay attacks using stolen tokens.
+
+\subsubsection{Operator Experience During Expiry and Revocation}
+If a token expires gracefully in the background, the proxy negotiates a new token with Keycloak upon the next interaction, and the UI loads seamlessly without requiring a re-login. Conversely, if \texttt{refreshAccessToken()} fails (e.g., the refresh token was explicitly revoked by an admin), \texttt{dispatchSessionExpired()} fires the custom \texttt{zgate:session-expired} event. The root React layout catches this, purges local state, displays an expiration modal, and hard-redirects to \texttt{/login}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/ui_new_content/secure_session_lifecycle_diagram_ui.png}
+    \caption{Secure Session Lifecycle and Refresh Recovery Flow}
+\end{figure}
+
 
 \subsection{API Endpoints and Usage}
 
@@ -926,6 +990,215 @@ Complete flow of the User Management feature from navigation to data display:
 \end{tikzpicture}
 \caption{Create User Flow}
 \end{figure}
+
+
+\subsection{Security Considerations and Hardening}
+Security is built into the WebUI at multiple distinct layers. It hardens the network response, prevents caching of sensitive data, enforces human interaction for critical endpoints, and fails securely if secrets are unavailable.
+
+\subsubsection{Cryptographic Nonces and Strict CSP}
+The \texttt{middleware.ts} file generates a 16-byte cryptographically secure nonce per request. The \texttt{Content-Security-Policy} header mandates \texttt{script-src 'nonce-... 'strict-dynamic'}, while \texttt{unsafe-inline} is explicitly removed in production environments. Strict-Transport-Security (HSTS) is also enforced to prevent protocol downgrade attacks.
+
+\subsubsection{Caching Prevention on Sensitive Routes}
+To ensure that neither the browser nor intermediate CDNs cache sensitive payloads, the proxy utilizes the \texttt{isCredentialBearingPath()} function. It evaluates every requested path against patterns like \texttt{/service-accounts}, \texttt{/db-accounts}, or \texttt{/keys}. If a match is found, the proxy explicitly appends \texttt{Cache-Control: no-store} to the response headers.
+
+\subsubsection{Vault Fail-Closed Boot Protocol}
+The Node server uses a short-lived \texttt{VAULT\_ROLE\_ID} and \texttt{VAULT\_SECRET\_ID} to authenticate via AppRole and pulls required secrets from \texttt{secret/data/zgate/webui}. If \texttt{loadVaultSecrets()} encounters a network timeout or 403 Forbidden, it executes a hard \texttt{throw err}. The container crashes immediately, honoring a fail-closed security posture rather than operating in a degraded state.
+
+\subsubsection{Human Verification and Anti-Brute Force}
+To prevent credential stuffing or automated brute force, login and other highly sensitive actions are protected by Proof-of-Work (PoW) challenges via \texttt{lib/altcha-server.ts}. Secondary verification layers (\texttt{lib/puzzle-server.ts}) ensure that operations are initiated by humans.
+
+\subsection{Dashboard Overview}
+The Dashboard is the operational nerve center. It provides security operators with an immediate, heads-up display of infrastructure health, active proxy sessions, and unhandled anomaly alerts, allowing them to assess system integrity at a glance.
+
+\subsubsection{Aggregated System Metrics and Parallel Fetching}
+The dashboard utilizes \texttt{Promise.allSettled()} to fetch six discrete endpoints simultaneously (\texttt{/api/admin/system-status}, \texttt{/users}, \texttt{/databases}, \texttt{/active-logins}, \texttt{/anomaly-stats}, \texttt{/roles}). If one backend microservice (e.g., the ML anomaly engine) is down, the rest of the dashboard continues to render gracefully.
+
+\subsubsection{Polling Intervals and Health Indicators}
+Live system health is maintained by \texttt{fetchSystemStatus()}, wrapped in a \texttt{setInterval} firing every 30 seconds. The \texttt{SYSTEM\_STATUS\_GROUPS} constant clusters raw microservices into logical groups (e.g., "Observability", "Core Routing"), rendering a unified colored status dot per group.
+
+\subsubsection{Event-Driven Degraded Mode Behavior}
+To provide immediate feedback without waiting for the 30-second poll tick, the dashboard listens for \texttt{llm\_status\_changed} window events. If an AI provider connection fails during a policy test elsewhere in the UI, the dashboard instantly updates the AI engine's health indicator to reflect the degraded state.
+
+\subsection{Database Management and TLS Enforcement}
+This module is where administrators define the target databases the proxy protects. It bridges the gap between raw network coordinates and internal ZGate metadata, enforcing strict TLS requirements before traffic is allowed to flow.
+
+Administrators configure host, port, and authentication credentials. Crucially, the system enforces five explicit TLS modes (\texttt{default}, \texttt{disable}, \texttt{require}, \texttt{verify-ca}, \texttt{verify-full}). The constant \texttt{TLS\_MODES\_WITH\_CERTS} triggers the dynamic rendering of certificate upload components (CA Root, Client Cert, Client Key) when a strict verification mode is selected.
+
+\subsubsection{Live Connectivity Verification}
+Before issuing a database creation or update request to the backend, the UI fires a test payload. This verifies network reachability and authentication validity from the proxy to the target database in real-time.
+
+\subsubsection{Partial Success and Offline Grace Periods}
+If the API successfully saves the database configuration but the live connection test fails (e.g., the target is temporarily firewalled), the UI catches the specific warning payload. It renders the database row with an "Offline" badge but does \textit{not} roll back the creation. This partial success state accommodates complex enterprise change-management workflows where ZGate configuration might precede firewall hole-punching. Deletion attempts also gracefully handle dependency conflicts (\texttt{DEPENDENCY\_CONFLICT}) if active shared accounts are assigned.
+
+\subsection{User and DB Account Provisioning}
+This section governs the mapping of human identities to database credentials. Instead of handing out raw passwords, administrators use this interface to authorize users and provision dynamically managed accounts on the target databases.
+
+\subsubsection{Identity Validation and Target Syncing}
+The UI enforces a stringent client-side regex for user passwords (requiring upper, lower, digit, and special characters) before payload submission, offloading validation compute from the backend. The UI abstracts internal UUIDs; administrators select human-readable labels for database access, which the frontend's submit handler translates into the nested relational payload expected by \texttt{/api/admin/users}.
+
+Creating a database account calls \texttt{/api/admin/users/[username]/db-accounts}. Similar to Database Management, if the WebUI saves the account mapping but the backend fails to \texttt{CREATE USER} on the target database (due to it being offline), the UI renders a "partial success" toast. The backend places the account in a \texttt{pending\_sync} state, visually flagged in the UI, indicating that the proxy will retry the synchronization via its eventual consistency model.
+
+\subsubsection{Live Presence Polling}
+To provide situational awareness during provisioning and troubleshooting, \texttt{fetchUserStatuses()} hits \texttt{/api/admin/users/statuses} every 30 seconds to render ONLINE, OFFLINE, or IDLE presence badges for all registered users.
+
+\subsection{Shared DB Account Pools}
+Shared DB Accounts solve the problem of connection limits and team-wide generic access. Instead of generating fifty individual database users for fifty developers, the admin provisions a pool of shared credentials that developers multiplex through via the proxy.
+
+\subsubsection{Role-Based Multiplexing}
+Unlike personal accounts, \texttt{handleSharedCreate()} binds the shared account to a \texttt{Role} ID, not a \texttt{User} ID. This maintains strict RBAC compliance. If a user is stripped of a specific role, their access to the shared pool associated with that role is implicitly and instantly revoked, without requiring backend DB account deletion.
+
+\subsubsection{Concurrency Tracking and Exhaustion Warnings}
+The \texttt{SharedAccount} interface exposes \texttt{currently\_in\_use} and \texttt{max\_concurrent\_users} metrics from the backend. The UI computes this ratio and renders a live utilization progress bar. If usage exceeds 80\%, the bar turns amber; at 100\%, it turns red, signaling impending connection exhaustion before developers experience failed queries.
+
+\subsection{Service Accounts and Vault Rotation}
+Service Accounts provide programmatic access for CI/CD pipelines and external applications. Because these accounts lack human interactivity (no MFA or SSO), their credentials must be rigorously managed, rotated, and monitored.
+
+\subsubsection{Dual Authenticators: Bearer Tokens and mTLS}
+A service account can authenticate via a static Bearer Token (\texttt{client\_secret}) or a strictly validated mTLS Certificate (\texttt{IssuedCertificate}). Both authenticators can be active simultaneously and rotated independently via \texttt{rotateServiceAccount\allowbreak Secret()} and \texttt{rotateServiceAccount\allowbreak Certificate()}.
+
+\subsubsection{Zero-Knowledge Secret Reveal}
+When a credential is rotated, the backend generates the new cryptographic material and returns the plaintext exactly once. The UI captures this and renders it in a blocking \texttt{SecretRevealModal}. Once the admin clicks "I have copied this" and closes the modal, the state is purged from React memory. Subsequent API fetches only return \texttt{has\_secret: true}, enforcing the zero-knowledge principle.
+
+\subsubsection{Expiry Computation and Proactive Warnings}
+\texttt{lib/service-accounts.ts} computes \texttt{isTokenExpiringSoon} against the JWT \texttt{exp} claim or X.509 \texttt{NotAfter} date. If the remaining validity is under 7 days, it forces a warning badge onto the row, prompting administrators to proactively rotate credentials before automated pipelines break.
+
+\subsection{Access Control, Roles, and Masking Policies}
+This module is the heart of the WebUI's authorization matrix. Administrators use it to construct complex Roles that weave together coarse-grained database access levels (read vs. write) with fine-grained query safety rules, column masking, and AI-driven PII redaction.
+
+\subsubsection{Structural Complexity of Role Objects}
+The \texttt{Role} interface is a highly nested object encompassing arrays for permissions (mapping \texttt{database\_id} to \texttt{level}), safety templates, standard masking templates, AI masking templates, and row-level filtering rules. Rather than containing raw rules, roles reference Template IDs. This indirection allows a Policy Admin to update a template once and instantly propagate the change to all Roles inheriting it.
+
+\subsubsection{Visualizing the Permission Matrix}
+To prevent information overload when viewing complex roles, the UI uses an expandable data table. The collapsed view shows the Role name and assigned user count. Expanding the row triggers a specialized sub-component that visually parses the policy arrays, grouping the assigned safety and masking rules cleanly by their target database.
+
+\subsubsection{Dependency Conflict Safeguards}
+\texttt{handleDelete()} verifies the backend's response before removing a role. If deleting the role would leave an active user with absolutely no assigned roles, the API returns a \texttt{DEPENDENCY\_CONFLICT} code. The UI intercepts this and blocks the deletion with an explicit explanation.
+
+\subsection{Query Policies}
+Query Policies define the precise analytical rules the ZGate proxy executes when evaluating a developer's SQL query. This module provides administrators with tools to define what is allowed, what is masked, and what requires manual approval.
+
+\subsubsection{Policy Categories and Enforcement Managers}
+The page is organized into distinct managers via a tabbed interface:
+\begin{itemize}
+    \item \textbf{\texttt{SafetyTemplatesManager}:} Allow, deny, or warn rules based on SQL patterns (e.g., block \texttt{DROP} statements).
+    \item \textbf{\texttt{RateLimitsManager}:} Quotas for query frequency per user or role.
+    \item \textbf{\texttt{MaskingPoliciesManager}:} Column-level regex or static PII masking transformations.
+    \item \textbf{\texttt{RowMaskingManager}:} Row-level \texttt{WHERE} clause injection rules.
+\end{itemize}
+
+\subsubsection{Visual DSL Editor and Live Compilation}
+Administrators use UI dropdowns to construct rules visually. The \texttt{buildDSL()} function compiles this visual state into a specialized AST/DSL string representation expected by the backend parser. By offloading the translation of visual rules to DSL syntax onto the browser (\texttt{lib/dsl.ts}), the backend API remains strictly a validation and storage engine. The UI features a live-updating preview block showing the compiled output.
+
+\subsubsection{Managed vs. Custom Templates in Practice}
+The \texttt{PolicyTemplate} interface includes an \texttt{is\_managed} boolean. Templates originating from a regulatory compliance framework are flagged as true. The UI renders all form inputs for these templates as \texttt{disabled} and removes the Save/Delete buttons, enforcing a read-only view. Custom templates (\texttt{is\_managed: false}) support full CRUD operations.
+
+\subsection{Compliance Templates}
+Compliance Templates allow administrators to apply massive, pre-configured bundles of security rules (e.g., HIPAA, GDPR, PCI-DSS) to entire databases with a single click, establishing an immediate regulatory baseline.
+
+\subsubsection{Regulatory Framework Baseline Application}
+These templates combine both safety rules and AI masking directives. Applying a framework guarantees that standard PII/PHI patterns recognized by the backend are automatically redacted or flagged, without requiring the administrator to build the rules manually from scratch.
+
+\subsubsection{Enforcing the Single-Framework Constraint}
+The system architecture enforces a strict one-framework-per-database rule to prevent unpredictable proxy behavior. If multiple frameworks applied competing transformations to the same SQL AST node (e.g., GDPR says mask email, PCI says drop it), the proxy would fail to resolve intent. 
+
+\subsubsection{Conflict Resolution Workflows}
+When an admin applies a framework, the UI calls \texttt{checkConflicts()} against \texttt{/api/\allowbreak admin/\allowbreak compliance/\allowbreak framework-assignments}. If the target database is already governed by another framework, the API returns \texttt{409 CONFLICT}. The UI intercepts this, presents an \texttt{<AlertDialog>} detailing the conflict, and if overridden, instructs the backend to detach the old framework and attach the new one atomically.
+
+\subsection{Session Monitoring and Revocation}
+This module acts as the "kill switch" console, providing a real-time list of every active connection passing through the proxy and empowering administrators to terminate compromised sessions.
+
+\subsubsection{Live Auditing of Proxied Connections}
+\texttt{fetchSessions()} retrieves an array of \texttt{ActiveLogin} objects. The UI maps these to a grid showing the \texttt{username}, \texttt{session\_id}, originating \texttt{ip\_address}, \texttt{user\_agent}, and a localized uptime duration. This provides immediate situational awareness of who is connected to the proxy at any given moment.
+
+\subsubsection{Instantaneous Remote Revocation Execution}
+\texttt{handleRevokeConfirm(sessionId)} sends an explicit \texttt{DELETE} request to \texttt{/api/\allowbreak admin/\allowbreak active-logins/\allowbreak [sessionId]}. The ZGate backend immediately drops the TCP connection to the target database, destroys the session token, and returns a \texttt{200 OK}. The WebUI instantly splices that session out of the React state array, providing the administrator with immediate visual confirmation of the termination.
+
+\subsection{Real-time Activity Audit and Historical Logs}
+The Activity Audit module provides the forensic trail required for zero-trust compliance. It ingests high-volume query logs emitted by the Go proxy and presents them in an actionable, filterable interface.
+
+\subsubsection{Ingesting and Parsing NDJSON Streams}
+The Go backend writes high-throughput NDJSON logs. The Next.js API proxy handles paginated requests for these logs, translating the raw JSON lines into structured \texttt{SessionLog} and \texttt{ProxySession} interfaces for the React frontend to consume efficiently.
+
+\subsubsection{Two-Tier Forensic Drill-Down}
+Rendering millions of raw queries in a single table would degrade browser performance. Instead, Tier 1 lists macro \texttt{ProxySessions} (e.g., "Alice connected to Postgres for 2 hours"). Clicking a session routes the user to Tier 2: the granular \texttt{SessionLog} view containing the exact SQL query text, execution duration in milliseconds, and rows affected for that specific connection.
+
+\subsubsection{Machine Learning Anomaly Highlighting}
+The Go backend's ML engine attaches a \texttt{risk\_score} to anomalous queries. The UI maps any score above a critical threshold to a high-contrast red badge (\texttt{text-red-600 bg-red-100}). This instantly draws the auditor's eye to potential data exfiltration attempts amidst thousands of routine logs.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/ui_new_content/audit_log_pipeline_diagram_ui.png}
+    \caption{Audit Log Ingestion and ML Tagging Pipeline}
+\end{figure}
+
+\subsection{Pending Reviews and Approval Workflows}
+When a query policy is set to "Warn", the proxy intercepts the SQL statement, suspends execution, and places it in a holding queue. This module allows administrators to manually review the suspended query and determine its fate.
+
+\subsubsection{Intercepting Warn-Level Safety Rules}
+The view displays \texttt{WarnedQuery} records, showing the submitting username, target database, triggered rule name, custom warning message, and the full, expandable SQL query text for manual forensic analysis.
+
+\subsubsection{Aggressive Polling and Socket Timeouts}
+Because a developer's local DB client is actively hanging and waiting for a response, the UI utilizes \texttt{setInterval} to poll \texttt{/api/admin/warned-queries?status=pending} aggressively every 3 seconds. The proxy enforces a hard timeout to prevent indefinite socket exhaustion; the UI mirrors this via the \texttt{WARN\_TIMEOUT\_MS} constant (5 minutes). A \texttt{TimeRemaining} custom hook renders a live countdown, turning red when under 60 seconds remain.
+
+\subsubsection{Operator Resolution Mechanics}
+The administrator calls \texttt{resolve('approve')} or \texttt{resolve('deny')}, issuing a \texttt{POST} to the backend. The backend releases the proxy lock, either executing or dropping the query, and the UI splices the item out of the queue.
+
+\subsection{AI and LLM Settings}
+This section configures the LLM backend utilized by the AI auto-masking engine (which detects PII contextually in result sets) and the ZGate operational chatbot.
+
+\subsubsection{Supported Providers and Base Configurations}
+The UI manages an \texttt{LLMConfig} interface supporting local deployments (Ollama) and cloud providers (OpenAI, Google Gemini, Anthropic Claude, Azure OpenAI). It allows administrators to configure custom base URLs and specific model identifiers.
+
+\subsubsection{Write-Only API Key Protections}
+To prevent lateral movement by malicious actors, the backend never returns the plaintext API key to the client. The API responds with \texttt{has\_api\_key: true}. The UI input field remains visually empty during edits, serving solely as a write-only channel. 
+
+\subsubsection{Test-Before-Save Verification Checks}
+\texttt{handleSave()} intercepts form submission and first issues a \texttt{POST /api/\allowbreak admin/\allowbreak llm-test} with the credentials. If the provider returns a successful completion, the UI proceeds to \texttt{PUT /api/\allowbreak admin/\allowbreak llm-config}. If the test fails, the UI aborts the save, ensuring the masking engine is never left with a broken or unauthorized configuration.
+
+\subsection{Admin Account and Profile Management}
+This module handles the lifecycle of the ZGate administrators themselves, ensuring strict partitioning of capabilities based on the admin's assigned tier.
+
+\subsubsection{Gated Access by Administrative Tier}
+A \texttt{useEffect} hook immediately checks \texttt{localStorage.getItem("admin\_tier")} upon mounting. If the value is not \texttt{"super"}, it fires a router redirect to an unauthorized splash page, aggressively blocking DOM rendering for lesser-privileged admins (like \texttt{auditor} or \texttt{policy\_admin}).
+
+\subsubsection{Two-Phase Commit Updates}
+Updating an admin's profile relies on two distinct API paths. \texttt{PUT /api/admin/admins/[username]} handles standard name and status changes. \texttt{PATCH /api/admin/admins/[username]/tier} handles privilege escalation or de-escalation. Separating the \texttt{tier} update allows the backend to apply much stricter authorization middleware to privilege escalation attempts.
+
+\subsubsection{Immutability Constraints}
+The \texttt{Admin} interface enforces that usernames are strictly immutable post-creation. The UI enforces this by setting the username input to \texttt{readOnly} during edit modes.
+
+\subsection{API Contracts and Proxy Layer}
+This is arguably the most critical security boundary in the WebUI. The Universal API Proxy intercepts every single fetch call made by the browser, enforcing DMZ boundaries and securely injecting credentials.
+
+\subsubsection{Request Interception and Session Decryption}
+The browser calls a route like \texttt{/api/admin/users}. Next.js catches this route. The proxy reads the \texttt{iron-session} cookie and decrypts it using the server-side \texttt{SESSION\_SECRET}, isolating the token extraction process from client-side code.
+
+\subsubsection{Header Injection and Fingerprint Forwarding}
+The proxy injects \texttt{Authorization: Bearer <token>} for authentication. It extracts the real client IP and forwards it as \texttt{X-Forwarded-For}. Furthermore, it reads the \texttt{X-Device-Fingerprint} from the incoming client request headers and re-appends it to the backend request for replay attack validation.
+
+\subsubsection{Retry, Refresh, and Error Semantics}
+If the backend returns \texttt{401 Unauthorized}, the proxy suspends the response. It calls \texttt{refreshSessionToken()}, negotiates a new Access Token with Keycloak, rewrites the \texttt{iron-session} cookie, and re-fires the original request transparently.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.45\textheight, keepaspectratio]{images/ui_new_content/universal_api_proxy_execution_blueprint_ui.png}
+    \caption{Universal API Proxy Execution Blueprint}
+\end{figure}
+
+\subsection{Configuration, Deployment, and Observability}
+The WebUI is distributed as a hardened, highly optimized Docker container featuring deep observability instrumentation.
+
+\subsubsection{Configuration and Environment Variables}
+The WebUI is configured entirely via environment variables. Variables like \texttt{SESSION\_SECRET} and \texttt{BACKEND} are strictly required. Missing critical variables cause immediate boot failures, honoring the "Fail-Closed" philosophy. If \texttt{VAULT\_ROLE\_ID} and \texttt{VAULT\_SECRET\_ID} are present, \texttt{instrumentation.ts} authenticates via Vault AppRole, pulling the remaining sensitive variables dynamically rather than relying on static \texttt{.env} files. \texttt{KEYCLOAK\_PUBLIC\_URL} can override build-time Keycloak endpoints at runtime, allowing a single compiled Docker image to be promoted across environments without rebuilding.
+
+\subsubsection{Multi-Stage Container Pipeline}
+The Dockerfile separates dependency installation, build compilation, and runtime into distinct stages. Next.js is configured for \texttt{output: 'standalone'}, tracing the import graph and copying only necessary files into the final image. This drastically reduces the attack surface by omitting the massive \texttt{node\_modules} directory from the runtime image.
+
+\subsubsection{Non-Root User Privilege Dropping}
+As a fundamental defense-in-depth measure, the final runtime image creates a \texttt{nextjs} user with UID \texttt{1001} and executes the server under this non-root context. This prevents container breakout privilege escalation if a Node.js vulnerability is exploited.
+
+\subsubsection{Testing Approach and Coverage}
+The WebUI leverages modern, fast testing frameworks. Vitest was chosen over Jest to provide native ESM support and significantly faster hot-reloading during component development. Utilizing \texttt{@testing-library/react}, tests interact with Radix UI components via accessibility queries (e.g., \texttt{getByRole('button')}) rather than fragile CSS selectors. This approach ensures that the highly complex administrative interfaces remain compliant with screen readers and keyboard navigation standards while validating core logic.
 
 \subsection{Technology Stack Market Analysis}
 
@@ -1524,3 +1797,284 @@ The React ecosystem provides unparalleled support infrastructure:
 \subsection{Conclusion}
 
 The zGate Admin Panel WebUI represents a successful synthesis of modern web development practices and enterprise security requirements. By leveraging industry-leading technologies (React, Next.js, TypeScript) backed by compelling market data, the interface delivers both exceptional user experience and robust security controls. The technology stack's strong adoption trends, combined with high developer satisfaction scores, position zGate for long-term maintainability and scalability. As demonstrated by the market analysis, our technology choices align with both global standards and regional Egyptian market dynamics, ensuring talent availability and industry relevance for years to come.
+
+\subsection{WebUI Product Tour with Zizo}
+
+\begin{wrapfigure}{r}{0.22\textwidth}
+\vspace{-3.5em}
+\raggedright
+\includegraphics[width=0.35\textwidth]{images/zizo-mascot.png}
+\vspace{-1em}
+\end{wrapfigure}
+
+To assist first-time administrators in navigating the zero-trust paradigm, the Admin Panel features an interactive onboarding assistant named \textbf{Zizo}. Built using \texttt{driver.js} for smooth DOM element highlighting, the Zizo tour acts as a friendly, context-aware product guide. It ensures that new operators discover critical safety features---such as access control policies and anomaly detection---without being overwhelmed by the platform's complexity.
+
+\subsubsection{First-Time Onboarding Flow}
+The primary ``Getting Started'' tour automatically triggers upon an administrator's first visit to the dashboard. The tour is entirely non-blocking; operators can pause, skip, or resume the walkthrough at any time via a persistently docked widget (the \texttt{ZizoDock}) in the bottom-right corner of the interface. As the user clicks ``Next'', the tour intelligently tracks their progress, even executing client-side routing to follow them seamlessly across different pages of the application.
+
+\subsubsection{Available Tours and Their Flows}
+
+The Zizo tour system is highly granular, featuring \textbf{nine distinct tours} tailored to the administrator's specific Role-Based Access Control (RBAC) tier. Tours are either triggered automatically on first login or invoked manually from their respective dashboard sections.
+
+\paragraph{1. Getting Started (Core Setup)}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}, \texttt{db\_admin}
+    \item \textbf{Entry Point:} Automatic on first visit
+    \item \textbf{Visited Screens:} \texttt{/admin/overview} $\rightarrow$ \texttt{/admin/databases} $\rightarrow$ \texttt{/admin/access-control} $\rightarrow$ \texttt{/admin/users}
+    \item \textbf{Key Highlights:} Introduces the live system dashboard, registering the first database connection, defining role-based access policies, and provisioning the first human users.
+\end{itemize}
+
+\paragraph{2. Getting Started (Overview Only)}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{policy\_admin}, \texttt{auditor}
+    \item \textbf{Entry Point:} Automatic on first visit
+    \item \textbf{Visited Screens:} \texttt{/admin/overview}
+    \item \textbf{Key Highlights:} A focused onboarding flow skipping infrastructure pages, highlighting anomaly alert health and core system status.
+\end{itemize}
+
+\paragraph{3. Query Policies \& Data Protection}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}, \texttt{policy\_admin}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/query-policies}
+    \item \textbf{Key Highlights:} Walks through safety rules (SQL firewall), rate limiting quotas, AI column masking templates, and strict row masking for tenant isolation.
+\end{itemize}
+
+\paragraph{4. Service Accounts \& DB Accounts}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}, \texttt{db\_admin}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/service-accounts} $\rightarrow$ \texttt{/admin/db-accounts}
+    \item \textbf{Key Highlights:} Covers generating programmatic Client IDs/Secrets, rotating tokens, and the distinction between 1-to-1 personal DB accounts and shared connection pools.
+\end{itemize}
+
+\paragraph{5. Logs \& Audit Center}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}, \texttt{auditor}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/logs}
+    \item \textbf{Key Highlights:} Demonstrates filtering the audit trail, triaging AI anomalies, tracing full requests via Correlation IDs, and revoking mTLS certificates.
+\end{itemize}
+
+\paragraph{6. Active Login Sessions}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}, \texttt{policy\_admin}, \texttt{auditor}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/sessions}
+    \item \textbf{Key Highlights:} Explains monitoring live authentication states, identifying idle sessions from unusual IPs, and using the instant-revocation kill switch.
+\end{itemize}
+
+\paragraph{7. Compliance \& Regulatory Frameworks}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/compliance-templates}
+    \item \textbf{Key Highlights:} Demonstrates the one-framework-per-database constraint and how to globally apply bundled templates for HIPAA, GDPR, ISO 27001, PCI DSS, CCPA, or SOC 2.
+\end{itemize}
+
+\paragraph{8. Admin Account Management}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/admins}
+    \item \textbf{Key Highlights:} Emphasizes separation of duties, lifecycle controls (suspension), and built-in safety protections preventing super admins from locking themselves out.
+\end{itemize}
+
+\paragraph{9. AI Settings}
+\begin{itemize}
+    \item \textbf{Audience:} \texttt{super}
+    \item \textbf{Entry Point:} Manual
+    \item \textbf{Visited Screens:} \texttt{/admin/ai-settings}
+    \item \textbf{Key Highlights:} Explains choosing an LLM provider (e.g., local Ollama), testing connections securely, and how AES-256-GCM protects API keys at rest.
+\end{itemize}
+
+Throughout these steps, the Zizo avatar reacts dynamically, changing its visual emotion (\emph{idle}, \emph{explain}, \emph{celebrate}, \emph{warn}) and CSS animation (\emph{float}, \emph{bounce}) to match the context of the current instruction. These animations are fully compliant with CSS \texttt{prefers-reduced-motion} media queries for accessibility.
+
+\subsubsection{State Persistence and User Preferences}
+To ensure a seamless user experience across devices and browsing sessions, the tour utilizes a hybrid state persistence model:
+\begin{itemize}
+    \item \textbf{Cross-Page Navigation:} As the user moves between Next.js routes during an active tour, the exact step index is temporarily cached in \texttt{sessionStorage}. A \texttt{TourSyncBoundary} component intercepts page loads, waits for target DOM elements to render, and resumes the driver automatically.
+    \item \textbf{Completion Tracking:} Once a tour is completed or dismissed, its status is immediately saved to \texttt{localStorage} for immediate offline/client-side gating. In the background, this preference is synchronized to the backend via the \texttt{/api/auth/tour-prefs} endpoint, ensuring the tour does not incorrectly trigger again if the administrator logs in from a different browser or clears their local data.
+\end{itemize}
+
+\subsubsection{Design Rationale and UX Benefits}
+In a zero-trust administrative console, the cost of misconfiguration is exceptionally high. By actively guiding operators through the exact workflow required to securely provision access---rather than relying solely on static documentation---the Zizo tour drastically reduces the cognitive load on new security personnel and establishes immediate confidence in the control plane's architecture.
+
+
+% ============================================================
+% 11.2 COMMAND LINE INTERFACE (CLI)
+% ============================================================
+\clearpage
+\section{Command Line Interface (CLI)}
+
+The \texttt{zgate} binary is the developer-facing entry point into the ZGate zero-trust database access system. It is not a database client and does not issue SQL. Instead, it handles everything a developer needs before their database client can securely connect: identity verification, credential provisioning, and local tunnel setup.
+
+\subsection{High-Level Feature Overview}
+
+In a traditional database access model, a developer holds a static username, password, and connection string. With ZGate, those permanent credentials do not exist at the developer level. The CLI mediates the entire chain: it authenticates the developer against Keycloak using the OIDC Device Authorization Grant (no browser-resident passwords), negotiates a short-lived mTLS client certificate with the proxy server, and creates a local loopback socket that standard database clients can connect to without any modification.
+
+\subsubsection{Two Modes of Operation}
+\begin{itemize}
+    \item \textbf{Interactive TUI mode:} The default when \texttt{zgate} is run with no arguments. A stateful, event-driven terminal dashboard backed by BubbleTea and styled with Lipgloss. Intended for developers connecting interactively from their workstations.
+    \item \textbf{Headless mode:} Exposed via explicit subcommands (\texttt{zgate tunnel}, \texttt{zgate cert rotate}). Designed for CI/CD pipelines and Service Accounts that cannot perform browser-based authentication. Supports environment-variable injection of pre-provisioned tokens and explicit certificate paths.
+\end{itemize}
+
+\subsection{Architecture and Component Breakdown}
+
+The repository is organized into four logical layers, each with a clearly bounded responsibility:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\rowcolor{teal!40}
+\textbf{Layer} & \textbf{Path} & \textbf{Responsibility} \\
+\hline
+Entry Point & \texttt{main.go} & Cobra root command, subcommand registration, \\
+ & & default TUI launch \\
+\hline
+Command Wrappers & \texttt{cli/} & Thin Cobra command definitions; \\
+ & & delegate to \texttt{internal/} \\
+\hline
+Core Logic & \texttt{internal/} & Auth, config, mTLS lifecycle, TUI state machine, \\
+ & & API client \\
+\hline
+UI Primitives & \texttt{internal/ui/} & Lipgloss styles, shared rendered components \\
+\hline
+\end{tabular}
+\caption{CLI Structural Layers}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/cli_new_content/system_architecture-diagram_cli.png}
+    \caption{zGate-CLI System Architecture and Boundaries}
+\end{figure}
+
+\subsection{Design Decisions and Technology Choices}
+
+\subsubsection{Single Static Binary via Go}
+Go 1.25 was chosen specifically for its cross-compilation model. The entire application, including all dependencies, compiles into a single, self-contained binary. There is no Node.js runtime, no Python interpreter, no shared library requirements. A developer installs one file and immediately has a working tool on any of the five supported platforms (Windows, macOS Intel/Silicon, Linux Intel/ARM).
+
+\subsubsection{BubbleTea and the Elm Architecture}
+The interactive TUI is built on BubbleTea, which enforces a strict \texttt{Model $\rightarrow$ Update $\rightarrow$ View} loop inspired by the Elm architecture. This design separates concerns cleanly: background goroutines communicate back to the UI exclusively through typed messages. The UI render function never triggers side effects. This makes the TUI deterministic, testable, and easy to reason about even under concurrent async state updates.
+
+\subsubsection{OS Keyring with File Fallback}
+The \texttt{zalando/go-keyring} library provides a unified API over the three major OS secret stores: Windows Credential Manager, macOS Keychain, and Linux Secret Service. However, Windows keyrings can be ephemeral across session contexts, so every credential write simultaneously persists a \texttt{credentials.json} fallback with \texttt{0600} permissions. This dual-write strategy ensures that token refresh works even when the keyring is unavailable.
+
+\subsubsection{Stunnel Pattern for TLS-from-Byte-One}
+Standard database clients implement \texttt{STARTTLS} — they begin with a plaintext handshake and only upgrade to TLS mid-stream. The ZGate proxy requires TLS from the very first byte. The CLI bridges this gap by running a local loopback listener that accepts plaintext from the database client, then establishes a fresh mTLS TLS 1.3 connection to the proxy, and pipes bytes in both directions.
+
+\subsection{Authentication and Token Storage}
+The CLI never handles static database passwords. It handles only OIDC tokens and short-lived mTLS certificates provisioned by the server.
+
+\subsubsection{OIDC Device Authorization Grant Flow}
+The Device Authorization Grant was chosen because it requires no locally running web server and works correctly in terminal environments where the developer cannot be redirected to \texttt{localhost}.
+
+\begin{enumerate}
+    \item The CLI sends a request to Keycloak and receives a \texttt{device\_code}, \texttt{user\_code}, and verification URI.
+    \item The CLI displays the URI and user code in the TUI.
+    \item The developer opens the URL in a browser, authenticates, and grants access.
+    \item Meanwhile, the CLI polls Keycloak's token endpoint, honoring \texttt{slow\_down} directives.
+    \item On success, Keycloak returns OIDC tokens, which the CLI exchanges with the ZGate Server for ZGate-internal access and refresh tokens.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/cli_new_content/oidc_device_authorization_grant_flow_cli.png}
+    \caption{OIDC Device Authorization Grant Flow}
+\end{figure}
+
+\subsubsection{Token Refresh and Concurrency Safety}
+The API client handles token refresh transparently when any request returns an HTTP 401. To prevent a race condition where multiple parallel requests simultaneously trigger a refresh, the refresh function acquires a mutex lock (\texttt{c.mu.Lock()}) before executing. All concurrent callers block until the single refresh completes, then retry with the updated token.
+
+\subsection{mTLS Certificate Lifecycle}
+When the ZGate Server operates with \texttt{EnforceMTLS: true}, the CLI must present a valid client certificate on every proxy connection. 
+
+\subsubsection{CSR-First Issuance and Memory Safety}
+The private key never leaves the client machine. The CLI generates an ECDSA P-256 private key entirely in process, constructs a CSR, and sends only the CSR to the server. Immediately after the TLS configuration is built from the raw key bytes, the function overwrites the key data in memory (\texttt{zeroBytes}), ensuring that raw private key material does not persist in process memory longer than needed.
+
+\subsubsection{Renewal Decision Engine}
+The certificate is renewed automatically after every successful login if either:
+\begin{itemize}
+    \item The certificate's remaining lifetime has fallen below 25\% of its total duration.
+    \item The pinned CA fingerprint stored locally no longer matches the fingerprint returned by the server (indicating a server CA rotation).
+\end{itemize}
+
+\subsection{Local Tunnel and Proxy Bridge}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.45\textheight, keepaspectratio]{images/cli_new_content/connection_architecture_cli.png}
+    \caption{CLI Local Tunnel Connection Architecture}
+\end{figure}
+
+\subsubsection{Platform-Specific Listener Binding}
+The local listener address is determined at runtime based on the operating system:
+\begin{itemize}
+    \item \textbf{Linux and macOS:} The CLI creates a Unix Domain Socket at \texttt{\$XDG\_RUNTIME\_DIR/zgate/zgate-<random>.sock}. The socket file is created with mode \texttt{0600}.
+    \item \textbf{Windows:} The CLI binds to \texttt{127.0.0.1:<random-port>} using TCP loopback.
+\end{itemize}
+
+When a database client connects to the local listener, the CLI immediately dials the remote proxy host using a \texttt{tls.Client} configured for TLS 1.3 with the user's mTLS certificate, then enters a bidirectional byte-copy loop.
+
+\subsection{Interactive TUI Dashboard}
+
+\subsubsection{Command Bar and Navigation}
+The TUI is centered on an always-visible command bar at the bottom of the screen. Recognized commands include:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|l|}
+\hline
+\rowcolor{teal!40}
+\textbf{Command} & \textbf{Description} \\
+\hline
+\texttt{/login} & Opens the OIDC device flow UI for authentication \\
+\hline
+\texttt{/list} & Lists available databases retrieved from the server \\
+\hline
+\texttt{/connect \textless db\textgreater} & Starts a secure tunnel and displays \\
+ & local connection details \\
+\hline
+\texttt{/status} & Displays the current session dashboard \\
+ & and active connections \\
+\hline
+\texttt{/requests} & Shows pending query approval requests awaiting review \\
+\hline
+\texttt{/cert rotate} & Manages mTLS certificate rotation directly within the TUI \\
+\hline
+\end{tabular}
+\caption{Available TUI Dashboard Commands}
+\end{table}
+
+\subsubsection{State Routing and the Update Loop}
+All TUI state lives in \texttt{MainModel}. Global keyboard shortcuts are intercepted here. \texttt{refreshMsg} events trigger non-blocking API calls to refresh background state. The design ensures that the UI never blocks on a network call.
+
+\subsection{Headless Automation and CI/CD Integration}
+
+\subsubsection{The \texttt{zgate tunnel} Command}
+This subcommand is designed to run as a persistent background process in automated environments. It requires explicit flags for parameters (\texttt{--cert}, \texttt{--key}, \texttt{--ca}, \texttt{--remote-host}, etc.) and blocks waiting for \texttt{SIGINT} or \texttt{SIGTERM} to cleanly tear down the listener.
+
+\subsubsection{Token Injection for Pipeline Environments}
+When \texttt{ZGATE\_ACCESS\_TOKEN} and \texttt{ZGATE\_REFRESH\_TOKEN} are present in the environment, the CLI returns them directly without consulting the OS keyring. This allows pipeline orchestrators to inject pre-provisioned service account tokens as environment secrets.
+
+\subsection{Security Considerations and Hardening}
+
+\begin{itemize}
+    \item \textbf{Untrusted Local Machine:} The CLI never makes its own policy judgments based on locally held data. It presents credentials and lets the server decide.
+    \item \textbf{Pinned CA Fingerprint:} If the server presents a CA that does not match the pinned fingerprint, the CLI rejects the connection and initiates a renewal.
+    \item \textbf{Device Fingerprinting:} All API requests carry an \texttt{X-Device-Fingerprint} header (a stable OS-level machine identifier) to prevent token replay from different devices.
+    \item \textbf{Memory Scrubbing:} Private keys are immediately scrubbed from memory using \texttt{zeroBytes()} after generating the TLS config.
+    \item \textbf{Purge Capabilities:} The \texttt{ClearTokens()} function wipes the keyring entry, the credentials file, and the certificate files, leaving no recoverable session material on disk.
+\end{itemize}
+
+\subsection{Configuration and Build Distribution}
+
+\subsubsection{Resolution Order and Build-Time Variables}
+Configuration values are resolved through environment variables (e.g., \texttt{ZGATE\_API\_URL}), \texttt{.env} files, and finally build-time defaults injected via \texttt{ldflags}. This allows operators to distribute a pre-configured binary to developers who never need to set environment variables.
+
+\subsubsection{Build Optimization}
+All release builds apply \texttt{-trimpath} (to strip local filesystem paths) and \texttt{-s -w} (to remove symbol tables and DWARF debug info). This reduces binary size, obscures the build environment, and makes reverse engineering more difficult.
