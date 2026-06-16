@@ -155,7 +155,7 @@ Requirements engineering forms the foundation of successful software development
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/actor-diagram.png}
-    \caption{System actors and component overview: End Users and Developers (via zGate-CLI with OIDC Device Flow and mTLS), System and Super Administrators (via zGate-WebUI with PKCE/OIDC), and the six platform components — zGate-Server, zGate-CLI, zGate-WebUI, zGate-AI, zGate-Tsql-Parser, and zGate-Deploy — alongside Keycloak and backend databases (MySQL, PostgreSQL, MSSQL).}
+    \caption{System actors and components: End Users (via CLI), System and Super Administrators (via WebUI), and the six platform components alongside Keycloak and backend databases.}
     \label{fig:actor-diagram}
 \end{figure}
 
@@ -542,7 +542,7 @@ Requirements engineering forms the foundation of successful software development
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/enduser-use-cases.png}
-    \caption{End user use case flows within zGate-CLI: OIDC Device Authorization Grant authentication via Keycloak (UC-1), database listing with RBAC permission filtering (UC-2), mTLS loopback tunnel connection with ephemeral credential injection (UC-3), transparent token refresh (UC-10), and JTI-based logout and token revocation (UC-11). Auto-cleanup of ephemeral database users within 30 seconds of disconnect is handled by zGate-Server.}
+    \caption{End user use cases via zGate-CLI: OIDC Device Flow authentication (UC-1), database listing with RBAC filtering (UC-2), mTLS loopback tunnel connection with ephemeral credentials (UC-3), automatic token refresh (UC-10), and JTI logout (UC-11).}
     \label{fig:enduser-use-cases}
 \end{figure}
 
@@ -550,21 +550,21 @@ Requirements engineering forms the foundation of successful software development
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/administrator-use-cases.png}
-    \caption{Administrator use cases via zGate-WebUI (iron-session PKCE): database configuration with five TLS modes (UC-5), user and role management with bcrypt-12 password hashing (UC-6), policy template definition covering safety, masking, AI masking, and row-filter rules (UC-7), active session monitoring with TCP-level session termination (UC-8), NDJSON audit log review with ML risk score badges (UC-9), shared account pool management (UC-12), compliance template application restricted to Super Administrators (GDPR, HIPAA, PCI-DSS, SOX, ISO~27001, NIST), warn-queue review with 5-minute timeout, and AI/LLM provider configuration.}
+    \caption{Administrator use cases via zGate-WebUI: database configuration (UC-5), user/role management (UC-6), policy template definition (UC-7), session monitoring (UC-8), audit log review (UC-9), shared account pools (UC-12), compliance templates, warn-queue review, and AI/LLM provider configuration.}
     \label{fig:administrator-use-cases}
 \end{figure}
 \subsection{Complete System Use Case Diagrams}
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/complete-system-use-case.png}
-    \caption{Complete system use case diagram consolidating all actors and all six platform components. End Users interact through CLI use cases; System and Super Administrators interact through WebUI use cases; all flows converge at the zGate-Server which delegates to the T-SQL Parser sidecar (gRPC AST analysis) and AI Engine sidecar (gRPC LLM column masking), and routes to backend databases. Keycloak provides OIDC authentication for both the CLI Device Flow and WebUI PKCE flow.}
+    \caption{Complete system use case diagram: all actors and six platform components, from CLI and WebUI flows through zGate-Server to the T-SQL Parser, AI Engine sidecars, and backend databases.}
     \label{fig:complete-system-use-case}
 \end{figure}
 \subsection{System Components Interaction}
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/system-component-interaction.png}
-    \caption{System component interaction diagram across all six platform components. The Client Layer (zGate-CLI via REST and mTLS; zGate-WebUI via iron-session cookie) connects to the zGate-Server REST API, which routes through the Auth Module (OIDC, JWT HS256, TOTP, built-in PKI), Policy Engine (RBAC, safety templates, compliance frameworks), six-phase Dispatcher, and eight-stage Interceptor Pipeline. The pipeline communicates with the T-SQL Parser sidecar (gRPC AST) and AI Engine sidecar (gRPC LLM), and persists data to the MySQL Store. All server telemetry is exported via OTLP; HashiCorp Vault bootstraps secrets; Keycloak provides OIDC identity.}
+    \caption{System component interaction across all six platform components: Client Layer to Server API through Auth, Policy Engine, six-phase Dispatcher, and eight-stage Interceptor Pipeline, with gRPC sidecars, MySQL Store, Vault, and OTel export.}
     \label{fig:system-component-interaction}
 \end{figure}
 \section{User Stories}
