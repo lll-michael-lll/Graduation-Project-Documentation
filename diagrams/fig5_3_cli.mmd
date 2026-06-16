@@ -3,8 +3,8 @@
   "themeVariables": {
     "primaryColor": "#6D94C5",
     "primaryTextColor": "#1a1a1a",
-    "primaryBorderColor": "#4a6fa0",
-    "lineColor": "#4a6fa0",
+    "primaryBorderColor": "#6D94C5",
+    "lineColor": "#6D94C5",
     "fontFamily": "Liberation Sans, Arial, sans-serif",
     "fontSize": "13px"
   }
@@ -18,7 +18,7 @@ sequenceDiagram
     participant PKI as Built-in PKI
     participant DB as Target Database
 
-    rect rgb(240,255,223)
+    rect rgb(168,223,142)
         Note over Dev,KC: Phase 1 — OIDC Device Flow Authentication
         Dev->>CLI: zgate login
         CLI->>KC: POST /device/authorization

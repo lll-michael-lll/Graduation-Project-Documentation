@@ -3,19 +3,19 @@
   "themeVariables": {
     "primaryColor": "#6D94C5",
     "primaryTextColor": "#1a1a1a",
-    "primaryBorderColor": "#4a6fa0",
-    "lineColor": "#4a6fa0",
+    "primaryBorderColor": "#6D94C5",
+    "lineColor": "#6D94C5",
     "fontFamily": "Liberation Sans, Arial, sans-serif",
     "fontSize": "14px"
   }
 }}%%
 flowchart TB
-    classDef client  fill:#A8DF8E,stroke:#4a6fa0,color:#1a1a1a
-    classDef server  fill:#6D94C5,stroke:#4a6fa0,color:#fff
-    classDef sidecar fill:#F5EFE6,stroke:#4a6fa0,color:#1a1a1a
-    classDef db      fill:#CBDCEB,stroke:#4a6fa0,color:#1a1a1a
-    classDef store   fill:#F0FFDF,stroke:#4a6fa0,color:#1a1a1a
-    classDef infra   fill:#E8DFCA,stroke:#4a6fa0,color:#1a1a1a
+    classDef client  fill:#A8DF8E,stroke:#6D94C5,color:#1a1a1a
+    classDef server  fill:#6D94C5,stroke:#CBDCEB,color:#fff
+    classDef sidecar fill:#F0FFDF,stroke:#6D94C5,color:#1a1a1a
+    classDef db      fill:#CBDCEB,stroke:#6D94C5,color:#1a1a1a
+    classDef store   fill:#F5EFE6,stroke:#6D94C5,color:#1a1a1a
+    classDef infra   fill:#E8DFCA,stroke:#6D94C5,color:#1a1a1a
 
     subgraph CLIENTS ["Client Layer"]
         CLI["zGate-CLI\n(Go · Cobra · BubbleTea)"]:::client
