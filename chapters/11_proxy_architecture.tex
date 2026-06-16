@@ -1921,9 +1921,94 @@ In a zero-trust administrative console, the cost of misconfiguration is exceptio
 
 
 % ============================================================
-% 11.2 COMMAND LINE INTERFACE (CLI)
+% NEW FEATURES ADDED AFTER COMMIT 320cc39d
 % ============================================================
-\clearpage
+
+\subsection{Admin Overview Dashboard}
+
+The Admin Overview Dashboard (\texttt{/admin/overview}) serves as the system's operational command center, giving administrators a real-time, consolidated view of platform health at a glance. It was introduced as a dedicated page after the initial release to reduce the cognitive load of monitoring multiple subsystems simultaneously.
+
+\subsubsection{System Status and Service Health}
+The dashboard fetches live health probes from the backend and groups them into four named status clusters: \textbf{AI Features} (combining the LLM Connection and Anomaly Detection probes), \textbf{Server}, \textbf{Database}, and \textbf{Keycloak}. Each cluster is polled every 30 seconds (mirroring the backend's own caching interval) and renders a color-coded badge: \emph{operational}, \emph{degraded}, or \emph{down}. Groups whose backend members return no data are automatically hidden rather than shown as errors, preventing alert fatigue from optional integrations that are simply not configured.
+
+\subsubsection{Anomaly Statistics Panel}
+A dedicated panel on the overview surfaces aggregated anomaly data from the ML pipeline: total events in the last 24 hours, unread count, critical severity count, and high severity count. These metrics are fetched concurrently with the other overview data using \texttt{Promise.allSettled}, ensuring a partial backend failure does not blank the entire page. When anomaly data is unavailable (e.g., the AI sidecar is not running), the panel gracefully degrades to a disabled state without throwing an unhandled error.
+
+\subsubsection{Usage Metrics}
+Three headline counters --- Total Users, Total Databases, and Active Logins --- are displayed as card tiles at the top of the overview. These are pulled in parallel from the backend's admin statistics endpoints and rendered immediately as numbers become available, providing operators with the most critical operational numbers as soon as they navigate to the page.
+
+% ============================================================
+
+\subsection{Real-Time Admin Notifications via Server-Sent Events}
+
+Administrators require immediate awareness of security-critical events without reloading the page. The WebUI implements a Server-Sent Events (SSE) stream to deliver live badge counters for two alert categories to the navigation bar.
+
+\subsubsection{SSE Stream Architecture}
+The \texttt{/api/admin/notifications/stream} route establishes a persistent HTTP response with \texttt{Content-Type: text/event-stream}. While the connection is held open, the server polls the backend every \textbf{3 seconds} for two counts: the number of pending warn-queue queries awaiting admin approval and the number of unread anomaly flags. A heartbeat comment is sent every \textbf{25 seconds} to prevent intermediate proxies and load balancers from timing out idle connections.
+
+\subsubsection{Security and Session Forwarding}
+The SSE handler reads the administrator's \texttt{iron-session} cookie on every poll cycle to obtain a fresh \texttt{accessToken}. It injects the session's \texttt{deviceId} as the \texttt{X-Device-Fingerprint} header and forwards the originating client IP via \texttt{X-Forwarded-For} and \texttt{X-Real-IP}. This ensures the backend's per-device fingerprint binding and IP-based anomaly detection continue to function even though the poll originates from the Next.js server process rather than the browser.
+
+\subsubsection{Navigation Badge Updates}
+Badge counts delivered over the SSE stream are consumed by the admin shell layout and rendered as small numerical indicators on the navigation links for \emph{Pending Reviews} and \emph{Audit Logs}. Counts are updated reactively whenever the stream delivers a new event, ensuring administrators see live alerts without any manual refresh action.
+
+% ============================================================
+
+\subsection{Loki-Backed System Logs Page}
+
+The \texttt{/admin/logs} page provides administrators with a unified view of server-side system logs sourced from Grafana Loki, complementing the NDJSON query-level audit trail already available on the Activity Audit page.
+
+\subsubsection{Loki Query Proxy}
+The WebUI does not expose Loki directly to browser clients. Instead, a server-side route at \texttt{/api/admin/logs} (and the parallel Loki proxy at \texttt{/api/loki/[...path]}) acts as an authenticated relay: the route validates the admin session, injects the bearer token, and forwards the LogQL query to the configured Loki endpoint. This ensures Loki is never accessible from the public internet and that all log queries carry the same device-fingerprint and access-control headers as any other admin API call.
+
+\subsubsection{Log Filtering and Drill-Down}
+Administrators can filter system log entries by severity level, time range, and free-text search. Individual log entries can be expanded inline to reveal full structured JSON payloads, stack traces, and correlated trace IDs — enabling end-to-end request tracing from a browser action through the Next.js proxy layer, the Go backend, and into the database proxy session.
+
+% ============================================================
+
+\subsection{Self-Hosted Deployment Mode}
+
+zGate WebUI supports two distinct deployment modes that are resolved at \texttt{next build} time: the \textbf{vendor cloud} mode (used by the zGate development team) and the \textbf{self-hosted} mode (used by customer organizations hosting the stack on their own infrastructure). These modes control which features are visible and which routes are reachable.
+
+\subsubsection{Build-Time Hardening via \texttt{NEXT\_PUBLIC\_PORTAL\_LOCKED}}
+The vendor-facing customer portal --- comprising pricing, checkout, license management, and the Deployment Hub pages --- is compiled into every Docker image as Next.js bundles all routes. However, in the self-hosted image the \texttt{PORTAL\_LOCKED} Docker build argument is set to \texttt{"true"}, which inlines the value of \texttt{NEXT\_PUBLIC\_PORTAL\_LOCKED} as a literal constant at build time:
+
+\begin{lstlisting}[language=bash, caption={Hardened Docker build for self-hosted image}]
+# Dockerfile (enforced/self-hosted image)
+ARG PORTAL_LOCKED=false
+ENV NEXT_PUBLIC_PORTAL_LOCKED=$PORTAL_LOCKED
+RUN PORTAL_LOCKED=true next build
+\end{lstlisting}
+
+Because \texttt{NEXT\_PUBLIC\_*} variables are inlined by the Next.js compiler into the client-side bundle as string literals, a self-hosted operator \emph{cannot} re-enable the portal by setting \texttt{ZGATE\_PORTAL\_ENABLED=true} at container runtime --- the compiled check will always evaluate to \texttt{false}. This one-way lock prevents license circumvention even if an operator gains shell access to the running container.
+
+\subsubsection{Middleware-Level Route Redirection}
+The Next.js middleware (\texttt{middleware.ts}) enforces the same locking logic at the request-routing layer. When \texttt{portalEnabled()} returns \texttt{false} (the self-hosted case), any request to the root path (\texttt{/}) or to any marketing route (\texttt{/docs}, \texttt{/start}, \texttt{/getting-started}) is immediately \texttt{307}-redirected to \texttt{/login}. This means self-hosted deployments boot directly into the administrative login screen with no landing page, documentation site, or pricing surface visible.
+
+\subsubsection{Content Security Policy}
+The same middleware attaches a strict \textbf{Content Security Policy} to every HTML response. In production it uses a per-request 16-byte random nonce with \texttt{strict-dynamic}, which ensures that only scripts explicitly tagged with the nonce (Next.js runtime and application code) can execute. Inline scripts injected by XSS attacks are blocked even if they reach the DOM. The following directives are enforced:
+\begin{itemize}
+    \item \texttt{default-src 'self'} --- all resources must originate from the same origin.
+    \item \texttt{script-src 'self' 'nonce-\{nonce\}' 'strict-dynamic'} --- nonce-gated scripts only.
+    \item \texttt{connect-src 'self' https://api.web3forms.com} --- all backend API calls route through \texttt{/api/[...path]} on the same origin; direct browser fetches to the backend are blocked.
+    \item \texttt{frame-ancestors 'none'} --- prevents clickjacking via iframes.
+    \item \texttt{upgrade-insecure-requests} --- enforced in production to mandate HTTPS.
+\end{itemize}
+
+\subsubsection{Deployment Hub (Vendor Cloud Only)}
+When the portal is enabled (vendor cloud builds), the \textbf{Deployment Hub} page (\texttt{/(portal)/hub}) provides licensed customers with:
+\begin{itemize}
+    \item A one-click \textbf{installer download} button for the zGate CLI installer binary (Linux \texttt{amd64} and Windows \texttt{amd64}), with the download URL resolved server-side from \texttt{ZGATE\_INSTALLER\_URL} so it never appears in the client bundle.
+    \item An \textbf{offline Docker image bundle} download (resolves from \texttt{ZGATE\_OFFLINE\_IMAGES\_URL}) for air-gapped deployments where direct Docker Hub access is restricted.
+    \item An animated \textbf{terminal simulation} showing the self-hosted install sequence step-by-step to guide operators through their first deployment.
+    \item OS-specific install command snippets (Linux: \texttt{sudo ./zgate-installer-linux-amd64}; Windows: \texttt{.\textbackslash{}zgate-installer-windows-amd64.exe}) with a clipboard-copy button and automatic OS detection on page load.
+    \item Links to the hosted documentation (\texttt{ZGATE\_MANUAL\_URL}) and the quick-start getting-started page.
+\end{itemize}
+This page is intentionally absent from self-hosted builds --- it hard-404s unless \texttt{ZGATE\_PORTAL\_ENABLED=true}, and the portal lock makes that flag inert.
+
+% ============================================================
+
+
 \section{Command Line Interface (CLI)}
 
 The \texttt{zgate} binary is the developer-facing entry point into the ZGate zero-trust database access system. It is not a database client and does not issue SQL. Instead, it handles everything a developer needs before their database client can securely connect: identity verification, credential provisioning, and local tunnel setup.
