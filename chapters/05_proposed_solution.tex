@@ -4,14 +4,16 @@
 
 \begin{sectionintro}{5}{Proposed Solution}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Zero Trust architecture and credential abstraction
-    \item Dynamic proxy management
-    \item JWT-based authentication and token lifecycle
-    \item Policy enforcement and audit logging
-    \item Cross-platform CLI with secure storage
+    \item Six-component Zero Trust platform: Server, CLI, WebUI, AI Engine,
+          T-SQL Parser, and Vault-first Deployment
+    \item Identity-aware gateway: OIDC Device Flow, PKCE, mTLS, and built-in PKI
+    \item Active interceptor pipeline: safety analysis, AI masking, anomaly
+          detection, and compliance policy enforcement
+    \item Vault-first secrets management and regulatory compliance templates
+    \item End-to-end observability: OpenTelemetry across all six components
   \end{itemize}
 }
-The zGate solution addresses database security vulnerabilities through Zero Trust architecture. This chapter presents our comprehensive approach to eliminating credential exposure through dynamic proxy management, JWT-based authentication, and real-time policy enforcement. We explore how the gateway server, CLI, and web dashboard integrate to provide identity-based access control while maintaining operational efficiency.
+The zGate solution addresses database security vulnerabilities through a six-component Zero Trust architecture. This chapter presents our comprehensive approach to eliminating credential exposure through dynamic proxy management, OIDC-based authentication, real-time interceptor pipeline execution, AI-assisted column masking, and behavioural anomaly detection. We explore how the gateway server, CLI, web dashboard, AI engine, T-SQL parser, and deployment orchestration layer integrate to provide identity-based access control while maintaining operational efficiency and full auditability.
 \end{sectionintro}
 
 \section{Solution Overview}
@@ -55,12 +57,14 @@ The server is the heart of the platform, handling all security, policy enforceme
 \end{figure}
 \subsubsection{Key Features}
 
-\textbf{1. JWT-Based Authentication}
+\textbf{1. OIDC + JWT Authentication}
 \begin{itemize}
-    \item Access tokens (15-minute TTL) for API requests
-    \item Refresh tokens (7-day TTL) for session persistence
-    \item Secure token generation with HMAC-SHA256 signatures
-    \item Automatic token refresh in CLI
+    \item OIDC Device Authorization Grant (CLI) and PKCE browser flow (WebUI) via Keycloak — no static passwords stored or transmitted
+    \item Access tokens (HS256, 5-minute default TTL, configurable via \texttt{ZGATE\_ACCESS\_TOKEN\_DURATION}) for API requests
+    \item Refresh tokens (1-hour default TTL, configurable via \texttt{ZGATE\_REFRESH\_TOKEN\_DURATION}) for session persistence
+    \item Per-token revocation via JTI (JWT ID); per-session revocation via refresh token family ID
+    \item Device fingerprint binding (SHA-256 of IP + User-Agent) embedded in every JWT to reject stolen-token replay
+    \item Mandatory TOTP two-factor authentication for all admin accounts
 \end{itemize}
 
 \textbf{2. Real-Time Policy Enforcement}
@@ -79,12 +83,12 @@ The server is the heart of the platform, handling all security, policy enforceme
     \item Automatic cleanup on disconnect or crash recovery
 \end{itemize}
 
-\textbf{4. Protocol Abstraction}
+\textbf{4. Multi-Protocol Wire-Level Proxy}
 \begin{itemize}
-    \item Pluggable architecture for database types
-    \item Current support: MSSQL, MySQL
-    \item Easy extensibility for PostgreSQL, Oracle, etc.
-    \item Database-specific SQL for user management
+    \item Three wire-protocol listeners: MySQL (port 9000), PostgreSQL (port 9001), Microsoft SQL Server/TDS (port 9002)
+    \item Pluggable \texttt{DatabaseHandler} interface — each protocol implements \texttt{PeekRouting}, \texttt{Handshake}, \texttt{ReadCommand}, \texttt{ForwardResult}
+    \item Six-phase \texttt{Dispatcher}: PeekRouting → StartSession → Bind → Backend Dial → Handshake → Command Loop
+    \item Database-specific ephemeral credential injection at the wire-protocol handshake layer
 \end{itemize}
 
 \textbf{5. Comprehensive Logging}
@@ -221,9 +225,9 @@ Privilege Escalation & Database-level permission enforcement & Grants limited to
 \hline
 Unauthorized Access & Real-time policy evaluation & Every connection request checked against current config \\
 \hline
-Session Hijacking & Short-lived JWT tokens & 15-minute access token expiry \\
+Session Hijacking & Short-lived JWT tokens + device fingerprint & 5-minute access token TTL; 128-bit SHA-256 fingerprint binding \\
 \hline
-Password Cracking & Strong password hashing & bcrypt with work factor 10 \\
+Password Cracking & Strong password hashing & bcrypt with work factor 12 (configurable via \texttt{ZGATE\_BCRYPT\_COST}) \\
 \hline
 Audit Evasion & Mandatory logging & Every API call, connection, disconnect logged \\
 \hline
