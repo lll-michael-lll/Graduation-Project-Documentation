@@ -4,10 +4,11 @@
 
 \begin{sectionintro}{4}{Requirements Engineering}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Functional requirements for system components
-    \item Non-functional requirements and performance targets
-    \item Permission system and access control
-    \item System actors and use cases
+    \item Functional requirements across all six platform components
+    \item Non-functional requirements and measurable quality targets
+    \item System actors: human users, platform services, and AI/analysis sidecars
+    \item Use case catalog: authentication, connection, masking, anomaly, and policy flows
+    \item Second-semester requirement additions and scope updates
   \end{itemize}
 }
 Requirements engineering forms the foundation of successful software development. This chapter systematically documents the functional requirements across authentication, proxying, and administration, alongside non-functional requirements for security, performance, and scalability. We define system actors, comprehensive use cases, and establish measurable quality attributes that guide architectural decisions.
@@ -17,25 +18,33 @@ Requirements engineering forms the foundation of successful software development
 
 \subsection{FR-1: User Authentication \& Authorization}
 \begin{itemize}
-    \item User login with bcrypt password hashing
-    \item JWT token management (access \& refresh tokens)
-    \item Role-based access control (RBAC)
-    \item Custom user permissions
+    \item OIDC Device Authorization Grant via Keycloak for CLI users (no password transmitted to CLI)
+    \item PKCE/OIDC browser flow for WebUI administrators
+    \item ALTCHA SHA-256 Proof-of-Work verification on all direct login endpoints
+    \item JWT-based session tokens (HS256): access token (5-minute default, configurable via \texttt{ZGATE\_ACCESS\_TOKEN\_DURATION}), refresh token (1-hour default, configurable via \texttt{ZGATE\_REFRESH\_TOKEN\_DURATION})
+    \item Per-token revocation via JTI (JWT ID) store; per-session revocation via refresh token family ID
+    \item Device fingerprint binding (SHA-256 of IP + User-Agent, 128-bit default) in every JWT to reject stolen-token replay
+    \item Mandatory TOTP two-factor authentication for all admin accounts
+    \item Role-based access control (RBAC) with four admin tiers: \texttt{super}, \texttt{db\_admin}, \texttt{policy\_admin}, \texttt{auditor}
+    \item Custom user permissions that combine with role-based permissions
 \end{itemize}
 
 \subsection{FR-2: Database Connection Management}
 \begin{itemize}
-    \item Multi-database support (MSSQL, MySQL, PostgreSQL)
-    \item Dynamic proxy creation with auto port allocation
-    \item Temporary database users with auto-cleanup
-    \item Secure credential generation
+    \item Multi-protocol proxy support: MySQL (port 9000), PostgreSQL (port 9001), Microsoft SQL Server/TDS (port 9002)
+    \item Two credential modes: \textit{ephemeral} (per-session temporary database users with auto-cleanup) and \textit{shared} (pooled shared accounts with concurrency limits)
+    \item Ticket mode: short-lived signed connection ticket; mTLS strict mode as opt-in alternative
+    \item Automatic resource cleanup on session close within 30 seconds of disconnect
+    \item Per-database health checks at configurable intervals
 \end{itemize}
 
 \subsection{FR-3: Policy Engine}
 \begin{itemize}
-    \item Real-time access control validation
-    \item Permission-based database filtering
-    \item Multi-level permissions (read, write, admin)
+    \item Real-time access control validation per connection and per query
+    \item Safety templates with four action types: \texttt{allow}, \texttt{deny}, \texttt{warn} (requires admin review), \texttt{mask}
+    \item Multi-level permissions (read, write, admin) enforced at the wire level
+    \item Warn flow: queries matching warn rules are held pending admin approval
+    \item 6 pre-seeded regulatory compliance frameworks: GDPR, HIPAA, PCI-DSS, SOX, ISO~27001, NIST
 \end{itemize}
 
 \subsection{FR-4: Command Line Interface}
@@ -64,9 +73,10 @@ Requirements engineering forms the foundation of successful software development
 
 \subsection{FR-7: Audit \& Logging}
 \begin{itemize}
-    \item Security event logging
-    \item User context in all logs
-    \item Structured logging with configurable levels
+    \item Structured OTLP telemetry export to OTel Collector (Jaeger/Prometheus/Loki/Grafana)
+    \item Per-query NDJSON audit log written to \texttt{ZGATE\_QUERY\_LOG\_DIR} with rotation
+    \item All authentication events logged with user context, IP, and outcome
+    \item Sensitive values (passwords, credentials) never logged; query text truncated in sidecar logs
 \end{itemize}
 
 \section{Non-Functional Requirements}
@@ -79,11 +89,13 @@ Requirements engineering forms the foundation of successful software development
     \item Token-based session security
 \end{itemize}
 
-\textbf{Key Metrics:}
+\textbf{Key Security Parameters:}
 \begin{itemize}
-    \item Access token expiry: 5 minutes
-    \item Refresh token expiry: 1 day
-    \item Session isolation with temporary users
+    \item Access token expiry: 5 minutes (\texttt{ZGATE\_ACCESS\_TOKEN\_DURATION})
+    \item Refresh token expiry: 1 hour (\texttt{ZGATE\_REFRESH\_TOKEN\_DURATION})
+    \item Proxy ticket TTL: 60 seconds (\texttt{PROXY\_TICKET\_TTL\_SECONDS})
+    \item Password hashing: bcrypt, work factor 12 (\texttt{ZGATE\_BCRYPT\_COST})
+    \item Session isolation with temporary users; auto-cleanup within 30 seconds
 \end{itemize}
 
 % NFR-2: Performance removed per requirements

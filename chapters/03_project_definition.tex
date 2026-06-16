@@ -10,50 +10,50 @@
     \item Project scope and deliverables
   \end{itemize}
 }
-zGate is a Zero Trust database access gateway platform eliminating credential exposure through identity-based access control. This chapter defines the three-tier architecture comprising the gateway server for protocol-aware proxying, the CLI for secure user access, and the web dashboard for centralized administration. We detail each component's capabilities and establish clear project scope boundaries.
+zGate is a Zero Trust database access gateway platform eliminating credential exposure through identity-based access control. This chapter defines the six-component architecture comprising the gateway server for protocol-aware proxying, the CLI for secure OIDC-authenticated developer access, the Next.js web dashboard for centralized administration, the AI masking engine, the T-SQL parser sidecar, and the Vault-first deployment stack. We detail each component's capabilities and establish clear project scope boundaries.
 \end{sectionintro}
 
 \section{Project Definition and Scope}
-zGate is a comprehensive Zero Trust database access gateway platform designed to eliminate credential exposure, enforce identity-based access control, and provide complete auditability for database operations in enterprise environments. The project encompasses the design, implementation, and deployment of a three-tier architecture that intercepts, authenticates, authorizes, and audits all database access in real-time.
+zGate is a comprehensive Zero Trust database access gateway platform designed to eliminate credential exposure, enforce identity-based access control, and provide complete auditability for database operations in enterprise environments. The project encompasses the design, implementation, and deployment of a six-component architecture that intercepts, authenticates, authorizes, and audits all database access in real-time.
 
 \subsection{System Components}
-The platform consists of three integrated components working in concert:
+The platform consists of six integrated components working in concert:
 
 \subsubsection{Gateway Server (zGate Core)}
 \begin{itemize}
     \item \textbf{Protocol Handlers:} Native implementation of MySQL, PostgreSQL, and MSSQL wire protocols, enabling transparent protocol-level interception and inspection of database traffic
-    \item \textbf{Authentication System:} JWT-based authentication with configurable token expiration, eliminating the need for users to possess database credentials
-    \item \textbf{Policy Engine:} Real-time policy evaluation engine that performs fresh permission lookups for every database operation, supporting role-based and custom permission models
-    \item \textbf{Dynamic Proxy Manager:} On-demand creation and management of database proxies with automatic port allocation, eliminating static listener configurations
-    % Temporary credential lifecycle is documented elsewhere; removed inline to avoid duplication
+    \item \textbf{Authentication System:} OIDC Device Flow (CLI) and PKCE browser flow (WebUI) via Keycloak; JWT-based internal session tokens (HS256, 5-minute access / 1-hour refresh), eliminating the need for users to possess database credentials
+    \item \textbf{Interceptor Pipeline:} Eight-stage middleware pipeline per query: RoutingBoundary \textrightarrow{} RateLimit \textrightarrow{} Safety (T-SQL AST) \textrightarrow{} DynamicMasking \textrightarrow{} AIMasking \textrightarrow{} RowMasking \textrightarrow{} Anomaly (ML Ensemble) \textrightarrow{} Logging
+    \item \textbf{Policy Engine:} Real-time policy evaluation engine performing fresh permission lookups for every database operation, supporting role-based and custom permission models; six compliance frameworks pre-seeded (GDPR, HIPAA, PCI-DSS, SOX, ISO~27001, NIST)
+    \item \textbf{Built-in PKI:} Internal CA auto-initialized at startup; CSR-based mTLS certificate issuance; revocation cache for instant session kill
     \item \textbf{Session Management:} Per-user, per-database session tracking with context preservation and graceful cleanup mechanisms
-    \item \textbf{API Server:} RESTful API exposing authentication, database listing, connection management, and session control endpoints
 \end{itemize}
 
 \subsubsection{Command-Line Interface (zGate-CLI)}
 \begin{itemize}
-    \item \textbf{Secure Authentication Flow:} Interactive login process with secure credential input and token management
-    \item \textbf{Token Storage \& Management:} Cross-platform secure token storage using OS keyring with encrypted file fallback, automatic token refresh before expiration
-    \item \textbf{Database Discovery:} List all databases accessible to the authenticated user based on their assigned roles
-    \item \textbf{Connection Management:} Establish database connections through the gateway with automatic credential handling
-    \item \textbf{Session Status:} Real-time visibility into active sessions, token expiration, and authentication state
-    \item \textbf{Logout \& Cleanup:} Proper session termination with server-side revocation and local credential cleanup
+    \item \textbf{OIDC Device Authorization Grant:} Browser-based authentication without CLI password exposure; Keycloak polls and returns OIDC tokens exchanged for internal zGate session tokens
+    \item \textbf{Bubble Tea TUI:} Stateful interactive terminal dashboard with Model/Update/View loop; headless subcommands for CI/CD pipelines
+    \item \textbf{Token Storage \& Management:} Cross-platform secure token storage using OS keyring (Windows Credential Manager, macOS Keychain, Linux Secret Service) with encrypted file fallback
+    \item \textbf{mTLS Certificate Lifecycle:} CSR-first issuance; private key never leaves client machine; auto-renewal at 25\% lifetime threshold or CA rotation
+    \item \textbf{Local Tunnel (Stunnel Pattern):} Loopback listener (Unix socket on Linux/macOS, TCP on Windows) bridges plaintext database client to TLS~1.3 mTLS proxy connection
 \end{itemize}
 
 \subsubsection{Web Administration Dashboard (zGate-WebUI)}
-Built with Next.js 15, React 19, and Radix UI, the dashboard provides comprehensive management capabilities:
+Built with Next.js~15, React~19, Tailwind CSS~4, and Radix UI, the dashboard provides comprehensive management capabilities via AES-256 iron-session and Vault AppRole secrets:
 \begin{itemize}
-    \item \textbf{Overview Dashboard:} Real-time system metrics, active sessions, and access patterns visualization
-    \item \textbf{Database Management:} Configure database connections, credentials, and connection pooling parameters
-    \item \textbf{User Management:} Create, modify, and deactivate user accounts with role assignments
-    \item \textbf{Administrator Management:} Dedicated administrative user management with elevated privileges
-    \item \textbf{Access Control:} Define and manage roles with granular permission specifications including database scoping and privilege levels (read-only, read-write, admin)
-    \item \textbf{Active Sessions Monitoring:} View all active database sessions with user context, connection duration, and query activity
-    \item \textbf{Query Execution:} Direct query interface with policy enforcement and audit logging
-    \item \textbf{Shared Account Pools:} Manage reusable database account credentials for backend systems
-    \item \textbf{Per-User Database Accounts:} Personal database account management for individual user needs
-    \item \textbf{Activity Audit:} Comprehensive audit log viewer with filtering, search, and export capabilities
-    \item \textbf{Connected Databases:} Real-time status of database connectivity and health
+    \item \textbf{Overview Dashboard:} Real-time system metrics (6 endpoints via \texttt{Promise.allSettled()}), active sessions, and ML anomaly alert counts
+    \item \textbf{Database Management:} Configure database connections with five TLS modes; live connectivity testing
+    \item \textbf{User Management:} Create, modify, and deactivate user accounts with role assignments; pending-sync state for offline targets
+    \item \textbf{Administrator Management:} Four-tier RBAC (super / db\_admin / policy\_admin / auditor) with immutable usernames and two-phase privilege escalation
+    \item \textbf{Access Control:} Roles referencing safety templates, masking templates, AI masking templates, and row-filter rules by Template ID
+    \item \textbf{Active Sessions Monitoring:} Live list of proxied connections; instant one-click TCP-level session revocation
+    \item \textbf{Query Policies:} Visual DSL editor for safety rules (allow/deny/warn/mask), rate limits, column masking, and row masking
+    \item \textbf{Compliance Templates:} One-framework-per-database constraint; six pre-seeded regulatory bundles (GDPR, HIPAA, PCI-DSS, SOX, ISO~27001, NIST)
+    \item \textbf{Pending Reviews:} Warn-level query approval queue with 3-second polling and 5-minute hard timeout
+    \item \textbf{AI/LLM Settings:} Hot-swappable LLM providers; write-only API key; test-before-save verification
+    \item \textbf{Activity Audit:} Two-tier NDJSON forensic drill-down; ML risk\_score red-badge highlighting
+    \item \textbf{Service Accounts:} Dual authenticators (Bearer + mTLS); zero-knowledge secret reveal; expiry proactive warnings
+    \item \textbf{Shared Account Pools:} Role-bound pooled credentials; real-time concurrency utilisation bar
 \end{itemize}
 
 \subsection{Scope Boundaries}
@@ -75,13 +75,12 @@ Built with Next.js 15, React 19, and Radix UI, the dashboard provides comprehens
 
 \subsubsection{Out of Scope (Current Phase):}
 \begin{itemize}
-    \item Oracle, and other database protocol support (planned for future phases)
-    \item Integration with external identity providers (SAML, LDAP, Active Directory)
-    \item Multi-factor authentication (MFA) enforcement
+    \item Oracle and other non-SQL-wire database protocol support (planned for future phases)
+    \item Integration with SAML or LDAP identity providers (Keycloak OIDC is the current IDP)
     \item Database activity replay and forensic analysis tools
-    \item High-availability and clustering capabilities
+    \item High-availability and clustering capabilities for the gateway server
     \item Advanced query rewriting and optimization
-    \item Automated compliance reporting generation
+    \item Automated compliance report generation and export
 \end{itemize}
 
 \section{Objectives}

@@ -86,7 +86,7 @@ The zGate Admin Panel leverages a carefully curated technology stack optimized f
 \rowcolor{teal!40}
 \textbf{Technology} & \textbf{Version} & \textbf{Purpose} \\
 \hline
-Next.js & 16.0 & React framework providing file-based routing, \\
+Next.js & 15 & React framework providing file-based routing, \\
  & & server-side rendering, and API proxying \\
 \hline
 React & 19.0 & Component-based UI library with modular, \\
@@ -95,7 +95,7 @@ React & 19.0 & Component-based UI library with modular, \\
 TypeScript & 5.x & Type-safe JavaScript superset catching \\
  & & errors at compile-time with IntelliSense \\
 \hline
-Tailwind CSS & 3.x & Utility-first CSS framework for rapid \\
+Tailwind CSS & 4 & Utility-first CSS framework for rapid \\
  & & UI development and responsive design \\
 \hline
 Radix UI & Latest & Accessible component primitives with \\
@@ -110,7 +110,7 @@ Zod & Latest & Schema validation ensuring data integrity \\
 Lucide React & Latest & Comprehensive icon library with \\
  & & 1000+ SVG icons \\
 \hline
-Node.js & Latest & JavaScript runtime for build tools \\
+Node.js & 22.x & JavaScript runtime for build tools \\
  & & and development server \\
 \hline
 pnpm & Latest & Fast, disk space efficient package manager \\
@@ -502,7 +502,7 @@ The following diagram illustrates the end-to-end authentication process from use
 \node (response) [action, below of=generate, yshift=-0.3cm] {5. Return Tokens\\+ User Info};
 
 % Row 5
-\node (store) [action, below of=response] {6. Store in localStorage};
+\node (store) [action, below of=response] {6. Store in AES-256 iron-session cookie\\(HttpOnly; Secure; SameSite=Lax)};
 
 % Row 6
 \node (redirect) [action, below of=store] {7. Redirect to Admin Dashboard};
@@ -714,10 +714,18 @@ This architectural pattern eliminates cross-origin restrictions while maintainin
 \textbf{Security Considerations:}
 
 \begin{itemize}
-    \item \textbf{Token Storage:} Tokens stored in localStorage (accessible to JavaScript). For maximum security, httpOnly cookies could be used (not accessible to JavaScript, preventing XSS attacks)
-    \item \textbf{HTTPS Requirement:} In production, all communication must occur over HTTPS to prevent token interception
-    \item \textbf{Token Revocation:} Admins can revoke sessions, immediately invalidating refresh tokens in the database
-    \item \textbf{Session Expiry:} After 1 hour of inactivity (refresh token expires), users must re-authenticate
+    \item \textbf{Token Storage:} Access tokens are stored exclusively in
+          an AES-256 encrypted \texttt{iron-session} \texttt{HttpOnly} cookie
+          --- never in \texttt{localStorage} or \texttt{sessionStorage}.
+          The token is decrypted server-side on every proxy request; client-side
+          JavaScript cannot access it.
+    \item \textbf{HTTPS Requirement:} In production, all communication occurs
+          over HTTPS (enforced by HSTS header); the cookie's \texttt{Secure}
+          flag prevents transmission over plain HTTP.
+    \item \textbf{Token Revocation:} Admins can revoke sessions, immediately
+          invalidating the Keycloak refresh token and purging the iron-session.
+    \item \textbf{Session Expiry:} After 8 hours (aligned to the Keycloak
+          session lifetime), users must re-authenticate.
 \end{itemize}
 \end{mdframed}
 
@@ -757,16 +765,21 @@ The user management interface provides comprehensive CRUD operations:
 \begin{mdframed}[backgroundcolor=green!5, linecolor=green!40, linewidth=2pt]
 \textbf{Supported Database Systems:}
 
-The Admin Panel provides unified management for multiple database types:
+The Admin Panel provides unified management for three SQL wire-protocol database types:
 
 \begin{itemize}
-    \item \textbf{MySQL:} Popular open-source relational database with enterprise features
-    \item \textbf{PostgreSQL:} Advanced open-source database with strong ACID compliance
-    \item \textbf{Microsoft SQL Server:} Enterprise-grade database with Windows integration
-    \item \textbf{MongoDB:} NoSQL document database for flexible schema design
+    \item \textbf{MySQL / MariaDB:} Full wire-protocol proxy on port 9000;
+          ephemeral and shared-account credential modes;
+          \texttt{caching\_sha2\_password} support for MySQL~8+
+    \item \textbf{PostgreSQL:} Wire-protocol proxy on port 9001;
+          ephemeral and shared-account modes; standard pg wire~v3 support
+    \item \textbf{Microsoft SQL Server (TDS):} Wire-protocol proxy on port
+          9002; full T-SQL structural analysis via the T-SQL Parser sidecar;
+          ephemeral credentials compatible with SQL Server authentication
 \end{itemize}
 
-Each database type has a dedicated configuration wizard with type-specific validation and connection testing.
+Each database type has a dedicated configuration wizard with type-specific
+validation and live connectivity testing.
 \end{mdframed}
 
 \subsubsection{Query Execution Interface}
@@ -1159,7 +1172,7 @@ To prevent lateral movement by malicious actors, the backend never returns the p
 This module handles the lifecycle of the ZGate administrators themselves, ensuring strict partitioning of capabilities based on the admin's assigned tier.
 
 \subsubsection{Gated Access by Administrative Tier}
-A \texttt{useEffect} hook immediately checks \texttt{localStorage.getItem("admin\_tier")} upon mounting. If the value is not \texttt{"super"}, it fires a router redirect to an unauthorized splash page, aggressively blocking DOM rendering for lesser-privileged admins (like \texttt{auditor} or \texttt{policy\_admin}).
+A \texttt{useEffect} hook checks \texttt{localStorage.getItem("admin\_tier")} upon mounting as a client-side secondary UX guard. The primary access control gate is the server-side PKCE/OIDC authentication via Keycloak, which embeds the admin tier in the encrypted iron-session cookie. The \texttt{localStorage} check provides an additional fast-path redirect to the unauthorized splash page for lower-privileged tiers (\texttt{auditor} or \texttt{policy\_admin}), avoiding unnecessary DOM rendering while the server-side validation proceeds.
 
 \subsubsection{Two-Phase Commit Updates}
 Updating an admin's profile relies on two distinct API paths. \texttt{PUT /api/admin/admins/[username]} handles standard name and status changes. \texttt{PATCH /api/admin/admins/[username]/tier} handles privilege escalation or de-escalation. Separating the \texttt{tier} update allows the backend to apply much stricter authorization middleware to privilege escalation attempts.
@@ -1730,12 +1743,15 @@ Optimization techniques include:
 Planned improvements for Term 2:
 
 \begin{itemize}
-    \item \textbf{GraphQL Integration:} Replace REST APIs with GraphQL for more efficient data fetching
-    \item \textbf{Real-time Updates:} WebSocket integration for live session monitoring
-    \item \textbf{Advanced Analytics:} Dashboard with query performance metrics and usage patterns
-    \item \textbf{Role Templates:} Pre-configured role sets for common use cases (Developer, Analyst, Read-Only)
-    \item \textbf{Multi-factor Authentication:} TOTP-based 2FA for enhanced admin security
-    \item \textbf{Internationalization:} Support for Arabic and French localization
+    \item \textbf{Internationalization:} Support for Arabic and French
+          localization of the administration dashboard
+    \item \textbf{GraphQL Integration:} Replace REST APIs with GraphQL for
+          more efficient data fetching on pages with complex relational data
+    \item \textbf{Real-Time WebSocket Push:} Replace polling-based session
+          monitoring with server-sent events or WebSocket for zero-latency
+          alert delivery
+    \item \textbf{Advanced Query Analytics:} Per-user query performance
+          heatmaps and historical latency trend charts
 \end{itemize}
 
 \subsubsection{Regional Market Analysis: Egypt}
@@ -1869,7 +1885,10 @@ The Zizo tour system is highly granular, featuring \textbf{nine distinct tours} 
     \item \textbf{Audience:} \texttt{super}
     \item \textbf{Entry Point:} Manual
     \item \textbf{Visited Screens:} \texttt{/admin/compliance-templates}
-    \item \textbf{Key Highlights:} Demonstrates the one-framework-per-database constraint and how to globally apply bundled templates for HIPAA, GDPR, ISO 27001, PCI DSS, CCPA, or SOC 2.
+    \item \textbf{Key Highlights:} Demonstrates the one-framework-per-database
+          constraint and how to globally apply bundled regulatory templates.
+          The six available frameworks are: GDPR, HIPAA, PCI-DSS, SOX,
+          ISO~27001, and NIST.
 \end{itemize}
 
 \paragraph{8. Admin Account Management}
