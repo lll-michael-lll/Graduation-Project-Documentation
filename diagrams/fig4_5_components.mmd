@@ -1,0 +1,67 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+    classDef client  fill:#A5E9DD,stroke:#810B38,color:#1a1a1a
+    classDef server  fill:#6D94C5,stroke:#810B38,color:#fff
+    classDef sidecar fill:#FDF4AF,stroke:#810B38,color:#1a1a1a
+    classDef db      fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+    classDef store   fill:#F0FFDF,stroke:#810B38,color:#1a1a1a
+    classDef infra   fill:#E8DFCA,stroke:#810B38,color:#1a1a1a
+
+    subgraph CLIENTS ["Client Layer"]
+        CLI["zGate-CLI\n(Go · Cobra · BubbleTea)"]:::client
+        WEBUI["zGate-WebUI\n(Next.js 15 · React 19 · iron-session)"]:::client
+    end
+
+    subgraph SERVER ["zGate-Server"]
+        API["REST API Server\n/api/admin/* · /api/user/*"]:::server
+        AUTH["Auth Module\nOIDC · JWT HS256 · TOTP · mTLS PKI"]:::server
+        POLICY["Policy Engine\nRBAC · Safety · Masking Templates"]:::server
+        DISP["Dispatcher\n6-Phase: Peek to Bind to Handshake to Loop"]:::server
+        PIPE["Interceptor Pipeline\nRateLimit > Telemetry > Log > Anomaly\n> SafeQuery > RowMask > ColMask > AIMask"]:::server
+        STORE["MySQL Store\nConfig · Accounts · Sessions · Audit"]:::store
+    end
+
+    subgraph SIDECARS ["Sidecar Services"]
+        TSQL["zGate-Tsql-Parser\ngRPC · AST · 40+ features"]:::sidecar
+        AI["zGate-AI\ngRPC · LLM column masking"]:::sidecar
+    end
+
+    subgraph INFRA ["Infrastructure (zGate-Deploy)"]
+        VAULT["HashiCorp Vault\nAppRole secrets"]:::infra
+        OTEL["OTel Collector\nJaeger · Prometheus · Loki · Grafana"]:::infra
+        KC["Keycloak\nOIDC Provider"]:::infra
+    end
+
+    subgraph DBS ["Backend Databases"]
+        DB1["MySQL :9000"]:::db
+        DB2["PostgreSQL :9001"]:::db
+        DB3["MSSQL :9002"]:::db
+    end
+
+    CLI -->|"REST + mTLS"| API
+    WEBUI -->|"REST (iron-session cookie)"| API
+    API --> AUTH
+    API --> POLICY
+    POLICY --> STORE
+    AUTH --> STORE
+    AUTH <-->|"OIDC token verify"| KC
+    POLICY --> DISP
+    DISP --> PIPE
+    PIPE <-->|"gRPC AST"| TSQL
+    PIPE <-->|"gRPC LLM"| AI
+    PIPE --> STORE
+    DISP --> DB1
+    DISP --> DB2
+    DISP --> DB3
+    SERVER -->|"OTLP traces/metrics/logs"| OTEL
+    VAULT -->|"bootstrap secrets"| SERVER

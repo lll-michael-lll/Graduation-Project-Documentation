@@ -1,0 +1,56 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TD
+    classDef actor   fill:#DCC3AA,stroke:#810B38,color:#1a1a1a
+    classDef usecase fill:#F1E2D1,stroke:#6D94C5,color:#1a1a1a
+    classDef super   fill:#4BB8FA,stroke:#810B38,color:#1a1a1a
+    classDef server  fill:#6D94C5,stroke:#810B38,color:#fff
+
+    SYS_ADMIN(["System Admin\n(db_admin | policy_admin | auditor)"]):::actor
+    SUPER_ADMIN(["Super Admin"]):::super
+
+    subgraph WEBUI ["zGate-WebUI (iron-session PKCE)"]
+        UC5["UC-5: Add/Edit Database Config\n(5 TLS modes, live test)"]:::usecase
+        UC6["UC-6: Create User with Roles\n(bcrypt-12, RBAC)"]:::usecase
+        UC7["UC-7: Define Role + Policy Templates\n(safety / masking / AI / row rules)"]:::usecase
+        UC8["UC-8: Monitor Active Sessions\n(TCP-level kill)"]:::usecase
+        UC9["UC-9: Review Audit Logs\n(NDJSON, risk_score badges)"]:::usecase
+        UC12["UC-12: Configure Shared Account Pool\n(concurrency limits)"]:::usecase
+        UC_COMP["Apply Compliance Template\n(GDPR/HIPAA/PCI-DSS/SOX/ISO27001/NIST)"]:::usecase
+        UC_WARN["Approve/Reject Warned Queries\n(5-min timeout queue)"]:::usecase
+        UC_AI["Configure AI/LLM Provider\n(hot-swap, write-only key)"]:::usecase
+    end
+
+    subgraph SERVER ["zGate-Server API"]
+        SRV["REST API\n(admin-token middleware)"]:::server
+    end
+
+    SUPER_ADMIN -->|"super tier only"| UC_COMP
+    SUPER_ADMIN -->|"super tier only"| UC_AI
+    SUPER_ADMIN --> UC6
+    SYS_ADMIN --> UC5
+    SYS_ADMIN --> UC6
+    SYS_ADMIN --> UC7
+    SYS_ADMIN --> UC8
+    SYS_ADMIN --> UC9
+    SYS_ADMIN --> UC12
+    SYS_ADMIN --> UC_WARN
+
+    UC5 --> SRV
+    UC6 --> SRV
+    UC7 --> SRV
+    UC8 --> SRV
+    UC9 --> SRV
+    UC12 --> SRV
+    UC_COMP --> SRV
+    UC_WARN --> SRV
+    UC_AI --> SRV

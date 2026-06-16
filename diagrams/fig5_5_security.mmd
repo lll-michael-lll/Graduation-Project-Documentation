@@ -1,0 +1,63 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "13px"
+  }
+}}%%
+flowchart TB
+    classDef l1 fill:#FFAAB8,stroke:#810B38,color:#1a1a1a
+    classDef l2 fill:#FDF4AF,stroke:#810B38,color:#1a1a1a
+    classDef l3 fill:#A5E9DD,stroke:#810B38,color:#1a1a1a
+    classDef l4 fill:#6D94C5,stroke:#810B38,color:#fff
+    classDef l5 fill:#5DF8D8,stroke:#810B38,color:#1a1a1a
+    classDef l6 fill:#A8DF8E,stroke:#810B38,color:#1a1a1a
+    classDef l7 fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+
+    subgraph L1 ["Layer 1 — Network and Transport Security"]
+        TLS["TLS 1.3 on all connections\nmTLS strict mode (CLI)"]:::l1
+        VPKT["Proxy ticket TTL: 60s\n(PROXY_TICKET_TTL_SECONDS)"]:::l1
+    end
+
+    subgraph L2 ["Layer 2 — Identity and Authentication"]
+        OIDC2["OIDC Device Flow / PKCE\n(no password to CLI)"]:::l2
+        ALTCHA2["ALTCHA SHA-256 PoW\n(all login endpoints)"]:::l2
+        TOTP2["TOTP 2FA\n(all admin accounts)"]:::l2
+        FINGER["Device Fingerprint\nSHA-256(IP + UA)"]:::l2
+    end
+
+    subgraph L3 ["Layer 3 — Token Security"]
+        JWT2["JWT HS256\naccess: 5min, refresh: 1hr"]:::l3
+        JTI2["JTI Revocation Store\n(per-token kill)"]:::l3
+        FAM["Family ID\n(per-session kill)"]:::l3
+        LOCKOUT["Progressive Lockout\n5 failures then backoff"]:::l3
+    end
+
+    subgraph L4 ["Layer 4 — Authorization (RBAC)"]
+        RBAC2["4-tier Admin RBAC\nsuper, db_admin, policy_admin, auditor"]:::l4
+        USERPERM["User Roles + Custom Overrides\n(eval fresh per request)"]:::l4
+        PERM_LEVEL["Permission Levels\nread, write, admin"]:::l4
+    end
+
+    subgraph L5 ["Layer 5 — Query Interception Pipeline"]
+        PIPE2["1 RateLimit, 2 OTel Span, 3 NDJSON Log\n4 Anomaly (ML), 5 SafeQuery (AST)\n6 RowMask, 7 ColMask, 8 AIMask (LLM)"]:::l5
+        WARN2["Warn Flow\nQuery held pending admin approval\n(5-min hard timeout)"]:::l5
+    end
+
+    subgraph L6 ["Layer 6 — Credential Isolation"]
+        EPHEM["Ephemeral Users\nauto-deleted 30s post-disconnect"]:::l6
+        BCRYPT["bcrypt work factor 12\n(ZGATE_BCRYPT_COST)"]:::l6
+        VAULT2["HashiCorp Vault AppRole\n(no secrets in env files)"]:::l6
+    end
+
+    subgraph L7 ["Layer 7 — Audit and Observability"]
+        NDJSON["Per-query NDJSON audit\n(ZGATE_QUERY_LOG_DIR)"]:::l7
+        OTLP2["OTLP to OTel Collector\n(Jaeger, Prometheus, Loki, Grafana)"]:::l7
+        RISK["ML risk_score\n(red-badge in audit viewer)"]:::l7
+    end
+
+    L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7

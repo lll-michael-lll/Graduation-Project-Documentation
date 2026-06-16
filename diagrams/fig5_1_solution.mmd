@@ -1,0 +1,50 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart LR
+    classDef client  fill:#A5E9DD,stroke:#810B38,color:#1a1a1a
+    classDef server  fill:#6D94C5,stroke:#810B38,color:#fff
+    classDef sidecar fill:#FDF4AF,stroke:#810B38,color:#1a1a1a
+    classDef db      fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+    classDef problem fill:#FFAAB8,stroke:#810B38,color:#1a1a1a
+    classDef benefit fill:#A8DF8E,stroke:#810B38,color:#1a1a1a
+    classDef deploy  fill:#E8DFCA,stroke:#810B38,color:#1a1a1a
+
+    subgraph BEFORE ["Traditional Model - Problem"]
+        direction TB
+        P1["Shared Credentials\n(sprawl in env files)"]:::problem
+        P2["Static Permissions\n(never revoked)"]:::problem
+        P3["No Query Visibility\n(no masking, no audit)"]:::problem
+    end
+
+    subgraph ZGATE ["zGate Zero Trust Platform"]
+        direction TB
+        CLI2["zGate-CLI\nOIDC, mTLS, BubbleTea"]:::client
+        WUI["zGate-WebUI\nNext.js 15, iron-session"]:::client
+        GW2["zGate-Server\nGateway, Auth, Policy, PKI"]:::server
+        TSQL2["zGate-Tsql-Parser\nAST Safety Analysis"]:::sidecar
+        AI2["zGate-AI\nLLM Column Masking"]:::sidecar
+        DEP["zGate-Deploy\nVault, Docker, OTel"]:::deploy
+    end
+
+    subgraph AFTER ["Security Guarantees"]
+        direction TB
+        B1["Ephemeral Credentials\n(auto-deleted 30s)"]:::benefit
+        B2["Real-Time RBAC\n(eval every query)"]:::benefit
+        B3["Query Interception\n(8-stage pipeline)"]:::benefit
+        B4["Full Audit Trail\n(NDJSON + OTLP)"]:::benefit
+    end
+
+    BEFORE -->|"replaced by"| ZGATE
+    ZGATE --> AFTER
+
+    DB_NEW["MySQL, PostgreSQL, MSSQL\n(users never see credentials)"]:::db
+    GW2 --> DB_NEW

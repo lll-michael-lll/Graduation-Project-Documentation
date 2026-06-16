@@ -305,25 +305,12 @@ Table~\ref{tab:tech-summary} consolidates all major technology choices, their ra
 \footnotesize
 \setlength\LTleft\fill
 \setlength\LTright\fill
-\begin{longtable}{|p{2.6cm}|p{3.2cm}|p{\dimexpr\linewidth-2.6cm-3.2cm-6\tabcolsep-4\arrayrulewidth\relax}|}
+\begin{longtable}{|p{2.6cm}|p{3.2cm}|p{9.5cm}|}
 \caption{zGate Technology Stack: Choices, Rationale, and Standards Alignment}
 \label{tab:tech-summary} \\
 \hline
-\rowcolor{lightGray}
 \textbf{Technology} & \textbf{Primary Role} & \textbf{Standard / Rationale} \\
 \hline
-\endfirsthead
-\multicolumn{3}{l}{\scriptsize\itshape (Continued from previous page)} \\[2pt]
-\hline
-\rowcolor{lightGray}
-\textbf{Technology} & \textbf{Primary Role} & \textbf{Standard / Rationale} \\
-\hline
-\endhead
-\hline
-\multicolumn{3}{r}{\scriptsize\itshape (Continued on next page)}
-\endfoot
-\hline
-\endlastfoot
 Go 1.26 & Backend server, gateway proxy & Memory safety, goroutines, static binary; no CVE class from memory corruption \\
 \hline
 MySQL 8 & Encrypted control-plane store & ACID transactions, \texttt{SELECT FOR UPDATE} row locking, AES-256-GCM field encryption (FIPS 197~\cite{fips-197}, SC-28) \\

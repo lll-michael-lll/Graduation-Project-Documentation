@@ -38,8 +38,8 @@ Traditional database access models suffer from several critical security and ope
 zGate addresses these challenges through a multi-layered architecture built on three core principles:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/zgate-sol.png}
-    \caption{zgate proposed solution architecture}
+    \includegraphics[width=\textwidth]{images/zgate-sol.png}
+    \caption{zGate Zero Trust platform overview contrasting the traditional credential-sharing model (shared credentials, static permissions, no query visibility) with the six-component zGate platform (zGate-Server, CLI, WebUI, AI Engine, T-SQL Parser, Deploy) and the resulting security guarantees: ephemeral credentials auto-deleted within 30~seconds, real-time RBAC evaluation per query, eight-stage interceptor pipeline, and full NDJSON and OTLP audit trail.}
     \label{fig:zgate-solution}
 \end{figure}
 \section{Core Components}
@@ -51,8 +51,8 @@ The server is the heart of the platform, handling all security, policy enforceme
 \subsubsection{Backend Layers}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/backend.png}
-    \caption{zGate backend architecture showing authentication, policy engine, and proxy layers}
+    \includegraphics[width=\textwidth]{images/backend.png}
+    \caption{zGate-Server internal layered architecture. The API Layer routes all requests into the Authentication and Identity module (OIDC token validation via Keycloak, JWT HS256 with device fingerprint binding, TOTP 2FA, built-in PKI for mTLS certificate lifecycle, and ALTCHA SHA-256 proof-of-work). The Policy Engine resolves four-tier RBAC permissions and applies safety templates and six compliance frameworks. The six-phase Dispatcher manages connection routing, and every query traverses an eight-stage Interceptor Pipeline: RateLimit, OTel Telemetry, NDJSON Logging, Anomaly detection, SafeQuery AST analysis (gRPC to zGate-Tsql-Parser), RowMask, ColMask, and AI Masking (gRPC to zGate-AI).}
     \label{fig:zgate-backend-architecture}
 \end{figure}
 \subsubsection{Key Features}
@@ -106,8 +106,8 @@ The command-line interface provides developers with a simple, secure way to acce
 \subsubsection{CLI Workflow}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/CLI-workflow.png}
-    \caption{zGate CLI workflow illustrating token management and database access process}
+    \includegraphics[width=\textwidth]{images/CLI-workflow.png}
+    \caption{zGate-CLI five-phase workflow sequence. Phase~1: OIDC Device Authorization Grant (RFC~8628) --- the CLI obtains a device code from Keycloak, presents a verification URI to the user, polls for approval, then exchanges the ID token for zGate JWT tokens (5-minute access, 1-hour refresh) stored in the OS keyring. Phase~2: mTLS certificate lifecycle --- ECDSA key pair generated locally, CSR submitted to the built-in PKI, signed certificate returned. Phase~3: database connection --- RBAC check, ephemeral credential creation, loopback tunnel established for transparent database client use. Phase~4: transparent token refresh one minute before expiry. Phase~5: secure logout with server-side JTI and family-ID revocation.}
     \label{fig:CLI-workflow}
 \end{figure}
 \subsubsection{CLI Features}
@@ -194,8 +194,8 @@ The web interface provides administrators with a comprehensive control panel for
 \subsubsection{Technology Stack}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/tech-stack.png}
-    \caption{zGate technology stack}
+    \includegraphics[width=\textwidth]{images/tech-stack.png}
+    \caption{zGate technology stack across all six platform components. The two Go~1.22+ services (zGate-Server and zGate-CLI) share the standard library's \texttt{crypto/tls} and \texttt{net} packages with \texttt{go-chi/chi~v5}, \texttt{golang-jwt}, \texttt{golang.org/x/crypto} (bcrypt cost~12), OpenTelemetry OTLP, and \texttt{google.golang.org/grpc} for sidecar communication. zGate-CLI additionally uses Cobra for command routing, BubbleTea for the interactive TUI, and OS keyring integration for secure token storage. The WebUI runs on Node~22~LTS with Next.js~15 (App Router), React~19, Tailwind~CSS~4, Radix~UI primitives, iron-session (AES-256 HttpOnly cookie), and Zod validation. The AI Engine and T-SQL Parser sidecars expose gRPC interfaces. zGate-Deploy provisions the full stack via Docker Compose with HashiCorp Vault (AppRole secrets), Keycloak (OIDC), and the OpenTelemetry Collector pipeline (Jaeger, Prometheus, Loki, Grafana).}
     \label{fig:technology-stack}
 \end{figure}
 
@@ -206,8 +206,8 @@ Security is woven into every layer of the zGate platform through multiple defens
 \subsection{Security Layers}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/security-layers.png}
-    \caption{Multi-layered security architecture in zGate platform}
+    \includegraphics[width=\textwidth]{images/security-layers.png}
+    \caption{zGate seven-layer defence-in-depth security model. Layer~1: TLS~1.3 on all connections with mTLS strict mode for CLI and a 60-second proxy ticket TTL. Layer~2: identity and authentication via OIDC Device Flow / PKCE (no passwords transmitted to clients), ALTCHA SHA-256 proof-of-work on all login endpoints, mandatory TOTP 2FA for admin accounts, and SHA-256 device fingerprinting. Layer~3: token security with JWT HS256, 5-minute access and 1-hour refresh TTLs, per-token JTI revocation, per-session family-ID revocation, and progressive lockout after five failures. Layer~4: four-tier RBAC (super, db\_admin, policy\_admin, auditor) with fresh per-request evaluation. Layer~5: eight-stage interceptor pipeline including a warn flow requiring admin approval within 5~minutes. Layer~6: credential isolation via ephemeral database users deleted within 30~seconds, bcrypt work factor~12, and HashiCorp Vault AppRole for secrets. Layer~7: full observability through per-query NDJSON audit logs, OTLP telemetry exported to the OTel Collector, and ML anomaly risk scores surfaced in the audit dashboard.}
     \label{fig:security-layers}
 \end{figure}
 \subsection{Security Guarantees}

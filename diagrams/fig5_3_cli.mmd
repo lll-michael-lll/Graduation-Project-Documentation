@@ -1,0 +1,73 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "13px"
+  }
+}}%%
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+    participant CLI as zGate-CLI
+    participant KC as Keycloak
+    participant GW as zGate-Server
+    participant PKI as Built-in PKI
+    participant DB as Target Database
+
+    rect rgb(245,252,255)
+        Note over Dev,KC: Phase 1 — OIDC Device Flow Authentication
+        Dev->>CLI: zgate login
+        CLI->>KC: POST /device/authorization
+        KC-->>CLI: device_code + verification_uri
+        CLI-->>Dev: Open browser and enter code
+        Dev->>KC: Enter code in browser + consent
+        loop Poll every 5s
+            CLI->>KC: POST /token (device_code)
+            KC-->>CLI: access_token + id_token
+        end
+        CLI->>GW: POST /api/auth/token (id_token exchange)
+        GW-->>CLI: JWT access_token (5min) + refresh_token (1hr)
+        CLI->>CLI: Store tokens in OS keyring
+    end
+
+    rect rgb(240,255,240)
+        Note over Dev,PKI: Phase 2 — mTLS Certificate Lifecycle
+        CLI->>CLI: Generate ECDSA key pair
+        CLI->>PKI: POST /api/user/cert (CSR)
+        PKI-->>CLI: Signed mTLS certificate
+        CLI->>CLI: Store cert + key locally
+    end
+
+    rect rgb(255,252,240)
+        Note over Dev,DB: Phase 3 — Database Connection
+        Dev->>CLI: zgate connect my-db
+        CLI->>GW: GET /api/user/databases (JWT)
+        GW-->>CLI: Accessible DB list + permissions
+        CLI->>GW: POST /api/user/connect/my-db (JWT + mTLS)
+        GW->>GW: RBAC check + create ephemeral DB user
+        GW-->>CLI: host, port, temp_user, temp_pass
+        CLI->>CLI: Start loopback tunnel on local port
+        CLI-->>Dev: Connect using standard DB client
+        Dev->>CLI: DB client connects to loopback
+        CLI->>DB: Tunnelled via mTLS to proxy port
+    end
+
+    rect rgb(252,245,255)
+        Note over CLI,GW: Phase 4 — Token Refresh
+        CLI->>CLI: Detect access_token expiry within 1 min
+        CLI->>GW: POST /api/auth/refresh (refresh_token)
+        GW-->>CLI: New access_token
+    end
+
+    rect rgb(255,245,245)
+        Note over Dev,GW: Phase 5 — Logout
+        Dev->>CLI: zgate logout
+        CLI->>GW: POST /api/auth/logout (refresh_token)
+        GW->>GW: Revoke JTI + family ID
+        GW-->>CLI: 200 OK
+        CLI->>CLI: Clear OS keyring + cert storage
+    end

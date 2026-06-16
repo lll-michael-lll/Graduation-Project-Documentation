@@ -1,0 +1,48 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "13px"
+  }
+}}%%
+flowchart LR
+    classDef human   fill:#DCC3AA,stroke:#810B38,color:#1a1a1a
+    classDef super   fill:#4BB8FA,stroke:#810B38,color:#1a1a1a
+    classDef server  fill:#6D94C5,stroke:#810B38,color:#fff
+    classDef sidecar fill:#FDF4AF,stroke:#810B38,color:#1a1a1a
+    classDef db      fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+    classDef ext     fill:#E8DFCA,stroke:#810B38,color:#1a1a1a
+
+    EU(["End User"]):::human
+    SYS(["System Admin"]):::human
+    SUP(["Super Admin"]):::super
+
+    subgraph GW ["zGate Gateway System"]
+        CLI_UC["CLI Use Cases\nLogin (OIDC Device)\nList DBs\nConnect (mTLS tunnel)\nToken Refresh\nLogout"]:::server
+        WEB_UC["WebUI Use Cases\nDB Config (5 TLS modes)\nUser + Role Mgmt\nPolicy Templates\nSession Monitor + Kill\nAudit Logs\nShared Pools\nCompliance Templates\nWarn Queue Review\nAI/LLM Config"]:::server
+        SRV_UC["Server Use Cases\nAuth (JWT HS256)\nRBAC Enforcement\nInterceptor Pipeline\nEphemeral Credentials\nPKI / mTLS Issuance\nAudit Logging (NDJSON)\nAnomaly Detection"]:::server
+    end
+
+    subgraph SIDECARS ["Supporting Services"]
+        TSQL_UC["T-SQL Parser\ngRPC AST Analysis\n40+ SQL features"]:::sidecar
+        AI_UC["AI Engine\ngRPC LLM Column Masking\nHot-swap providers"]:::sidecar
+        KC_UC["Keycloak\nOIDC Device Flow\nPKCE Browser Flow"]:::ext
+    end
+
+    DB["MySQL · PostgreSQL · MSSQL"]:::db
+
+    EU -->|"CLI"| CLI_UC
+    SYS -->|"WebUI"| WEB_UC
+    SUP -->|"WebUI (super)"| WEB_UC
+    CLI_UC --> SRV_UC
+    WEB_UC --> SRV_UC
+    SRV_UC --> DB
+    SRV_UC <--> TSQL_UC
+    SRV_UC <--> AI_UC
+    EU --> KC_UC
+    SYS --> KC_UC
+    KC_UC --> SRV_UC

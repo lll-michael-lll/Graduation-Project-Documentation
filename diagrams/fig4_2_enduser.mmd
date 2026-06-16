@@ -1,0 +1,60 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "secondaryColor": "#A5E9DD",
+    "tertiaryColor": "#F1E2D1",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TD
+    classDef actor   fill:#DCC3AA,stroke:#810B38,color:#1a1a1a
+    classDef usecase fill:#F1E2D1,stroke:#6D94C5,color:#1a1a1a
+    classDef system  fill:#6D94C5,stroke:#810B38,color:#fff
+    classDef ext     fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+
+    EU(["End User\n/ Developer"]):::actor
+
+    subgraph CLI_LAYER ["zGate-CLI"]
+        UC1["UC-1: Authenticate\n(OIDC Device Flow / local login)"]:::usecase
+        UC2["UC-2: List Accessible Databases"]:::usecase
+        UC3["UC-3: Connect to Database\n(mTLS loopback tunnel)"]:::usecase
+        UC10["UC-10: Auto Token Refresh"]:::usecase
+        UC11["UC-11: Logout and Token Revocation"]:::usecase
+        UC_STATUS["Check Session Status\n(zgate status)"]:::usecase
+    end
+
+    subgraph GW_LAYER ["zGate-Server"]
+        GW_AUTH["Validate OIDC Token\n/ Issue JWT (HS256)"]:::system
+        GW_PERM["Resolve RBAC Permissions"]:::system
+        GW_PROXY["Ephemeral Credential\nProxy Session"]:::system
+        GW_CLEANUP["Auto-Cleanup\n(30s after disconnect)"]:::system
+        GW_REVOKE["Revoke Refresh Token\n(JTI store)"]:::system
+    end
+
+    KC["Keycloak"]:::ext
+    DB["Target Database\nMySQL | PG | MSSQL"]:::ext
+
+    EU --> UC1
+    EU --> UC2
+    EU --> UC3
+    EU --> UC10
+    EU --> UC11
+    EU --> UC_STATUS
+
+    UC1 -->|"Device Code to Browser"| KC
+    KC -->|"ID Token"| GW_AUTH
+    GW_AUTH -->|"JWT access+refresh"| UC1
+
+    UC2 --> GW_PERM
+    UC3 --> GW_PROXY
+    GW_PROXY -->|"ephemeral user"| DB
+    GW_PROXY -->|"loopback port"| EU
+
+    UC10 --> GW_AUTH
+    UC11 --> GW_REVOKE
+    GW_PROXY -->|"on disconnect"| GW_CLEANUP

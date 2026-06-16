@@ -1,0 +1,68 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#6D94C5",
+    "primaryTextColor": "#1a1a1a",
+    "primaryBorderColor": "#810B38",
+    "lineColor": "#810B38",
+    "fontFamily": "Liberation Sans, Arial, sans-serif",
+    "fontSize": "13px"
+  }
+}}%%
+flowchart LR
+    classDef go      fill:#A5E9DD,stroke:#810B38,color:#1a1a1a
+    classDef js      fill:#CBDCEB,stroke:#810B38,color:#1a1a1a
+    classDef infra   fill:#E8DFCA,stroke:#810B38,color:#1a1a1a
+    classDef ai      fill:#FDF4AF,stroke:#810B38,color:#1a1a1a
+    classDef db      fill:#F1E2D1,stroke:#810B38,color:#1a1a1a
+
+    subgraph SERVER_TECH ["zGate-Server (Go 1.22+)"]
+        direction TB
+        G1["Go stdlib\n(net, crypto/tls)"]:::go
+        G2["go-chi/chi v5\n(HTTP router)"]:::go
+        G3["golang-jwt/jwt\n(HS256 tokens)"]:::go
+        G4["golang.org/x/crypto\n(bcrypt-12, ECDSA)"]:::go
+        G5["go.opentelemetry.io\n(OTLP traces/metrics/logs)"]:::go
+        G6["database/sql + go-sql-driver\n(MySQL store)"]:::go
+        G7["google.golang.org/grpc\n(T-SQL Parser + AI sidecars)"]:::go
+    end
+
+    subgraph CLI_TECH ["zGate-CLI (Go 1.22+)"]
+        direction TB
+        C1["spf13/cobra\n(command routing)"]:::go
+        C2["charmbracelet/bubbletea\n(BubbleTea TUI)"]:::go
+        C3["zalando/go-keyring\n(OS keyring storage)"]:::go
+        C4["net/http + crypto/tls\n(mTLS client)"]:::go
+    end
+
+    subgraph WEBUI_TECH ["zGate-WebUI (Node 22 LTS)"]
+        direction TB
+        W1["Next.js 15\n(App Router, RSC)"]:::js
+        W2["React 19\n(Server Components)"]:::js
+        W3["Tailwind CSS 4"]:::js
+        W4["Radix UI Primitives\n(accessible components)"]:::js
+        W5["iron-session\n(AES-256 HttpOnly cookie)"]:::js
+        W6["Zod + React Hook Form\n(validation)"]:::js
+    end
+
+    subgraph AI_TECH ["zGate-AI + zGate-Tsql-Parser"]
+        direction TB
+        A1["gRPC server\n(LLM masking)"]:::ai
+        A2["Hot-swap LLM providers\n(OpenAI, Ollama, etc.)"]:::ai
+        A3["gRPC T-SQL AST server\n(40+ SQL features)"]:::ai
+    end
+
+    subgraph INFRA_TECH ["zGate-Deploy Infrastructure"]
+        direction TB
+        I1["Docker Compose\n(single-command deploy)"]:::infra
+        I2["HashiCorp Vault\n(AppRole secrets)"]:::infra
+        I3["Keycloak\n(OIDC provider)"]:::infra
+        I4["OTel Collector\nJaeger, Prometheus, Loki, Grafana"]:::infra
+    end
+
+    subgraph DB_TECH ["Target Databases"]
+        direction TB
+        D1["MySQL 5.7+\n(wire :9000)"]:::db
+        D2["PostgreSQL\n(wire :9001)"]:::db
+        D3["MSSQL Server 2016+\n(TDS :9002)"]:::db
+    end

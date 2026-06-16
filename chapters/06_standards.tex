@@ -59,25 +59,13 @@ NIST SP 800-53 Revision 5 provides a comprehensive catalogue of security and pri
 \small
 \setlength\LTleft\fill
 \setlength\LTright\fill
-\begin{longtable}{|p{1.6cm}|p{4.0cm}|p{\dimexpr\linewidth-1.6cm-4.0cm-6\tabcolsep-4\arrayrulewidth\relax}|}
+\begin{table}[H]
 \caption{zGate implementation mapped to NIST SP 800-53 Rev.\ 5 controls}
-\label{tab:nist-controls} \\
+\label{tab:nist-controls}
+\begin{tabular}{|p{1.6cm}|p{4.0cm}|p{9cm}|}
 \hline
-\rowcolor{lightGray}
 \textbf{Control} & \textbf{Family} & \textbf{zGate Implementation} \\
 \hline
-\endfirsthead
-\multicolumn{3}{l}{\footnotesize\itshape (Continued from previous page)} \\[2pt]
-\hline
-\rowcolor{lightGray}
-\textbf{Control} & \textbf{Family} & \textbf{zGate Implementation} \\
-\hline
-\endhead
-\hline
-\multicolumn{3}{r}{\footnotesize\itshape (Continued on next page)}
-\endfoot
-\hline
-\endlastfoot
 AC-2 & Account Management & Admin accounts provisioned with mandatory role and tier assignment; service accounts issued with configurable certificate validity \\
 \hline
 AC-3 & Access Enforcement & Policy Engine performs per-request live permission lookup; stale cached claims are never trusted \\
@@ -114,7 +102,8 @@ SI-4 & System Monitoring & Anomaly detection flags suspicious patterns; OpenTele
 \hline
 SI-10 & Information Input Validation & All API inputs pass through the validation layer; SQL queries are AST-parsed before forwarding \\
 \hline
-\end{longtable}
+\end{tabular}
+\end{table}
 \renewcommand{\arraystretch}{1}
 
 % ──────────────────────────────────────────────────────────────────────────────
@@ -298,7 +287,7 @@ All cryptographic primitives used in zGate conform to NIST-approved algorithms a
 \renewcommand{\arraystretch}{1.4}
 \begin{tabularx}{\textwidth}{|p{2.8cm}|X|p{3.0cm}|p{3.5cm}|}
 \hline
-\rowcolor{lightGray}
+
 \textbf{Primitive} & \textbf{Usage in zGate} & \textbf{Standard} & \textbf{Key / Digest Size} \\
 \hline
 AES-GCM & Control-plane store encryption; service-account secret encryption & FIPS 197~\cite{fips-197} & 256-bit key \\
@@ -348,20 +337,8 @@ Table~\ref{tab:compliance-matrix} provides a consolidated view of zGate's implem
 \caption{zGate Comprehensive Compliance Mapping Matrix}
 \label{tab:compliance-matrix} \\
 \hline
-\rowcolor{lightGray}
 \textbf{Feature} & \textbf{Implementation} & \textbf{Standards Satisfied} \\
 \hline
-\endfirsthead
-\multicolumn{3}{c}{\textit{Table~\ref{tab:compliance-matrix} continued from previous page}} \\
-\hline
-\rowcolor{lightGray}
-\textbf{Feature} & \textbf{Implementation} & \textbf{Standards Satisfied} \\
-\hline
-\endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 
 AES-256-GCM Encryption at Rest &
 \path{store/crypto.go} --- 128-bit nonce/op &
