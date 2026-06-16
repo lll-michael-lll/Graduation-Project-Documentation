@@ -1810,10 +1810,6 @@ The React ecosystem provides unparalleled support infrastructure:
 \vspace{0.3cm}
 \textit{Source: NPM Statistics 2025, GitHub Octoverse 2024}
 
-\subsection{Conclusion}
-
-The zGate Admin Panel WebUI represents a successful synthesis of modern web development practices and enterprise security requirements. By leveraging industry-leading technologies (React, Next.js, TypeScript) backed by compelling market data, the interface delivers both exceptional user experience and robust security controls. The technology stack's strong adoption trends, combined with high developer satisfaction scores, position zGate for long-term maintainability and scalability. As demonstrated by the market analysis, our technology choices align with both global standards and regional Egyptian market dynamics, ensuring talent availability and industry relevance for years to come.
-
 \subsection{WebUI Product Tour with Zizo}
 
 \begin{wrapfigure}{r}{0.22\textwidth}
@@ -2008,7 +2004,14 @@ This page is intentionally absent from self-hosted builds --- it hard-404s unles
 
 % ============================================================
 
+\subsection{Conclusion}
 
+The zGate Admin Panel WebUI represents a successful synthesis of modern web development practices and enterprise security requirements. By leveraging industry-leading technologies (React, Next.js, TypeScript) backed by compelling market data, the interface delivers both exceptional user experience and robust security controls. The technology stack's strong adoption trends, combined with high developer satisfaction scores, position zGate for long-term maintainability and scalability. As demonstrated by the market analysis, our technology choices align with both global standards and regional Egyptian market dynamics, ensuring talent availability and industry relevance for years to come.
+
+% ============================================================
+% 11.2 COMMAND LINE INTERFACE (CLI)
+% ============================================================
+\clearpage
 \section{Command Line Interface (CLI)}
 
 The \texttt{zgate} binary is the developer-facing entry point into the ZGate zero-trust database access system. It is not a database client and does not issue SQL. Instead, it handles everything a developer needs before their database client can securely connect: identity verification, credential provisioning, and local tunnel setup.
@@ -2182,3 +2185,4 @@ Configuration values are resolved through environment variables (e.g., \texttt{Z
 
 \subsubsection{Build Optimization}
 All release builds apply \texttt{-trimpath} (to strip local filesystem paths) and \texttt{-s -w} (to remove symbol tables and DWARF debug info). This reduces binary size, obscures the build environment, and makes reverse engineering more difficult.
+
