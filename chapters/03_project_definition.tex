@@ -56,6 +56,34 @@ Built with Next.js~15, React~19, Tailwind CSS~4, and Radix UI, the dashboard pro
     \item \textbf{Shared Account Pools:} Role-bound pooled credentials; real-time concurrency utilisation bar
 \end{itemize}
 
+\subsubsection{AI Engine (zGate-AI)}
+\begin{itemize}
+    \item \textbf{Framework:} Python 3.12 FastAPI service exposing two primary capabilities
+    \item \textbf{Column Classification:} \texttt{/classify-columns} endpoint for LLM-based column sensitivity mapping and masking strategy selection
+    \item \textbf{Anomaly Detection:} \texttt{/anomaly/detect} endpoint powered by an ML ensemble behavioral scoring system
+    \item \textbf{Pluggable LLMs:} Support for Anthropic, Gemini, OpenAI-compatible, and Ollama providers
+    \item \textbf{Fail-safes:} Fail-open for anomaly detection (scoring error never blocks traffic) vs fail-closed for masking (classification timeout withholds data)
+    \item \textbf{Security \& Retraining:} Vault AppRole authentication and online retraining via admin feedback labels
+\end{itemize}
+
+\subsubsection{T-SQL Parser Sidecar (zGate-TSQL-Parser)}
+\begin{itemize}
+    \item \textbf{Framework:} C\# .NET 8 gRPC sidecar using Microsoft ScriptDOM for AST analysis
+    \item \textbf{Structural Analysis:} Extraction and analysis of 40+ T-SQL structural features
+    \item \textbf{Threat Detection:} Identification of SQL injection bypass patterns and data exfiltration vectors
+    \item \textbf{Query Fingerprinting:} Normalization and SHA-256 fingerprint generation for queries
+    \item \textbf{Masking Resolution:} Output column tracing for SELECT statements to apply masking rules
+    \item \textbf{Architecture:} Exposed via gRPC to the Server, running as a separate container alongside the proxy
+\end{itemize}
+
+\subsubsection{Deployment Orchestrator (zGate-Deploy)}
+\begin{itemize}
+    \item \textbf{Orchestration Layer:} Docker Compose orchestration with two branches (dev posture vs Azure production)
+    \item \textbf{Provisioned Services:} Keycloak for OIDC, Vault with auto-unseal sidecar, Caddy for TLS termination, and OTel stack (Collector, Prometheus, Grafana, Loki, Tempo, Alertmanager)
+    \item \textbf{Bootstrapping:} Keycloak realm automatically hydrated from JSON at first boot
+    \item \textbf{Installation:} Self-hosted installer optimized for offline deployments
+\end{itemize}
+
 \subsection{Scope Boundaries}
 
 \subsubsection{In Scope:}

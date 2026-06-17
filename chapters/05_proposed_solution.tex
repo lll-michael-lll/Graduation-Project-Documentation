@@ -87,11 +87,18 @@ The server is the heart of the platform, handling all security, policy enforceme
 \begin{itemize}
     \item Three wire-protocol listeners: MySQL (port 9000), PostgreSQL (port 9001), Microsoft SQL Server/TDS (port 9002)
     \item Pluggable \texttt{DatabaseHandler} interface — each protocol implements \texttt{PeekRouting}, \texttt{Handshake}, \texttt{ReadCommand}, \texttt{ForwardResult}
-    \item Six-phase \texttt{Dispatcher}: PeekRouting → StartSession → Bind → Backend Dial → Handshake → Command Loop
+    \item Six-phase \texttt{Dispatcher}: PeekRouting \textrightarrow{} StartSession \textrightarrow{} Bind \textrightarrow{} Backend Dial \textrightarrow{} Handshake \textrightarrow{} Command Loop
     \item Database-specific ephemeral credential injection at the wire-protocol handshake layer
 \end{itemize}
 
-\textbf{5. Comprehensive Logging}
+\textbf{5. External gRPC Interceptors}
+\begin{itemize}
+    \item The eight-stage interceptor pipeline delegates heavy computation to independent gRPC services rather than running inline.
+    \item Safety analysis makes an outbound gRPC call to the \texttt{zGate-TSQL-Parser} container for AST construction.
+    \item AIMasking and Anomaly stages make outbound gRPC calls to the Python-based \texttt{zGate-AI Engine} container.
+\end{itemize}
+
+\textbf{6. Comprehensive Logging}
 \begin{itemize}
     \item Structured logging with key-value pairs
     \item Every security event logged with user context
@@ -189,6 +196,46 @@ The web interface provides administrators with a comprehensive control panel for
     \item Connected databases view
 \end{itemize}
 
+\subsection{zGate AI Engine}
+
+\subsubsection{AI Engine Architecture}
+\begin{itemize}
+    \item Python 3.12 FastAPI service running on port 8001
+    \item Two primary endpoints: \texttt{/classify-columns} (LLM masking classification) and \texttt{/anomaly/detect} (ML ensemble scoring)
+    \item ML ensemble architecture: Isolation Forest + PyTorch autoencoder + XGBoost + per-user behavioral baselines + query-fingerprint novelty, fused by logistic-regression stacker
+    \item Pluggable LLM provider system (Anthropic/Gemini/OpenAI-compatible/Ollama) hot-swappable without redeploy
+    \item Dynamic config pulled from Server's \texttt{/api/internal/llm-config} at boot
+    \item Vault AppRole authentication
+    \item Online retraining pipeline with maturity-gated weights
+    \item OTLP observability export
+    \item Fail-open vs fail-closed design per endpoint
+\end{itemize}
+
+\subsection{zGate T-SQL Parser}
+
+\subsubsection{Parser Architecture}
+\begin{itemize}
+    \item C\# .NET 8 gRPC service utilizing Microsoft ScriptDOM for AST construction
+    \item Four capability groups: structural analysis, threat detection, fingerprinting, and masking resolution
+    \item gRPC communication via Unix socket or TCP
+    \item Exposed \texttt{AnalyzeQuery} RPC returning \texttt{AnalyzeResponse} with 40+ fields
+    \item Runs as a sidecar container alongside the Server
+    \item Invoked synchronously on the MSSQL query hot path with strict performance targets for gRPC round-trip
+    \item No user-facing interface
+\end{itemize}
+
+\subsection{zGate Deploy}
+
+\subsubsection{Deployment Architecture}
+\begin{itemize}
+    \item Docker Compose as the orchestration primitive
+    \item Two branches with intentionally divergent postures: dev for local testing and deployment for Azure production
+    \item Services provisioned: Keycloak realm auto-imported from hydrated JSON on first boot, Vault with auto-unseal sidecar, Caddy as TLS-terminating reverse proxy, and OTel Collector feeding Prometheus, Grafana, Loki, Tempo, Alertmanager
+    \item Self-hosted offline installer mode
+    \item Environment variable tiers: public \texttt{.env} and private secrets in Vault
+    \item E2E test overlay (\texttt{docker-compose.test.yml})
+\end{itemize}
+
 \section{Key Technologies \& Design Decisions}
 
 \subsubsection{Technology Stack}
@@ -234,6 +281,8 @@ Audit Evasion & Mandatory logging & Every API call, connection, disconnect logge
 Resource Exhaustion & Automatic cleanup & Temporary users deleted within 30 seconds of disconnect \\
 \hline
 Man-in-the-Middle & Encrypted connections & TLS support for backend database connections \\
+\hline
+Data Leakage via AI Timeout & Fail-closed masking & AI Engine times out withholding data rather than leaking it \\
 \hline
 \end{tabular}%
 }

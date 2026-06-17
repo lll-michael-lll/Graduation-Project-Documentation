@@ -41,7 +41,11 @@ Requirements engineering forms the foundation of successful software development
 \subsection{FR-3: Policy Engine}
 \begin{itemize}
     \item Real-time access control validation per connection and per query
-    \item Safety templates with four action types: \texttt{allow}, \texttt{deny}, \texttt{warn} (requires admin review), \texttt{mask}
+    \item Safety templates with four action types: \texttt{allow}, \texttt{deny}, \texttt{warn} (requires admin review), and two distinct \texttt{mask} mechanisms:
+    \begin{itemize}
+        \item \textbf{AI Column Masking:} Server calls AI Engine \texttt{/classify-columns}; LLM maps column names and sample values to masking strategies. Result is cached and enforced by the AIMasking interceptor stage.
+        \item \textbf{Rule-based Row Masking:} Configured static masking policies applied by the RowMasking interceptor stage; no AI involved.
+    \end{itemize}
     \item Multi-level permissions (read, write, admin) enforced at the wire level
     \item Warn flow: queries matching warn rules are held pending admin approval
     \item 6 pre-seeded regulatory compliance frameworks: GDPR, HIPAA, PCI-DSS, SOX, ISO~27001, NIST
@@ -53,6 +57,10 @@ Requirements engineering forms the foundation of successful software development
     \item Login methods: username/password (local) and OAuth2/OIDC (external IdP)
     \item Database listing and connection
     \item Session status monitoring
+    \item mTLS certificate lifecycle management (CSR-first issuance via Server PKI, private key never leaves client, auto-renewal at 25\% lifetime or CA rotation)
+    \item BubbleTea TUI interactive dashboard (Model/Update/View stateful terminal UI)
+    \item Headless/CI mode (subcommands operable without TTY for pipeline automation)
+    \item Local tunnel bridge (loopback listener — Unix socket on Linux/macOS, TCP on Windows — that bridges plaintext database client traffic to TLS 1.3 mTLS proxy connection)
 \end{itemize}
 
 \subsection{FR-5: Web User Interface}
@@ -69,6 +77,9 @@ Requirements engineering forms the foundation of successful software development
 \subsection{FR-6: Protocol Handling}
 \begin{itemize}
     \item MSSQL, MySQL and Postgres protocol support with temp user creation
+    \item T-SQL Parser gRPC dependency: for MSSQL, every query passes through the T-SQL Parser sidecar via gRPC before policy evaluation, affecting latency and failure handling
+    \item Wire-level interception with protocol-specific handshake injection for ephemeral credentials
+    \item Six-phase Dispatcher architecture: PeekRouting \textrightarrow{} StartSession \textrightarrow{} Bind \textrightarrow{} Backend Dial \textrightarrow{} Handshake \textrightarrow{} Command Loop
 \end{itemize}
 
 \subsection{FR-7: Audit \& Logging}
@@ -77,6 +88,28 @@ Requirements engineering forms the foundation of successful software development
     \item Per-query NDJSON audit log written to \texttt{ZGATE\_QUERY\_LOG\_DIR} with rotation
     \item All authentication events logged with user context, IP, and outcome
     \item Sensitive values (passwords, credentials) never logged; query text truncated in sidecar logs
+\end{itemize}
+
+\subsection{FR-8: AI/ML Engine}
+\begin{itemize}
+    \item LLM-based column sensitivity classification (\texttt{/classify-columns} endpoint)
+    \item Behavioral anomaly detection via ML ensemble (\texttt{/anomaly/detect} endpoint)
+    \item Pluggable LLM provider selection without redeploy
+    \item Fail-open contract for anomaly (errors never block traffic) and fail-closed contract for masking (timeouts withhold data rather than leak it)
+    \item Admin FP/TP feedback endpoint (\texttt{/anomaly/feedback}) that feeds online model retraining
+    \item Server-managed LLM config pulled from \texttt{/api/internal/llm-config} at boot and refreshed periodically
+    \item Vault AppRole for secret access
+\end{itemize}
+
+\subsection{FR-9: T-SQL Parser Sidecar}
+\begin{itemize}
+    \item Structural T-SQL AST analysis via gRPC
+    \item Extraction of 40+ query features (query type, tables, columns, schemas, WHERE clauses, JOINs, subqueries, CTEs, locking hints)
+    \item Threat detection for SQLi bypass patterns (tautologies, tautological JOINs, dynamic SQL execution)
+    \item Data exfiltration vector detection (OPENROWSET, OPENQUERY, BACKUP/RESTORE, system schema access)
+    \item Query fingerprinting (normalize literals to placeholders, SHA-256 fingerprint)
+    \item Column masking resolution (traces each SELECT output column back to its source table and column for masking rule application)
+    \item gRPC communication over Unix socket or TCP with the Server
 \end{itemize}
 
 \section{Non-Functional Requirements}
@@ -98,7 +131,13 @@ Requirements engineering forms the foundation of successful software development
     \item Session isolation with temporary users; auto-cleanup within 30 seconds
 \end{itemize}
 
-% NFR-2: Performance removed per requirements
+\subsection{NFR-2: Performance and Latency}
+\begin{itemize}
+    \item Proxy added latency budget per query strictly monitored
+    \item T-SQL Parser gRPC round-trip target must be synchronous and optimized, as it is on the hot path for every MSSQL query
+    \item AI Engine inference timeout thresholds strictly enforced (fail-closed timeouts are documented as requirements)
+    \item Connection pool sizing targets implemented to maintain throughput under concurrent session load
+\end{itemize}
 
 \subsection{NFR-3: Scalability Targets}
 \begin{itemize}
@@ -242,6 +281,29 @@ Requirements engineering forms the foundation of successful software development
         \item Store application data
         \item Accept connections from zGate proxy
         \item Enforce database-level permissions
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{zGate AI Engine}
+\begin{itemize}
+    \item \textbf{Description:} Non-interactive ML inference sidecar participating in security decisions
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Classify columns for masking strategy on first table access
+        \item Score every query for behavioral anomaly
+        \item Accept admin feedback for model retraining
+        \item Pull LLM configuration from Server at boot
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{zGate T-SQL Parser}
+\begin{itemize}
+    \item \textbf{Description:} Non-interactive sidecar invoked on every MSSQL query via gRPC before policy evaluation
+    \item \textbf{Responsibilities:}
+    \begin{itemize}
+        \item Parse incoming T-SQL into AST and extract structural features
+        \item Flag threat patterns and generate query fingerprint
+        \item Resolve masking column origins for SELECT output
     \end{itemize}
 \end{itemize}
 

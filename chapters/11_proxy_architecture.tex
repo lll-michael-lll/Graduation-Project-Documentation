@@ -2187,3 +2187,30 @@ Configuration values are resolved through environment variables (e.g., \texttt{Z
 \subsubsection{Build Optimization}
 All release builds apply \texttt{-trimpath} (to strip local filesystem paths) and \texttt{-s -w} (to remove symbol tables and DWARF debug info). This reduces binary size, obscures the build environment, and makes reverse engineering more difficult.
 
+\clearpage
+\section{AI Engine Admin Interface}
+
+The AI Engine features a dedicated admin-facing HTTP surface designed to provide operators with fine-grained control over machine learning behaviors without requiring container redeploys. While most day-to-day administration occurs within the WebUI, these endpoints offer direct intervention capabilities for the AI Engine's classification and scoring systems.
+
+\subsection{Online Retraining Feedback Loop}
+\begin{itemize}
+    \item \textbf{Endpoint:} \texttt{/anomaly/feedback}
+    \item \textbf{Function:} Accepts admin labels for False Positives (FP) and True Positives (TP) on historical query anomalies.
+    \item \textbf{Impact:} These labels directly feed the online retraining pipeline, adjusting the ML ensemble's baseline weights and immediately affecting future anomaly scoring for similar query patterns.
+\end{itemize}
+
+\subsection{Dynamic Configuration Management}
+\begin{itemize}
+    \item \textbf{Endpoint:} \texttt{/admin/reload-config}
+    \item \textbf{Function:} Forces an immediate refresh of the LLM configuration (provider, model, API keys) from the central Server without restarting the Python service.
+    \item \textbf{Impact:} Enables zero-downtime hot-swapping of LLM providers during provider outages or rate-limiting events.
+\end{itemize}
+
+\subsection{Anomaly Score Review Workflow}
+While the WebUI audit log surfaces ML risk scores with red-badge highlighting, the workflow for reviewing these scores relies on the admin interface:
+\begin{itemize}
+    \item \textbf{Review:} Admins investigate high-risk queries flagged by the ML ensemble.
+    \item \textbf{Acceptance:} Validating a true positive reinforces the model's threat detection.
+    \item \textbf{Dismissal:} Flagging a false positive automatically adjusts the user's behavioral baseline, reducing alert fatigue for legitimate but novel query patterns.
+\end{itemize}
+
