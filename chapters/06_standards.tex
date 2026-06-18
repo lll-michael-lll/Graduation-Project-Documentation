@@ -151,21 +151,21 @@ The \textit{PCI DSS --- Flag Batch Queries for Review} template flags multi-stat
 
 The HIPAA Security Rule (45 CFR Part 164) imposes administrative, physical, and technical safeguards on Covered Entities and Business Associates that create, receive, maintain, or transmit Electronic Protected Health Information (ePHI)~\cite{hipaa-security-rule}. zGate's built-in HIPAA compliance framework enforces the technical safeguards directly at the database query layer, independent of application-layer changes.
 
-\subsection{Technical Safeguards (45 CFR § 164.312)}
+\subsection{Technical Safeguards (45 CFR \S~164.312)}
 
 \begin{itemize}
-    \item \textbf{Access Control (§ 164.312(a)(1)):} Role-based permissions restrict each user to only the databases containing ePHI they are authorised to access. The Policy Engine re-evaluates entitlements on every connection request without trusting cached credential data.
-    \item \textbf{Automatic Log-off (§ 164.312(a)(2)(iii)):} JWT access tokens automatically expire after 5 minutes. Administrators can force-terminate any active session immediately from the admin panel, ensuring that unattended sessions are not exploitable.
-    \item \textbf{Audit Controls (§ 164.312(b)):} Every database query executed against an ePHI database is captured with a complete audit record, including the user's identity, timestamp, query text, and the specific tables accessed. Records are immutable after creation and exported to OpenTelemetry for off-system retention.
-    \item \textbf{Person or Entity Authentication (§ 164.312(d)):} TOTP multi-factor authentication is available for all administrative accounts. The OIDC integration enables organisation-wide identity verification through Keycloak.
-    \item \textbf{Transmission Security (§ 164.312(e)(1)):} All connections to the gateway are protected with TLS~1.3. Credential injection from the gateway to the backend database occurs over encrypted database protocol connections.
+    \item \textbf{Access Control (\S~164.312(a)(1)):} Role-based permissions restrict each user to only the databases containing ePHI they are authorised to access. The Policy Engine re-evaluates entitlements on every connection request without trusting cached credential data.
+    \item \textbf{Automatic Log-off (\S~164.312(a)(2)(iii)):} JWT access tokens automatically expire after 5 minutes. Administrators can force-terminate any active session immediately from the admin panel, ensuring that unattended sessions are not exploitable.
+    \item \textbf{Audit Controls (\S~164.312(b)):} Every database query executed against an ePHI database is captured with a complete audit record, including the user's identity, timestamp, query text, and the specific tables accessed. Records are immutable after creation and exported to OpenTelemetry for off-system retention.
+    \item \textbf{Person or Entity Authentication (\S~164.312(d)):} TOTP multi-factor authentication is available for all administrative accounts. The OIDC integration enables organisation-wide identity verification through Keycloak.
+    \item \textbf{Transmission Security (\S~164.312(e)(1)):} All connections to the gateway are protected with TLS~1.3. Credential injection from the gateway to the backend database occurs over encrypted database protocol connections.
 \end{itemize}
 
 \subsection{HIPAA Minimum Necessary and Safe Harbor Data Masking}
 
-The \textit{HIPAA --- Block Unbounded Queries} safety template enforces the Minimum Necessary standard (§ 164.502(b)) by rejecting SELECT statements that lack a WHERE clause, preventing bulk ePHI extraction. The \textit{HIPAA --- Restrict Destructive Operations} template blocks DELETE, DROP, and TRUNCATE to protect ePHI retention requirements. Schema modification via ALTER and DROP is blocked to prevent attackers from circumventing column-level masking rules.
+The \textit{HIPAA --- Block Unbounded Queries} safety template enforces the Minimum Necessary standard (\S~164.502(b)) by rejecting SELECT statements that lack a WHERE clause, preventing bulk ePHI extraction. The \textit{HIPAA --- Restrict Destructive Operations} template blocks DELETE, DROP, and TRUNCATE to protect ePHI retention requirements. Schema modification via ALTER and DROP is blocked to prevent attackers from circumventing column-level masking rules.
 
-The \textit{HIPAA --- PHI Auto-Mask} AI masking template automatically identifies and masks all 18 Safe Harbor identifier categories defined in 45 CFR § 164.514(b)(2) --- including names, geographic subdivisions, dates, telephone numbers, email addresses, social security numbers, account numbers, and IP addresses --- inline in query results before data is returned to the client, without requiring any changes to application code.
+The \textit{HIPAA --- PHI Auto-Mask} AI masking template automatically identifies and masks all 18 Safe Harbor identifier categories defined in 45 CFR \S~164.514(b)(2) --- including names, geographic subdivisions, dates, telephone numbers, email addresses, social security numbers, account numbers, and IP addresses --- inline in query results before data is returned to the client, without requiring any changes to application code.
 
 % ──────────────────────────────────────────────────────────────────────────────
 \section{General Data Protection Regulation (GDPR)}
@@ -251,14 +251,14 @@ The compliance engine (\path{internal/compliance/catalog.go}) includes five read
 \section{California Consumer Privacy Act (CCPA)}
 % ──────────────────────────────────────────────────────────────────────────────
 
-The CCPA (Cal.\ Civ.\ Code §§ 1798.100--1798.199), effective January 2020 and strengthened by the California Privacy Rights Act (CPRA) in 2023, grants California residents rights over their personal information and imposes security obligations on qualifying businesses~\cite{ccpa-2018}.
+The CCPA (Cal.\ Civ.\ Code \S\S~1798.100--1798.199), effective January 2020 and strengthened by the California Privacy Rights Act (CPRA) in 2023, grants California residents rights over their personal information and imposes security obligations on qualifying businesses~\cite{ccpa-2018}.
 
 \begin{itemize}
-    \item \textbf{§ 1798.100/110 --- Right of Access and Disclosure:} Audit logs provide a complete record of which users accessed which Personal Information (PI) categories, enabling businesses to respond to consumer access requests with a verifiable data-access history including timestamp, user identity, and specific tables queried.
-    \item \textbf{§ 1798.105 --- Right to Delete:} The \textit{CCPA --- Restrict DELETE to Authorised Roles} template ensures that PI deletion is restricted to explicitly authorised personnel, preventing both unauthorised erasure and the bypassing of consent-based deletion workflows.
-    \item \textbf{§ 1798.140(o) --- Personal Information Definition:} The \textit{CCPA --- Personal Information Auto-Mask} template automatically detects and masks CCPA-defined PI categories in query results --- including email, phone, full name, SSN, address, IP address, and date of birth --- using the AI column classification subsystem.
-    \item \textbf{§ 1798.100 --- Bulk Export Prevention:} The \textit{CCPA --- Block INTO OUTFILE Exports} template prevents direct file-system exports that bypass all access controls. The \textit{CCPA --- Flag Bulk PI Exports for Review} template intercepts wildcard SELECT statements for human approval, preventing mass PI extraction that would undermine consumer rights.
-    \item \textbf{§ 1798.150 --- Data Security:} The combination of AES-256-GCM encryption, TLS~1.3 transport security, multi-factor authentication, and comprehensive audit logging satisfies the ``reasonable security procedures and practices'' standard required by CCPA § 1798.150.
+    \item \textbf{\S~1798.100/110 --- Right of Access and Disclosure:} Audit logs provide a complete record of which users accessed which Personal Information (PI) categories, enabling businesses to respond to consumer access requests with a verifiable data-access history including timestamp, user identity, and specific tables queried.
+    \item \textbf{\S~1798.105 --- Right to Delete:} The \textit{CCPA --- Restrict DELETE to Authorised Roles} template ensures that PI deletion is restricted to explicitly authorised personnel, preventing both unauthorised erasure and the bypassing of consent-based deletion workflows.
+    \item \textbf{\S~1798.140(o) --- Personal Information Definition:} The \textit{CCPA --- Personal Information Auto-Mask} template automatically detects and masks CCPA-defined PI categories in query results --- including email, phone, full name, SSN, address, IP address, and date of birth --- using the AI column classification subsystem.
+    \item \textbf{\S~1798.100 --- Bulk Export Prevention:} The \textit{CCPA --- Block INTO OUTFILE Exports} template prevents direct file-system exports that bypass all access controls. The \textit{CCPA --- Flag Bulk PI Exports for Review} template intercepts wildcard SELECT statements for human approval, preventing mass PI extraction that would undermine consumer rights.
+    \item \textbf{\S~1798.150 --- Data Security:} The combination of AES-256-GCM encryption, TLS~1.3 transport security, multi-factor authentication, and comprehensive audit logging satisfies the ``reasonable security procedures and practices'' standard required by CCPA \S~1798.150.
 \end{itemize}
 
 % ──────────────────────────────────────────────────────────────────────────────
