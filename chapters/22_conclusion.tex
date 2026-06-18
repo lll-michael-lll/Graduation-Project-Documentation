@@ -5,13 +5,13 @@
 
 \begin{sectionintro}{20}{Conclusion}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Term 1 achievements and validation
-    \item Core infrastructure delivered
-    \item Security mechanisms implemented
-    \item Term 2 production roadmap
+    \item Restated purpose of zGate Zero Trust Gateway
+    \item Summary of completed team achievements
+    \item Importance and contribution to database security
+    \item Planned future research and scaling roadmap
   \end{itemize}
 }
-The zGate project represents a fundamental advancement in database security architecture. This chapter reflects on Term 1 achievements including the MySQL proxy implementation, JWT authentication system, and role-based access control engine that successfully validate Zero Trust database access. We articulate the production roadmap for Term 2 focusing on external identity integration, observability enhancements, and enterprise deployment readiness.
+The zGate project represents a fundamental advancement in database security architecture. This chapter reflects on the completed achievements including the multi-protocol proxy implementation (MySQL, PostgreSQL, MSSQL), JWT/OIDC authentication system, C\# T-SQL AST safety parsing, Python AI anomaly engine, and administrative components that successfully validate Zero Trust database access. We also articulate the future roadmap focusing on federated directory sync, advanced query rewriting, consensus clustering, hardware-level isolation, and chaos validation.
 \end{sectionintro}
 
 \section{Restated Purpose}
@@ -22,52 +22,81 @@ zGate was conceived as a Zero Trust Database Access Gateway that places security
 
 \section{Summary of Achievements}
 
-During Term~1, the team successfully delivered a functional Proof of Concept that validates the core architectural decisions and demonstrates end-to-end Zero Trust database access.
+Over the course of the project, the team successfully designed, developed, and validated the zGate Zero Trust Database Access Gateway. Incorporating contributions across backend proxy engineering, artificial intelligence, security compilers, and frontend telemetry systems, the team achieved the following milestones:
 
-\textbf{Core Infrastructure Delivered:}
+\textbf{Multi-Protocol Proxy Engine:}
 \begin{itemize}
-    \item A high-performance Go-based gateway server implementing the MySQL wire protocol with transparent credential injection and connection pooling
-    \item A complete authentication system using JWT tokens with short-lived access tokens, refresh token rotation, and server-side revocation
-    \item A role-based access control engine supporting hierarchical permissions at the database level
-    \item A composable interceptor pipeline enabling data masking, query safety enforcement, and comprehensive audit logging
+    \item Developed wire-protocol parsers and proxies in Go supporting MySQL/MariaDB, PostgreSQL, and Microsoft SQL Server (MSSQL/TDS).
+    \item Implemented dynamic port listeners and connection allocation strategies mapping individual user sessions to isolated backend database pools.
+    \item Integrated client-side mutual TLS (mTLS) enforcement utilizing a custom CA and a dynamic PKI cert issuance system, combined with SNI validation to prevent man-in-the-middle attacks.
 \end{itemize}
 
-\textbf{User-Facing Components:}
+\textbf{Identity-Based Authentication \& Access Control:}
 \begin{itemize}
-    \item A cross-platform CLI with secure keyring integration, enabling developers to access databases without handling production credentials
-    \item A full-featured web administration dashboard for managing users, roles, databases, sessions, and audit logs
+    \item Built full Keycloak OIDC integration supporting standard OAuth2 flows, dynamic Device Login Flows for command-line clients, and PKCE-secured Single Sign-On (SSO).
+    \item Implemented a multi-level administration privilege model on the backend, enabling granular database permissions, shared credential pools with concurrent session caps, and ephemeral DB user auto-creation.
+    \item Engineered dynamic Multi-Factor Authentication (MFA/TOTP) enrollment and verification flows, integrated with browser fingerprinting (FingerprintJS) to bind tokens to verified devices.
 \end{itemize}
 
-\textbf{Security Mechanisms Validated:}
+\textbf{Security Compiler \& Parsing Sidecar (C\#):}
 \begin{itemize}
-    \item Users successfully authenticate and connect to databases without ever seeing or handling database credentials
-    \item The safety interceptor blocks dangerous SQL operations (DELETE without WHERE, DDL statements)
-    \item Data masking redacts sensitive information (emails, phone numbers, credit cards) from query results
-    \item All database operations are logged with complete user attribution for audit and compliance purposes
+    \item Designed a high-fidelity C\# T-SQL parsing service (`zGate-Tsql-Parser`) running as a sidecar and communicating with the Go core via gRPC channels.
+    \item Built SQL Abstract Syntax Tree (AST) safety analysis visitors that analyze incoming query structures to block dangerous statements (such as `UPDATE` or `DELETE` commands without `WHERE` clauses).
+    \item Developed schema normalization and masking visitors to standardize incoming query streams.
+\end{itemize}
+
+\textbf{AI Sidecar \& Anomaly Detection (Python):}
+\begin{itemize}
+    \item Developed a Python FastAPI AI engine sidecar featuring PyTorch Deep Denoising Autoencoders, XGBoost Classifiers, and Multi-Model Stacker scoring pipelines.
+    \item Implemented query fingerprinting, template tracking, and Isolation Forest scoring to detect runtime SQL anomalies and alert administrators to potential data exfiltration.
+    \item Engineered dynamic data masking algorithms redacting PII columns (emails, credit cards, phones, and names) in query results based on user access levels.
+\end{itemize}
+
+\textbf{User Interfaces \& Developer Tooling:}
+\begin{itemize}
+    \item Rebuilt the zGate command-line client (`zGate-CLI`) in Go, integrating secure host-native keyrings (macOS Keychain, Windows Credential Manager, Linux Secret Service).
+    \item Built an interactive Bubble Tea Terminal UI (TUI) dashboard in the CLI and an interactive Next.js WebUI administration portal featuring telemetry tables, onboarding guides, and Stripe subscription checkouts.
+\end{itemize}
+
+\textbf{DevOps, Storage, \& Resiliency Infrastructure:}
+\begin{itemize}
+    \item Configured automated Docker Compose orchestrations, Caddy Edge reverse proxies, and a centralized HashiCorp Vault secrets seeder.
+    \item Designed a secure database storage metadata manager encrypted using AES-256-GCM to prevent local leakage of credentials.
+    \item Added Proof-of-Work captcha (Altcha) integrations on both the backend and frontend to protect endpoints against brute-force and Denial-of-Service (DoS) vectors.
 \end{itemize}
 
 \section{Importance \& Contribution}
 
-The zGate project contributes to the evolving landscape of database security in several meaningful ways.
+The zGate project introduces key contributions that address critical vulnerabilities in legacy enterprise database infrastructures:
 
-\textbf{Practical Application of Zero Trust Principles:} While Zero Trust has been widely adopted for network and application access, its application to database security remains nascent. zGate demonstrates that the same principles—never trust, always verify, assume breach—can be practically implemented at the database protocol level without sacrificing developer productivity.
+\textbf{Practical Zero-Trust Implementation at the Protocol Layer:} Traditional database security relies on perimeter network firewalls or static IP whitelisting. zGate applies Zero Trust principles directly to the binary protocol stream, ensuring that database sessions are validated continuously, regardless of network location.
 
-\textbf{Elimination of Credential Sprawl:} The project addresses one of the most persistent security problems in enterprise environments: the proliferation of database credentials across configuration files, environment variables, and documentation. By abstracting credentials behind an identity-based gateway, zGate removes this attack vector entirely.
+\textbf{Elimination of Credential Sprawl:} By utilizing token-based proxy routing, zGate completely eliminates the need to share database passwords with engineers or embed them in configuration files. The gateway injects target database credentials dynamically on authenticated tunnels, removing a primary vector of data leaks.
 
-\textbf{Query-Level Security Enforcement:} Unlike solutions that operate at the network or session level, zGate's protocol-aware architecture enables security enforcement at the query level—blocking specific operations, masking sensitive data in results, and logging every database interaction with full context.
+\textbf{Hybrid Query-Level Security Strategy:} By combining deterministic compiler-level scanning (C\# AST visitors) with statistical machine learning profiling (Python PyTorch autoencoders), the proxy achieves dual-layer query protection. It blocks structured attacks while detecting subtle, behavioral anomalies in data access patterns.
 
-\textbf{Open Architecture:} The modular design, with clearly defined interfaces for protocol handlers and interceptors, provides a foundation for extending Zero Trust principles to additional database engines and implementing advanced security features.
+\textbf{Tamper-Evident Audit Trails:} Through the interceptor pipeline, zGate generates query audit logs linked to organizational identities (OIDC) rather than shared database users. This meets stringent regulatory requirements (HIPAA, PCI-DSS, SOC2) and guarantees that all database interactions are traced to a verified physical user.
 
-\section{Transition to Term 2}
+\textbf{Retrofit Compatibility:} The gateway requires no modifications to downstream database engines or developer tools, allowing organizations to wrap existing databases in a Zero-Trust security mesh with minimal friction.
 
-With the core infrastructure validated, Term~2 will focus on three primary objectives:
+\section{The Future}
 
-\textbf{External Identity Integration:} Bridging the internal authentication system with enterprise identity providers (OAuth2/OIDC) to enable Single Sign-On and leverage existing organizational identity management.
+Based on lessons learned and performance benchmarks compiled during system testing, the zGate development roadmap outlines the following milestones for future implementation:
 
-\textbf{Production Readiness:} Implementing comprehensive observability features—real-time metrics, searchable audit logs, and alerting—alongside performance optimization and security hardening through penetration testing.
+\textbf{Federated Enterprise Directory Connectors:}
+Future versions will expand beyond Keycloak to support native directory connectors (LDAP/AD, Okta, Microsoft Entra ID) and implement the SCIM (System for Cross-domain Identity Management) protocol to synchronize user status, groups, and role mappings in real time.
 
-\textbf{Validation and Documentation:} Conducting rigorous performance benchmarking, security auditing, and completing all technical documentation required for production deployment.
+\textbf{Dynamic SQL Rewriting \& Cell Filtering:}
+The C\# AST parsing compiler will be extended to support dynamic query rewriting. The proxy will automatically append row-level security constraints (e.g., appending `WHERE tenant\_id = 'X'`) based on the authenticated user's claim context, while the masking engine will support cell-level, multi-level classification filters.
 
-The foundation established in Term~1 positions zGate to become a complete, deployable solution that organizations can adopt to fundamentally improve their database security posture while reducing operational overhead.
+\textbf{High Availability \& Consensus Clustering:}
+To eliminate single points of failure, the architecture will shift to an active-active clustered deployment. Using the Raft consensus protocol, multiple zGate nodes will synchronize session keys, connection limits, and token states, backed by a distributed Redis caching layer.
 
-\textbf{Validation and Documentation:}  Testing here 
+\textbf{Hardware-Assisted Security Isolation:}
+Core proxy handlers and credential decryption routines will be ported to run within Hardware Security Modules (HSMs) and Secure Enclaves (e.g., Intel SGX, AMD SEV) to prevent host-level system administrators or compromised hypervisors from inspecting decrypted database packets or session memory.
+
+\textbf{Zero-Copy Protocol Performance Optimization:}
+To meet enterprise latency standards, hot paths in the protocol peeking handlers will be optimized using zero-copy memory parsing and Go `sync.Pool` buffer recycling. This targets a p50 latency overhead under 1ms and concurrent connection support for over 10,000 threads.
+
+\textbf{Chaos Resiliency \& Fuzz Testing:}
+Automated validation pipelines will integrate Chaos Mesh to simulate sidecar failures, proxy network latencies, and service outages, alongside continuous protocol fuzz testing to ensure gateway parsing code remains resilient against malformed wire streams.

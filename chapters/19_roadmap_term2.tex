@@ -1,250 +1,205 @@
 % !TeX root = ../document_main.tex
 % ============================================================
-% 19. ROADMAP FOR TERM 2
+% 19. ROADMAP FOR THE FUTURE
 % ============================================================
 
-\begin{sectionintro}{18}{Roadmap for Term 2}{
+\begin{sectionintro}{18}{Roadmap for the Future}{
   \begin{itemize}[leftmargin=1.5em]
-    \item External identity provider integration
-    \item Enhanced observability features
-    \item Advanced policy engine capabilities
-    \item Performance optimization goals
-    \item Security hardening measures
-    \item Comprehensive testing strategy
+    \item Native identity provider connectors
+    \item Enterprise SIEM \& alerting integrations
+    \item Advanced dynamic query rewriting
+    \item Performance tuning to sub-1ms latencies
+    \item Hardware security module \& secure enclaves
+    \item Chaos \& fuzz testing strategies
   \end{itemize}
 }
-Term 2 represents the evolution from proof of concept to production-ready system. This chapter outlines the roadmap for integrating external identity providers with OAuth2 and OIDC support, implementing enhanced observability with real-time metrics and alerting, and developing advanced policy capabilities including time-based controls. We establish performance targets of sub-2ms latency and 1000+ concurrent connections, alongside security hardening through comprehensive testing and vulnerability scanning.
+With the core zGate features fully implemented and validated, this chapter outlines the roadmap for what is next for the platform. We focus on transitioning from a single-instance gateway to a globally scalable, enterprise-grade Zero-Trust database security mesh. We detail plans for native directory integrations (SCIM), automated alerting webhooks, dynamic SQL query rewriting, and cell-level filtering, establishing future performance targets of sub-1ms latency and 10,000+ concurrent connections, alongside hardware-assisted security hardening and advanced chaos validation.
 \end{sectionintro}
 
-Term~2 represents the critical transition from a functional Proof of Concept to a production-ready database security solution. Building upon the foundational work completed in Term~1, the development team will focus on three primary areas: integrating enterprise-grade identity management, implementing comprehensive observability features, and conducting rigorous validation to ensure system reliability and security.
+The core implementation of zGate has validated the feasibility of transparent, identity-aware database wire proxying. Building upon the functional, security-hardened system now in place, the future roadmap focuses on three primary areas: scaling the proxy architecture to multi-region deployments, enhancing security boundaries through hardware-assisted isolation, and expanding the AST and AI policy capabilities.
 
+% ============================================================
 \section{Remaining Features}
+% ============================================================
 
-The following features are scheduled for implementation during Term~2, organized by milestone and priority.
+The following features are scheduled for future development phases, expanding the capabilities of the zGate platform.
 
 \subsection{External Identity Provider Integration (Milestone 4)}
 
-The current POC utilizes an internal token-based authentication system. Term~2 will extend this to support federated identity management through external providers.
-
+While Keycloak integration provides standard OIDC and OAuth2 capability, future iterations will support federated identity management directly inside the gateway core to optimize connection routing:
 \begin{itemize}
-    \item \textbf{OAuth2/OIDC Implementation:} Integrate industry-standard authentication protocols to enable Single Sign-On (SSO) capabilities.
-    \item \textbf{Identity Provider Support:} Configure connectors for major identity providers including:
-    \begin{itemize}
-        \item Google Workspace
-        \item Microsoft Azure Active Directory
-        \item Okta
-        \item Generic SAML 2.0 providers
-    \end{itemize}
-    \item \textbf{Claims-to-Role Mapping:} Develop a flexible mapping engine that translates IdP claims (groups, roles, attributes) to zGate's internal RBAC policies.
-    \item \textbf{Just-in-Time Provisioning:} Implement automatic user provisioning based on IdP attributes upon first login.
+    \item \textbf{Native Directory Connectors:} Build native connectors for Active Directory (LDAP/AD) and cloud directories (Azure AD/Entra ID, Okta, Google Workspace) to query user groups and status dynamically without HTTP redirect hops.
+    \item \textbf{SCIM Directory Syncing:} Implement the System for Cross-domain Identity Management (SCIM) protocol to synchronize user lifecycle events, permissions, and group adjustments in real-time.
+    \item \textbf{Graphical Claims Mapper:} Implement a visual interface inside the WebUI admin dashboard to drag-and-drop identity claims (IdP groups, organization units) to internal zGate roles.
+    \item \textbf{Just-in-Time Provisioning Extensions:} Support automatic mapping of user attributes and role assignment on first database connection query.
 \end{itemize}
 
 \subsection{Enhanced Observability Features (Milestone 5)}
 
-Transform the initial dashboard into a comprehensive monitoring and compliance platform.
-
+Translate the local metrics and Jaeger tracing integrations into an enterprise-ready security operations center compliance platform:
 \begin{itemize}
-    \item \textbf{Real-Time Metrics Dashboard:}
-    \begin{itemize}
-        \item Connection pool utilization graphs
-        \item Query throughput and latency percentiles
-        \item Active session monitoring
-        \item Database health indicators
-    \end{itemize}
-    \item \textbf{Audit Logging System:}
-    \begin{itemize}
-        \item Structured logging of all database access events
-        \item Query content capture with optional redaction
-        \item User activity timeline visualization
-        \item Export capabilities for compliance reporting (CSV, JSON, SIEM integration)
-    \end{itemize}
-    \item \textbf{Alerting Framework:}
-    \begin{itemize}
-        \item Configurable threshold-based alerts
-        \item Anomaly detection for unusual access patterns
-        \item Integration with notification channels (email, Slack, webhooks)
-    \end{itemize}
+    \item \textbf{SIEM Connectors:} Implement native exporter hooks for Security Information and Event Management (SIEM) systems, including Splunk, Datadog, and the ELK stack.
+    \item \textbf{Alert Dispatching Webhooks:} Implement native notification integrations inside the gateway server, allowing immediate alert pushes to Slack, Microsoft Teams, and PagerDuty when anomalies are detected.
+    \item \textbf{Cryptographic Log Signatures:} Bind query and session log files with SHA-256 HMAC chained hashes to guarantee that audit files are tamper-evident and audit-compliant.
 \end{itemize}
 
 \subsection{Advanced Policy Engine Enhancements}
 
-Extend the current policy engine with more granular control mechanisms.
-
+Extend the AST interceptor pipeline to provide finer control over query execution limits and database results:
 \begin{itemize}
-    \item \textbf{Time-Based Access Controls:} Implement policies that restrict database access to specific time windows.
-    \item \textbf{Query Complexity Limits:} Add configurable limits on query complexity to prevent resource exhaustion.
-    \item \textbf{Row-Level Security Policies:} Develop mechanisms to enforce row-level filtering based on user identity.
-    \item \textbf{Dynamic Masking Rules:} Extend data masking to support context-aware redaction based on user roles.
+    \item \textbf{Dynamic Query Rewriting:} Implement dynamic SQL rewriting. The AST pipeline will automatically append database filters to incoming queries (such as adding `WHERE tenant\_id = 'X'`) to enforce multi-tenancy rules at the proxy layer.
+    \item \textbf{Cell-Level Filtering:} Extend data masking to support cell-level filtering based on user role security classifications, selectively redacting cells rather than entire columns.
+    \item \textbf{Query Complexity Limits:} Extract query joins and statement weights from the AST sidecar, blocking queries that exceed maximum estimated database costs or complexity limits.
+    \item \textbf{Auto-Classification Workers:} Implement continuous background LLM workers that scan target database tables to identify and tag PII fields automatically.
 \end{itemize}
 
 %-----------------------------------------------------------
 
 \section{Architecture Improvements}
 
-Based on lessons learned during POC development, the following architectural enhancements are planned.
+Based on lessons learned during system validation, the following architectural enhancements are planned to support enterprise-scale deployments.
 
 \subsection{Scalability Enhancements}
 
 \begin{itemize}
-    \item \textbf{Horizontal Scaling Support:} Implement stateless proxy instances that can be load-balanced for high availability.
-    \item \textbf{Connection Multiplexing:} Optimize connection pooling to support higher concurrent user loads with fewer backend connections.
-    \item \textbf{Caching Layer:} Introduce caching for policy decisions and session metadata to reduce latency.
+    \item \textbf{Active-Active Clustering:} Implement a distributed consensus protocol (Raft) to synchronize active connection counters and token states across load-balanced zGate proxy nodes.
+    \item \textbf{Distributed Caching:} Introduce a centralized Redis caching layer for policy decisions and session metadata to minimize database lookups.
+    \item \textbf{Proxy-Side Multiplexing:} Develop dynamic proxy-side connection pooling to handle larger client connection pools over fewer target database connections.
 \end{itemize}
 
 \subsection{Security Hardening}
 
 \begin{itemize}
-    \item \textbf{TLS Certificate Management:} Implement automated certificate rotation and enhanced certificate validation.
-    \item \textbf{Secret Management Integration:} Support for external secret stores (HashiCorp Vault, AWS Secrets Manager).
-    \item \textbf{Audit Trail Integrity:} Implement cryptographic signing of audit logs to ensure tamper-evidence.
+    \item \textbf{HSM Integration:} Support Hardware Security Modules (HSMs) for securing root CA private keys and signing client certificates.
+    \item \textbf{Secure Enclave Execution:} Run core proxy routines inside Secure Enclaves (Intel SGX, AMD SEV) to prevent host OS administrators from inspecting database streams or memory states.
+    \item \textbf{Zero-Knowledge Tickets:} Implement zero-knowledge proof ticket validations to authenticate clients without exposing session state details.
 \end{itemize}
 
 \subsection{Deployment Improvements}
 
 \begin{itemize}
-    \item \textbf{Container Orchestration:} Official Docker images and Kubernetes Helm charts for production deployment.
-    \item \textbf{Configuration Management:} Migration to environment-based configuration with validation on startup.
-    \item \textbf{Health Check Endpoints:} Enhanced liveness and readiness probes for orchestrator integration.
+    \item \textbf{Kubernetes Operator:} Develop a native zGate Kubernetes Operator to automate deployment scaling, config synchronization, and database sidecar injections.
+    \item \textbf{Service Mesh Sidecar:} Compile the zGate proxy into a lightweight sidecar binary suitable for deployment in service meshes (such as Istio) for internal pod-to-database communications.
 \end{itemize}
 
 %-----------------------------------------------------------
 
 \section{Performance Goals}
 
-Table~\ref{tab:performance-goals} outlines the target performance metrics for the production release.
+Table~\ref{tab:performance-goals} outlines the target performance metrics for the future production releases.
 
 \begin{table}[H]
 \centering
-\caption{Term 2 Performance Targets}
+\caption{Future Performance Targets}
 \label{tab:performance-goals}
 \begin{tabular}{|l|l|l|}
 \hline
 \textbf{Metric} & \textbf{Target} & \textbf{Measurement Method} \\
 \hline
-Latency Overhead (p50) & $<$ 2ms & Benchmarking with synthetic load \\
-Latency Overhead (p99) & $<$ 10ms & Benchmarking under stress \\
-Concurrent Connections & $\geq$ 1000 & Load testing with connection ramp \\
-Connection Setup Time & $<$ 50ms & End-to-end connection timing \\
-Memory Footprint & $<$ 500MB (idle) & Resource monitoring under load \\
-CPU Utilization & $<$ 30\% (normal load) & Profiling during benchmark \\
+Latency Overhead (p50) & $<$ 1ms & Benchmarking with synthetic load \\
+Latency Overhead (p99) & $<$ 5ms & Benchmarking under stress \\
+Concurrent Connections & $\geq$ 10000 & Load testing with connection ramp \\
+Connection Setup Time & $<$ 10ms & End-to-end connection timing \\
+Memory Footprint & $<$ 250MB (idle) & Resource monitoring under load \\
+CPU Utilization & $<$ 15\% (normal load) & Profiling during benchmark \\
 \hline
 \end{tabular}
 \end{table}
 
 \subsection{Optimization Strategies}
 
-To achieve these performance targets, the following optimization strategies will be employed:
-
+To achieve these future performance targets, the following optimization strategies will be employed:
 \begin{enumerate}
-    \item \textbf{Profiling-Driven Optimization:} Use Go's built-in profiler (pprof) to identify and eliminate bottlenecks.
-    \item \textbf{Memory Pool Management:} Implement buffer pooling to reduce garbage collection overhead.
-    \item \textbf{Protocol Parser Optimization:} Optimize hot paths in protocol parsing using zero-copy techniques where applicable.
-    \item \textbf{Goroutine Pool Management:} Implement worker pools to prevent goroutine explosion under high load.
+    \item \textbf{Zero-Copy Parsing:} Optimize protocol parsing hot paths using zero-copy techniques, eliminating memory allocations during wire peeking.
+    \item \textbf{Goroutine Worker Pools:} Implement fixed-size goroutine worker pools to prevent CPU thread thrashing under extreme client connection floods.
+    \item \textbf{Dynamic Buffer Reuse:} Utilize Go's `sync.Pool` to recycle byte buffers, reducing garbage collection overhead.
 \end{enumerate}
 
 %-----------------------------------------------------------
 
 \section{Testing \& Validation Plan}
 
-A comprehensive testing strategy will ensure system reliability and security before final delivery.
+A comprehensive testing strategy will ensure system reliability and security for future version iterations.
 
 \subsection{Automated Testing Framework}
 
 \begin{itemize}
-    \item \textbf{Unit Tests:} Target minimum 80\% code coverage for core proxy logic and security modules.
-    \item \textbf{Integration Tests:} End-to-end tests covering authentication flows, query processing, and data masking across all supported databases.
-    \item \textbf{Regression Test Suite:} Automated test suite executed on every code commit via CI/CD pipeline.
+    \item \textbf{Unit Tests:} Achieve a minimum of 90\% code coverage for the proxy server and C\# parsing logic.
+    \item \textbf{Integration Tests:} Build automated pipelines that deploy full Compose stacks containing MySQL, PostgreSQL, and MSSQL databases to test AST features on every code push.
 \end{itemize}
 
 \subsection{Performance Validation}
 
 \begin{itemize}
-    \item \textbf{Load Testing:} Use tools such as \texttt{pgbench} (PostgreSQL), \texttt{mysqlslap} (MySQL), and custom scripts to simulate production workloads.
-    \item \textbf{Stress Testing:} Evaluate system behavior under extreme conditions (connection floods, memory pressure).
-    \item \textbf{Latency Profiling:} Measure and document latency distribution across different query types and database backends.
+    \item \textbf{High-Volume Load Testing:} Utilize `pgbench` and custom benchmark scripts to validate concurrent connections up to 10,000 threads.
+    \item \textbf{Distributed Chaos Engineering:} Implement Chaos Mesh to validate proxy fail-open resiliency during sidecar failures or authentication server latencies.
 \end{itemize}
 
 \subsection{Security Validation}
 
 \begin{itemize}
-    \item \textbf{Penetration Testing:} Internal security audit focusing on:
-    \begin{itemize}
-        \item SQL injection bypass attempts
-        \item Authentication bypass vectors
-        \item Token forging and replay attacks
-        \item Policy engine circumvention
-    \end{itemize}
-    \item \textbf{Threat Modeling:} Document potential attack vectors and corresponding mitigations.
-    \item \textbf{Dependency Audit:} Scan all dependencies for known vulnerabilities using automated tools.
+    \item \textbf{Protocol Fuzz Testing:} Implement fuzzing tools to test the peeking and connection dispatching handlers against malformed packets.
+    \item \textbf{Penetration Testing:} Enlist external security audits to identify bypass vectors, memory leaks, and policy circumventions.
 \end{itemize}
 
 \subsection{User Acceptance Testing}
 
 \begin{itemize}
-    \item \textbf{Supervisor Demonstrations:} Weekly demonstrations of new features to project supervisors.
-    \item \textbf{Documentation Review:} Validation that all user-facing documentation accurately reflects system behavior.
-    \item \textbf{Demo Environment:} Prepare a stable demonstration environment for final presentation.
+    \item \textbf{Sandbox Environments:} Provide cloud-hosted sandbox environments for administrators to evaluate policy engine updates before deployment.
+    \item \textbf{Interactive Documentation:} Deploy interactive swagger and API reference guides.
 \end{itemize}
 
 \subsection{Validation Timeline}
 
-Table~\ref{tab:testing-timeline} presents the planned testing phases and their timelines.
+Table~\ref{tab:testing-timeline} presents the planned testing phases for the future milestones.
 
 \begin{table}[H]
 \centering
-\caption{Testing \& Validation Timeline}
+\caption{Future Testing \& Validation Timeline}
 \label{tab:testing-timeline}
 \begin{tabular}{|l|l|l|}
 \hline
 \textbf{Testing Phase} & \textbf{Timeline} & \textbf{Focus Area} \\
 \hline
-Unit \& Integration Testing & Ongoing (all sprints) & Continuous quality assurance \\
-Performance Benchmarking & May 1--15 & Latency and throughput validation \\
-Security Audit & May 15--31 & Penetration testing and hardening \\
-User Acceptance Testing & June 1--10 & Feature validation and feedback \\
-Final Documentation Review & June 10--15 & Documentation completeness \\
-Demo Environment Preparation & June 15--20 & Final presentation preparation \\
+Unit \& Integration Fuzzing & Ongoing (all sprints) & Continuous quality assurance \\
+Distributed Chaos Testing & Phase 1 (Q3 2026) & Fail-open and resiliency validation \\
+Security & Phase 2 (Q4 2026) & Protocol fuzzing and enclave audits \\
+Scale Benchmarks & Phase 3 (Q1 2027) & 10,000+ connections validations \\
+User Acceptance Sandbox & Phase 4 (Q2 2027) & Release candidate evaluations \\
 \hline
 \end{tabular}
 \end{table}
 
 %-----------------------------------------------------------
 
-\section{Term 2 Development Timeline}
+\section{Future Development Timeline}
 
-Figure~\ref{fig:term2-timeline} illustrates the project timeline for Term~2, depicting the progression through the remaining three milestones from February to June 2026.
+Figure~\ref{fig:term2-timeline} illustrates the future development timeline, depicting the progression through the upcoming three phases from July 2026 to December 2027.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{images/Term 2 Timeline.png}
-    \caption{Term 2 Project Timeline (February -- June 2026)}
+    \caption{Future Project Timeline (July 2026 -- December 2027)}
     \label{fig:term2-timeline}
 \end{figure}
 
-% Mermaid Gantt Chart Syntax for Term 2 Timeline:
+% Mermaid Gantt Chart Syntax for Future Timeline:
 % 
 % ```mermaid
 % gantt
-%     title Term 2 Development Timeline (Feb - June 2026)
+%     title Future Development Timeline (July 2026 - Dec 2027)
 %     dateFormat  YYYY-MM-DD
 %     axisFormat  %b %Y
 %     
-%     section Milestone 4
-%     External IAM & Identity Integration     :m4_iam, 2026-02-01, 2026-02-28
-%     SSO Integration (Google/Okta/Azure AD)  :m4_sso, 2026-02-01, 2026-02-14
-%     OAuth2/OIDC Authentication Flow         :m4_oauth, 2026-02-08, 2026-02-21
-%     RBAC Mapping & Policy Engine            :m4_rbac, 2026-02-15, 2026-02-28
+%     section Phase 1: High Availability & IAM
+%     Consensus Clustering (Raft) & Redis Cache  :p1_ha, 2026-07-01, 2026-12-31
+%     Native Directory Connectors & SCIM Sync    :p1_iam, 2026-08-01, 2026-11-30
 %     
-%     section Milestone 5
-%     Observability & Production Readiness    :m5_obs, 2026-03-01, 2026-04-30
-%     Metrics Visualization & Dashboard       :m5_metrics, 2026-03-01, 2026-03-21
-%     Audit Logging Implementation            :m5_audit, 2026-03-15, 2026-04-07
-%     Error Handling & System Robustness      :m5_error, 2026-04-01, 2026-04-30
+%     section Phase 2: Advanced Policies
+%     Dynamic Query Rewriting & Cell-level     :p2_policy, 2027-01-01, 2027-06-30
+%     SIEM Connectors & Cryptographic Logs     :p2_obs, 2027-02-01, 2027-05-31
 %     
-%     section Milestone 6
-%     Final Validation & Delivery             :m6_final, 2026-05-01, 2026-06-15
-%     Performance Benchmarking & Load Testing :m6_perf, 2026-05-01, 2026-05-21
-%     Security Auditing & Penetration Testing :m6_sec, 2026-05-15, 2026-05-31
-%     Final Documentation & Reports           :m6_doc, 2026-05-20, 2026-06-10
-%     Demo Environment & Presentation Prep    :m6_demo, 2026-06-01, 2026-06-15
+%     section Phase 3: Service Mesh & K8s
+%     Kubernetes Operator Development          :p3_k8s, 2027-07-01, 2027-10-31
+%     Service Mesh Sidecar Proxy Routing       :p3_mesh, 2027-09-01, 2027-12-31
 % ```
