@@ -1,3 +1,4 @@
+% !TeX root = ../document_main.tex
 % ============================================================
 % 9. TECHNICAL BACKGROUND
 % ============================================================
@@ -332,6 +333,12 @@ Context cancellation terminates goroutines cleanly, avoiding resource leakage:
 \section{Database Wire Protocols (MySQL/MariaDB)}
 
 A distinguishing feature of zGate is its ability to "speak" the MySQL protocol directly, acting as a full proxy rather than a driver or middleware within the application layer.
+
+\subsection{Modular Gateway Architecture and Library-Based Protocol Handling}
+
+To achieve high reliability, performance, and maintenance scalability, zGate replaces custom-coded low-level socket-splicing logic with a modular gateway server architecture integrated with a production-grade library-based protocol handler (leveraging \texttt{go-mysql}). The modular server isolates transport-layer listener configurations (such as mTLS verification) from application-layer session and wire-protocol handlers.
+
+A major challenge in multi-connection client environments (such as developer instances running \texttt{mysqlsh} alongside parallel auto-completion workers) is database connection corruption. If a single user session shares a backend connection instance concurrently, the interleaved packets corrupt the wire protocol, leading to MySQL Error 2013 (``Lost connection to MySQL server during query''). To resolve this, zGate implements a single-adoption session model: the pre-warmed backend connection is adopted at most once per session. Any concurrent or subsequent connection for the same session is directed to dial a fresh, isolated upstream backend connection, maintaining packet sequence integrity.
 
 \begin{figure}[H]
     \centering
@@ -1344,6 +1351,13 @@ Technical aspects in zGate include:
         \item Rejects connections using SSL 3.0, TLS 1.0, TLS 1.1
         \item Prevents downgrade attacks
     \end{itemize}
+
+    \item \textbf{Fail-Closed TLS Enforcement}:
+    \begin{itemize}
+        \item Removal of insecure fallback parameters.
+        \item Gateway immediately aborts execution at startup if certificates, private keys, or required TLS/mTLS parameters are missing.
+        \item Prevents fallback to unencrypted TCP communication, maintaining Zero-Trust compliance.
+    \end{itemize}
     
     \item \textbf{Certificate chain validation}:
     \begin{itemize}
@@ -2175,7 +2189,72 @@ A critical implementation detail is that the packet length field must be updated
 \end{figure}
 
 % ============================================================
-% 10. Observability and Distributed Tracing
+% 10. Machine Learning and Anomaly Detection in Database Governance
+% ============================================================
+\section{Machine Learning and Anomaly Detection in Database Governance}
+
+Securing database endpoints under Zero Trust requires more than static rule evaluation. Attackers who gain access to legitimate credentials often attempt data exfiltration or reconnaissance using standard query patterns. Detecting these threats requires continuous, behavioral anomaly detection.
+
+\subsection{Query Normalisation and Fingerprinting}
+
+A major challenge in analyzing SQL traffic is that queries executing the same logic differ in their literals. For example:
+\begin{verbatim}
+SELECT name, email FROM users WHERE id = 42;
+SELECT name, email FROM users WHERE id = 107;
+\end{verbatim}
+represent the same logical intent. To construct stable behavioral models, zGate normalises queries by stripping comments, single-quoted/double-quoted string literals, hex and binary literals, numeric values, and collapsing consecutive whitespaces. The resulting template string:
+\begin{verbatim}
+select name, email from users where id = ?
+\end{verbatim}
+is hashed to generate a unique query fingerprint (using SHA-256). Behavioral models track the occurrence frequency, execution duration, and row-level metrics at the fingerprint level rather than for individual raw query strings.
+
+\subsection{Template State Registry and Promotion}
+
+To balance false-positive alerts with secure defaults, zGate manages observed query templates via a state machine:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Quarantine State:} A new query template is assigned to \texttt{QUARANTINE}. It is treated as untrusted. A warning is raised if it is executed in a strict role.
+    \item \textbf{Maturity/Trusted Promotion:} To prevent race conditions or alert fatigue during development, a template is promoted to the \texttt{TRUSTED} state only after it has been executed at least 10 times across at least 3 distinct users or has been seen for over 24 hours.
+\end{itemize}
+
+\subsection{Continuous Parameter Estimation and Outlier Detection}
+
+For each query template, zGate maintains running estimates of key continuous variables using an exponentially moving average (EMA) and variance. When a new query execution completes, its metrics (duration $d$, row count $r$, and rows affected $a$) are updated:
+\[
+\mu_t = (1 - \alpha)\mu_{t-1} + \alpha x_t
+\]
+\[
+\sigma^2_t = (1 - \alpha)(\sigma^2_{t-1} + \alpha(x_t - \mu_t)^2)
+\]
+where $\alpha = 0.1$ represents the learning rate. Once a template has accrued at least 20 historical executions, zGate calculates a robust z-score for each metric:
+\[
+z = \frac{x_t - \mu_t}{\sigma_t}
+\]
+If the z-score for any parameter exceeds $3.0$ and the absolute value is non-trivial (e.g., $d > 50\text{ms}$ or $r > 5$), zGate flags a metric outlier anomaly. This catches anomalous bulk data extraction (high row counts) and denial-of-service queries (high duration) targeting known endpoints.
+
+\subsection{Noise Verb Separation in Behavioral Models}
+
+Database clients routinely send ambient session queries like transaction controls (\texttt{BEGIN}, \texttt{COMMIT}, \texttt{ROLLBACK}) and capability checks (\texttt{SHOW VARIABLES}, \texttt{SHOW TABLES}). These are database protocol ``noise'' rather than data-access intent. If included in behavioral models:
+\begin{itemize}
+    \item They dilute the statistical probability of real queries, making legitimate \texttt{SELECT} statements appear anomalous.
+    \item They skew transition models since their frequency is highly variable depending on driver implementations.
+\end{itemize}
+zGate defines a baseline noise set:
+\[
+\mathcal{N} = \{\text{SHOW}, \text{BEGIN}, \text{COMMIT}, \text{ROLLBACK}\}
+\]
+Queries matching these verbs are fully audited but are excluded from the anomaly detector's user-type frequency scoring and transition modeling, eliminating a major source of false-positive alarms.
+
+\subsection{Ensemble Architecture: Autoencoder and XGBoost}
+
+The anomaly service combines unsupervised and supervised learning model outputs:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{PyTorch Denoising Autoencoder:} Learns a compressed representation of normal query feature vectors (72-dimensional input). Reconstruction error indicates unsupervised novelty.
+    \item \textbf{XGBoost Classifier:} A supervised gradient-boosted decision tree trained on labeled anomaly vectors (e.g., injection payloads, sequential scanning, and credential abuse).
+    \item \textbf{Stacking Regressor:} A logistic regression stacker fuses the outputs of the autoencoder, XGBoost, per-user baseline statistics, query fingerprint scores, and table sensitivity ratings into a single risk score.
+\end{itemize}
+
+% ============================================================
+% 11. Observability and Distributed Tracing
 % ============================================================
 \section{Observability and Distributed Tracing}
 

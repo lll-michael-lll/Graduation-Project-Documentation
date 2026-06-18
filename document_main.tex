@@ -6,7 +6,7 @@
 \usepackage{graphicx}
 \usepackage{titlesec}
 \usepackage{hyperref}
-\usepackage{bookmark}
+% \usepackage{bookmark}
 \usepackage{amsmath}
 \usepackage{multirow}
 \usepackage{tocloft}
@@ -109,6 +109,8 @@
 }
 
 \geometry{margin=1in}
+\setlength{\headheight}{30pt}
+\addtolength{\topmargin}{-18pt}
 \onehalfspacing
 
 % -----------------------------
@@ -205,7 +207,7 @@
   \setcounter{table}{0}  % Reset table counter for new chapter
   \markboth{Chapter #1: #2}{Chapter #1: #2}  % Set chapter marks for headers
   \thispagestyle{empty}
-  \vspace*{3cm}
+  \vspace*{1.0cm}
   
   % Create a TikZ overlay for the large "Chapter X" on the right
   \begin{tikzpicture}[remember picture,overlay]
@@ -225,29 +227,30 @@
   {\Huge\color{primaryBlue}\textbf{#2}}\\[0.5cm]
   {\color{primaryBlue}\rule{\textwidth}{2pt}}
   
-  \vspace{1.5cm}
+  \vspace{0.8cm}
   
   % "This part covers" section in beige box on the left
   \noindent
   \begin{minipage}{0.6\textwidth}
+    \setlist[itemize]{nosep}
     \begin{mdframed}[
       linewidth=0pt,
       backgroundcolor=chapterBg,
       roundcorner=8pt,
-      innertopmargin=15pt,
-      innerbottommargin=15pt,
-      innerrightmargin=20pt,
-      innerleftmargin=20pt,
+      innertopmargin=10pt,
+      innerbottommargin=10pt,
+      innerrightmargin=15pt,
+      innerleftmargin=15pt,
       skipabove=0pt,
       skipbelow=0pt
     ]
-      {\large\color{primaryBlue}\textit{This part covers:}}\\[0.4cm]
-      \color{darkGray}
+      {\large\color{primaryBlue}\textit{This part covers:}}\\[0.3cm]
+      \color{darkGray}\small
       #3
     \end{mdframed}
   \end{minipage}
   
-  \vspace{1.5cm}
+  \vspace{0.8cm}
   
   \noindent
   % Apply lettrine to the captured body
@@ -378,6 +381,7 @@ The Term~1 prototype demonstrates functional Zero Trust database access where us
 \input{chapters/09_technical_background}
 \input{chapters/10_system_architecture}
 \input{chapters/11_proxy_architecture}
+\input{chapters/12_deployment_strategy}
 \input{chapters/13_technology_justification}
 \input{chapters/14_prototype}
 \input{chapters/15_methodology}

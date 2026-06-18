@@ -1,3 +1,4 @@
+% !TeX root = ../document_main.tex
 % ============================================================
 % 10. SYSTEM ARCHITECTURE
 % ============================================================
@@ -864,7 +865,26 @@ Row masking templates are assigned to roles via \texttt{role\_row\_masking\_temp
 \subsection{Anomaly Detection}
 \label{subsec:anomaly-detection}
 
-The anomaly detection subsystem continuously monitors query behaviour per session and raises alerts when patterns deviate from the user's or role's established baseline.
+The anomaly detection subsystem continuously monitors query behaviour per session and raises alerts when patterns deviate from the user's or role's established baseline. The engine combines per-user statistical modeling with a modular query fingerprint classification system.
+
+\subsubsection{Query Fingerprint Detector and Baseline Promotion}
+
+At the core of the machine-learning pipeline is the \texttt{QueryFingerprintDetector} (implemented in \path{app/anomaly/detector.py}). Rather than evaluating raw SQL queries, which contain highly variable parameter values and literals, the detector normalises queries to a parameter-agnostic template string. The detector maintains a registry of observed templates and handles template state transitions:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Quarantine State:} Any never-before-seen query template starts in a \texttt{QUARANTINE} state. It is considered untrusted until it matures.
+    \item \textbf{Promotion Criteria:} A query template is automatically promoted to the \texttt{TRUSTED} state once it has been observed at least 10 times, and either: (1) has been executed by at least 3 distinct users, or (2) has an age exceeding 24 hours.
+    \item \textbf{Metric Outlier Analysis:} Once a template baselines (accruing at least 20 executions), the engine performs robust standard-deviation checks (z-scoring) on execution duration, row counts returned, and rows affected. Any deviation exceeding 3.0 standard deviations from the template's historical mean flags an outlier warning.
+    \item \textbf{Distribution Shift Detection:} The detector tracks a sliding window of the last 1000 observed fingerprints. If the frequency of a particular template spikes to more than 3 times its long-term decayed expected frequency, a sudden distribution shift is flagged, indicating automated exfiltration or brute-force scanning.
+\end{itemize}
+
+\subsubsection{Noise Verb Filtering}
+
+To prevent developer tools and schema-browsing queries (e.g., in DBeaver or PGAdmin) from generating behavioral false positives, the anomaly detector implements noise verb filtering. Specific protocol-level ``noise'' verbs---\texttt{SHOW}, \texttt{BEGIN}, \texttt{COMMIT}, and \texttt{ROLLBACK}---are excluded from the user's query-type behavioral transition model and frequency counters. While they are still audited for compliance, filtering them prevents routine transaction boundaries and UI capability checks from masking real, anomalous data-access patterns.
+
+\subsubsection{Client IP Tracking and Replay}
+
+When a query is held for administrative review by the safety interceptor, its context is logged in the \texttt{warned\_queries} table. This log includes the client's actual IP address (\texttt{client\_ip}). Upon approval and execution, the query's original client IP is transmitted to the anomaly detector rather than the IP of the reviewing administrator. This ensures that the ML engine evaluates the request under its originating network context, avoiding false-positive anomalies that would otherwise occur when executing from the administrator's subnet.
 
 \subsubsection{Detection Signals}
 
@@ -876,6 +896,7 @@ The anomaly interceptor (\texttt{internal/proxy/interceptor/anomaly.go}) evaluat
     \item \textbf{Result size anomaly:} Rows returned significantly exceeding the user's historical average
     \item \textbf{Time anomaly:} Queries executed outside the user's normal working hours
     \item \textbf{Sequential scan pattern:} Systematic table enumeration indicative of data exfiltration
+    \item \textbf{Fingerprint violation:} Execution of an untrusted quarantined template or binding violations (novel user/IP binding).
 \end{itemize}
 
 \subsubsection{Alert Structure}
@@ -887,7 +908,7 @@ Each alert is written to \texttt{anomaly\_notifications} with:
     \item \textbf{score:} Numeric risk score (0–100)
     \item \textbf{reasons:} JSON array of human-readable explanation strings
     \item \textbf{correlation\_id:} Groups related alerts from the same attack sequence
-    \item \textbf{session / connection / user references:} For drill-down investigation
+    \item \textbf{session / connection / user / client\_ip references:} For drill-down investigation
 \end{itemize}
 
 Administrators review alerts via \texttt{GET /api/admin/anomaly-notifications} with filtering by severity and status. Aggregated statistics are available at \texttt{GET /api/admin/anomaly-stats}. Alerts can be dismissed individually, by correlation group, or all at once.
@@ -1213,6 +1234,8 @@ The TUI (\texttt{zgate tui}) presents a full-screen dashboard with:
     \item \texttt{/slash} command bar for all operations: \texttt{/login}, \texttt{/logout}, \texttt{/connect}, \texttt{/list}, \texttt{/status}, \texttt{/disconnect}
     \item Keyboard-driven navigation (no mouse required)
     \item Status indicators for connection state and token validity
+    \item \textbf{Automated Session and Token Refresh:} The TUI's \texttt{MainModel} tracks JWT expiration in the background, automatically invoking OIDC token refresh cycles prior to expiry to prevent connection teardowns.
+    \item \textbf{Signature-Based Notification Tracking:} Rather than tracking pending-review notifications using raw database auto-increment IDs (which are prone to duplication during local database resets), the TUI maps notifications using a unique cryptographic signature composed of \texttt{id:created\_at:status}. This prevents notification suppression or accidental duplicate notifications.
 \end{itemize}
 
 \begin{figure}[H]

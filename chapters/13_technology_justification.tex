@@ -1,8 +1,9 @@
+% !TeX root = ../document_main.tex
 % ============================================================
 % 13. TECHNOLOGY JUSTIFICATION
 % ============================================================
 
-\begin{sectionintro}{12}{Technology Justification}{
+\begin{sectionintro}{13}{Technology Justification}{
   \begin{itemize}[leftmargin=1.5em]
     \item Go for high-performance, memory-safe gateway proxy
     \item MySQL with AES-256-GCM for encrypted control-plane storage
@@ -50,6 +51,10 @@ tlsCfg := &tls.Config{
 
 Session ticket resumption is explicitly disabled so that a revoked client certificate cannot bypass the real-time revocation cache through a cached session. This decision maps directly to NIST SP 800-52 Rev.\ 2 guidance on TLS session management~\cite{nist-tls}.
 
+\subsection{Fail-Closed Transport Enforcement}
+
+To guarantee a strict security posture under production environments, the gateway server implements a fail-closed transport architecture. All configuration branches that allowed insecure/unencrypted fallbacks have been removed from the server initialization path. If TLS certificates, keys, or mTLS parameters are missing or invalid, the gateway automatically aborts and exits (fail-closed) rather than failing open. This ensures that no misconfiguration can expose database connections in plain text, satisfying NIST SP 800-53 SC-8 (Transmission Integrity) requirements.
+
 \subsection{Static Binary Deployment}
 
 Go compiles to a single, statically linked binary with all dependencies included. The zGate server image is built in a two-stage Docker build: a Go builder stage compiles the binary, and a \texttt{gcr.io/distroless/base} final stage contains only the binary and its minimal OS dependencies---no shell, no package manager, no interpreter. The resulting image surface is orders of magnitude smaller than a Node.js or JVM-based equivalent, directly reducing the number of CVE-relevant components that must be patched.
@@ -95,6 +100,10 @@ A 128-bit (12-byte) nonce is generated via \texttt{crypto/rand} for each encrypt
 
 zGate's shared database account model requires that exactly one active session holds a shared credential at a time. This mutual exclusion is implemented using \texttt{SELECT \ldots FOR UPDATE} on the shared-accounts table within a transaction, which MySQL's InnoDB engine enforces at the row level. This is a capability that file-based or embedded stores without row-level locking (e.g., plain SQLite in WAL mode) cannot provide safely under concurrent gateway connections.
 
+\subsection{Warning Management and Client IP Archival}
+
+When the query policy engine flags a statement for administrative review, the gateway persists the transaction context inside the \texttt{warned\_queries} table. To support precise downstream anomaly detection, this table archives the originating user's IP address (\texttt{client\_ip} column). When an administrator approves a query, the gateway replays this IP address rather than the admin's own address. This prevents the machine-learning pipeline from flagging the execution as a false-positive anomaly from a new location, leveraging MySQL's indexing to cross-reference historical user addresses.
+
 % ──────────────────────────────────────────────────────────────────────────────
 \section{HashiCorp Vault for Secrets Lifecycle Management}
 \label{sec:vault}
@@ -113,6 +122,8 @@ Vault's dynamic secrets engine can generate database credentials with a bounded 
 \subsection{Why Vault Over Alternatives}
 
 Environment variables provide no rotation, expiry, or access auditing. Cloud-provider secret stores (AWS Secrets Manager, Azure Key Vault) introduce a vendor dependency and require cloud-specific IAM configuration incompatible with on-premises deployments. Vault provides a vendor-neutral, self-hosted solution with open-source licensing, a well-defined audit log, and a Go SDK maintained by the same organisation that produces the server---reducing the risk of API incompatibility across versions.
+
+To securely inject these secrets into the runtime, zGate uses the custom \texttt{vaultenv} loader package. This package parses local configuration templates at boot time and automatically synchronizes environment variables from Vault to the server and licensing components, preventing static keys from being leaked in container definitions.
 
 % ──────────────────────────────────────────────────────────────────────────────
 \section{Keycloak and OpenID Connect for Federated Identity}
@@ -275,6 +286,10 @@ Bubble Tea implements the Elm Architecture (Model-Update-View) for terminal appl
 
 The interactive \texttt{connect} command, for example, presents a searchable list of databases the user is permitted to access, a dropdown for connection parameters, a real-time status indicator showing handshake progress, and a live SQL prompt with command history---all implemented as Bubble Tea components. The Bubble Tea and Lipgloss libraries are maintained by Charm~\cite{bubbletea-docs}, a company with a track record of long-term maintenance and semantic-versioned releases.
 
+\subsection{Automated TUI State and Token Refresh Management}
+
+To support long-running terminal sessions without forcing frequent re-authentication, the CLI's \texttt{MainModel} embeds automated session and OAuth token refresh logic. The Bubble Tea update loop checks token expiration and sends background refresh commands to the keycloak endpoint. Furthermore, to avoid flooding the user with notifications or dropping them during environment resets (e.g., when the gateway's database is reset and auto-increment query IDs start from 1), the CLI generates unique resolution signatures based on \texttt{id:created\_at:status} rather than relying on sequential IDs alone. This ensures that notifications are correctly deduplicated and displayed exactly once.
+
 \subsection{OS Keyring for Credential Storage}
 
 JWT access and refresh tokens are stored in the operating system's native credential store via \texttt{github.com/zalando/go-keyring}: Keychain on macOS, Secret Service (GNOME Keyring or KWallet) on Linux, and Windows Credential Manager on Windows. This approach keeps tokens out of plain-text files on disk (preventing credentials from appearing in accidental \texttt{cat} output, shell history, or backup snapshots) while supporting single-sign-on across terminal sessions. The go-keyring library provides a unified API across all three platforms, eliminating platform-specific credential management code in the CLI.
@@ -289,6 +304,10 @@ The full zGate stack comprises nine services: Vault, Keycloak, MySQL, the zGate 
 \subsection{Service Dependency and Health Check Orchestration}
 
 Docker Compose's \texttt{depends\_on.condition: service\_healthy} ensures that Keycloak does not start until Vault and MySQL pass their health checks, and that the zGate server does not start until Keycloak has completed its realm import. This ordering prevents race conditions where a service starts before its dependencies are ready to accept connections---a common source of startup failures in multi-container deployments.
+
+\subsection{Offline Infrastructure and Self-Signed TLS Generation}
+
+The deployment stack includes an offline installation infrastructure managed via a dedicated TUI-based setup tool. To facilitate secure container communications in air-gapped environments, the system automates self-signed TLS certificate generation for internal proxying. It also mounts the local \texttt{zGate-AI} directory as read-only to isolate model parameters and prevent runtime tampering, conforming to OCI image best practices.
 
 \subsection{OCI Container Standard}
 

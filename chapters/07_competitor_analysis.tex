@@ -1,3 +1,4 @@
+% !TeX root = ../document_main.tex
 % ============================================================
 % 7. COMPETITOR & MARKET ANALYSIS
 % ============================================================
@@ -124,7 +125,7 @@ DSPM (sometimes called DSPaaS) is a newer category focused on discovering and cl
 
 With the rise of AI, a few platforms are adding machine-learning capabilities to database governance. IBM's Guardium AI Security claims to protect AI/ML workloads and data access; Oracle Data Safe incorporates anomaly detection on query logs.
 
-These tools typically analyse query logs to detect unusual behaviour (e.g., an LLM making bulk-extraction queries) and may quarantine AI agents. They do not intercept and sanitise each SQL statement in real time. The key opportunity for zGate here is supporting \emph{non-human identities (NHIs)}---internal bots or agents---by giving them managed ephemeral credentials and applying the same query policies as for human users.
+These tools typically analyse query logs offline or out-of-band to detect unusual behaviour (e.g., an LLM making bulk-extraction queries) and may quarantine AI agents after the fact. They do not intercept and sanitise each SQL statement in real time. The key opportunity for zGate here is supporting \emph{non-human identities (NHIs)}---internal bots or agents---by giving them managed ephemeral credentials and applying the same query policies as for human users. Furthermore, zGate implements a real-time \texttt{QueryFingerprintDetector} that performs online template-based traffic classification and anomaly detection. To eliminate false-positive alerts common in developer sessions, zGate isolates and excludes noise verbs (such as \texttt{SHOW}, \texttt{BEGIN}, \texttt{COMMIT}, and \texttt{ROLLBACK}) from the user-type behavioral model while keeping them in audit records, solving a major usability barrier in AI-native governance.
 
 \section{Comparative Feature Matrix}
 
@@ -173,9 +174,10 @@ A clear gap exists today: \emph{no lightweight, open-source system performs real
 \begin{itemize}
     \item \textbf{Protocol-Level Understanding:} AST parsing of MySQL, PostgreSQL, and MSSQL queries to inspect or modify content.
     \item \textbf{Data-Centric Policies:} Dynamic masking of sensitive fields and selective query blocking based on column-level or statement rules.
-    \item \textbf{Native Client Support:} Seamless integration with existing database tools (DBeaver, Tableau, \texttt{psql}, JDBC applications) without vendor lock-in to web consoles.
-    \item \textbf{Lightweight Deployment:} Self-hostable middleware runnable in an air-gapped environment with no external SaaS dependency.
-    \item \textbf{AI \& Machine Identity Support:} Ability to attach policies to non-human agents and apply the same fine-grained rules as for human-initiated queries.
+    \item \textbf{Native Client Support:} Seamless integration with existing database tools (DBeaver, Tableau, \texttt{psql}, JDBC applications) without vendor lock-in.
+    \item \textbf{Fail-Closed Transport:} A strict security model that rejects all connections if TLS configurations or certificates are missing, eliminating vulnerable fallback modes.
+    \item \textbf{Robust Concurrency and Connection Stability:} Ticket-based session authentication and connection invalidation logic that prevents backend wire protocol corruption (e.g., MySQL error 2013) by adopting pre-warmed backend connections at most once per session.
+    \item \textbf{AI \& Machine Identity Support:} Ability to attach policies to non-human agents and apply the same fine-grained rules as for human-initiated queries, powered by a noise-tolerant \texttt{QueryFingerprintDetector} that automatically promotes matured templates from quarantine to trusted status.
 \end{itemize}
 
 Crucially, while \textbf{89\%} of security teams plan Zero Trust access policies for databases, only \textbf{43\%} have implemented strong controls today \cite{okta2023zt}---leaving a \textbf{46\% enforcement gap}. zGate aims directly at this underserved segment by inserting data governance into the trusted path of every database session.
