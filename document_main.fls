@@ -3,7 +3,7 @@ INPUT /etc/texmf/web2c/texmf.cnf
 INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT /home/rod/Documents/sem1_GP/Graduation-Project-Documentation/document_main.tex
+INPUT document_main.tex
 OUTPUT document_main.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/report.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/report.cls
@@ -521,6 +521,10 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1338,6 +1342,15 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/tds_packet_header.png
+INPUT ./images/tds_packet_header.png
+INPUT ./images/tds_packet_header.png
+INPUT ./images/tds_packet_header.png
+INPUT ./images/tds_packet_header.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1680,6 +1693,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/totp_flow.png
+INPUT ./images/totp_flow.png
+INPUT ./images/totp_flow.png
+INPUT ./images/totp_flow.png
+INPUT ./images/totp_flow.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1698,6 +1716,10 @@ INPUT ./images/images for doc/Authentication flows/2.2 Token Refresh Flow.png
 INPUT ./images/images for doc/Authentication flows/2.2 Token Refresh Flow.png
 INPUT ./images/images for doc/Authentication flows/2.2 Token Refresh Flow.png
 INPUT ./images/images for doc/Authentication flows/2.2 Token Refresh Flow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/images for doc/Authentication flows/2.3 Admin Login Flow.png
 INPUT ./images/images for doc/Authentication flows/2.3 Admin Login Flow.png
 INPUT ./images/images for doc/Authentication flows/2.3 Admin Login Flow.png
@@ -1707,6 +1729,20 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/admin_tiers.png
+INPUT ./images/admin_tiers.png
+INPUT ./images/admin_tiers.png
+INPUT ./images/admin_tiers.png
+INPUT ./images/admin_tiers.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/service_account_lifecycle.png
+INPUT ./images/service_account_lifecycle.png
+INPUT ./images/service_account_lifecycle.png
+INPUT ./images/service_account_lifecycle.png
+INPUT ./images/service_account_lifecycle.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1715,10 +1751,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
+INPUT ./images/mtls_cert_lifecycle.png
+INPUT ./images/mtls_cert_lifecycle.png
+INPUT ./images/mtls_cert_lifecycle.png
+INPUT ./images/mtls_cert_lifecycle.png
+INPUT ./images/mtls_cert_lifecycle.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1741,6 +1778,10 @@ INPUT ./images/ephemeral.png
 INPUT ./images/ephemeral.png
 INPUT ./images/ephemeral.png
 INPUT ./images/ephemeral.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1771,6 +1812,33 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/safety_template_flow.png
+INPUT ./images/safety_template_flow.png
+INPUT ./images/safety_template_flow.png
+INPUT ./images/safety_template_flow.png
+INPUT ./images/safety_template_flow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/warned_query_workflow.png
+INPUT ./images/warned_query_workflow.png
+INPUT ./images/warned_query_workflow.png
+INPUT ./images/warned_query_workflow.png
+INPUT ./images/warned_query_workflow.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/ai_masking_pipeline.png
+INPUT ./images/ai_masking_pipeline.png
+INPUT ./images/ai_masking_pipeline.png
+INPUT ./images/ai_masking_pipeline.png
+INPUT ./images/ai_masking_pipeline.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1787,14 +1855,20 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/compliance_flow.png
+INPUT ./images/compliance_flow.png
+INPUT ./images/compliance_flow.png
+INPUT ./images/compliance_flow.png
+INPUT ./images/compliance_flow.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
-INPUT ./images/cover_page_logo.png
+INPUT ./images/zara_chat.png
+INPUT ./images/zara_chat.png
+INPUT ./images/zara_chat.png
+INPUT ./images/zara_chat.png
+INPUT ./images/zara_chat.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
@@ -1808,15 +1882,15 @@ INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.1 User Management Flow.png
-INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
-INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
-INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
-INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
-INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
+INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
+INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
+INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
+INPUT ./images/images for doc/WebUI flows/3.2 Database Management Flow.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
 INPUT ./images/images for doc/WebUI flows/3.3 Active sessions monitoring flow.png
@@ -1884,6 +1958,11 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cli_tui.png
+INPUT ./images/cli_tui.png
+INPUT ./images/cli_tui.png
+INPUT ./images/cli_tui.png
+INPUT ./images/cli_tui.png
 INPUT ./images/images for doc/CLI features/4.1 CLI login flow.png
 INPUT ./images/images for doc/CLI features/4.1 CLI login flow.png
 INPUT ./images/images for doc/CLI features/4.1 CLI login flow.png
@@ -2523,6 +2602,48 @@ INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/system_trust_boundaries.png
+INPUT ./images/system_trust_boundaries.png
+INPUT ./images/system_trust_boundaries.png
+INPUT ./images/system_trust_boundaries.png
+INPUT ./images/system_trust_boundaries.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/cover_page_logo.png
+INPUT ./images/ambiguous_session_resolution.png
+INPUT ./images/ambiguous_session_resolution.png
+INPUT ./images/ambiguous_session_resolution.png
+INPUT ./images/ambiguous_session_resolution.png
+INPUT ./images/ambiguous_session_resolution.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png
 INPUT ./images/cover_page_logo.png

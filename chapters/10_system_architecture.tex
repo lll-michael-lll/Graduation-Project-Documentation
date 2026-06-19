@@ -370,8 +370,11 @@ An alternative lightweight challenge (\texttt{GET /api/puzzle/challenge}) issues
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: TOTP enrolment flow – QR code generation, first-code activation, and subsequent login verification]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: TOTP Enrolment and Verification Flow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean, professional, high-resolution cybersecurity flow diagram illustrating the TOTP (Time-based One-Time Password) Enrolment and Verification Flow. Left block: "User / Web UI" showing: 1. Request TOTP Setup -> 2. Scan QR Code -> 3. Submit Activation Code -> 4. Subsequent Logins (Enter Password + TOTP Code). Right block: "zGate API Server" showing: 1. Generate TOTP Secret & QR URI -> 2. Verify First Activation Code -> 3. Persist Secret in Store -> 4. Validate TOTP on Login. Style: Modern flat vector design, academic styling, sans-serif fonts, white background, soft blues and greens, crisp and readable labels.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/totp_flow.png}
     \caption{TOTP Multi-Factor Authentication Flow}
     \label{fig:totp-flow}
 \end{figure}
@@ -477,8 +480,11 @@ zGate implements a four-tier administrative access-control model to enforce leas
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Admin tier hierarchy diagram showing permission scopes]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Admin Access-Control Tier Diagram]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean, high-resolution hierarchical diagram depicting the four Admin Access-Control Tiers. Stacked block design with 4 distinct horizontal tiers: Tier 1 (Top, red): "Super Admin" (Full system access, admin management, LLM configuration, tier assignment). Tier 2 (green): "DB Admin" (Manages users, databases, accounts, service accounts, and roles). Tier 3 (blue): "Policy Admin" (Manages rate limits, safety templates, masking/filtering policies, compliance frameworks). Tier 4 (Bottom, gray): "Auditor" (Read-only access to all logs, session history, and configurations). Style: Flat vector design, academic textbook styling, sans-serif fonts, white background.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/admin_tiers.png}
     \caption{Admin Access-Control Tier Hierarchy}
     \label{fig:admin-tiers}
 \end{figure}
@@ -510,8 +516,11 @@ Service accounts provide a first-class authentication primitive for automated pr
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Service account lifecycle – create, issue cert, connect, rotate, suspend, revoke]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Service Account Lifecycle Flow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean, high-resolution lifecycle flow diagram showing the 7 stages of Service Account Lifecycle Management in a circular sequence: 1. Create (Define name & IP allowlist) -> 2. Issue Certificate (Generate key/cert bundle) -> 3. Connect (mTLS session initiation) -> 4. Rotate Secret/Cert (Atomic credential updates) -> 5. Suspend/Activate (Toggle access) -> 6. Revoke (Invalidate cert/tokens) -> 7. Delete (Remove account). Style: Academic textbook presentation style, flat vector design, sans-serif font, white background, soft professional colors.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/service_account_lifecycle.png}
     \caption{Service Account Lifecycle Management}
     \label{fig:service-account-lifecycle}
 \end{figure}
@@ -542,8 +551,11 @@ The CA is initialised on first start and stored in the \texttt{pki\_ca} table (s
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: mTLS flow – client presents certificate, gateway validates, session established]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: mTLS Certificate Lifecycle and Validation Flow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A professional sequence diagram showing the mTLS (mutual TLS) Client Certificate Validation and Session Establishment flow. Participants: Client, Gateway Proxy, Internal Certificate Authority (CA). Flow: 1. Client sends TLS Client Hello with Certificate. 2. Proxy validates Certificate against Internal CA (signature verification, expiration check). 3. Proxy checks Revocation Cache (fingerprint lookup). 4. Connection established and mapped to Client Identity principal. Style: Academic sequence diagram, flat design, clean lines, sans-serif font, white background, professional blue and gray color palette.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/mtls_cert_lifecycle.png}
     \caption{mTLS Client Certificate Lifecycle}
     \label{fig:mtls-cert-lifecycle}
 \end{figure}
@@ -691,7 +703,7 @@ Figure~\ref{fig:query-interception} illustrates the complete query processing pi
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\textwidth]{images/images for doc/5.2 query interception and processing.png}
+    \includegraphics[height=0.72\textheight,keepaspectratio]{images/images for doc/5.2 query interception and processing.png}
     \caption{Query Interception and Processing Pipeline}
     \label{fig:query-interception}
 \end{figure}
@@ -758,8 +770,11 @@ Rules are evaluated using an AST-aware SQL parser, enabling table- and column-le
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Safety template evaluation flow – rule matching, condition logic, exception evaluation]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Safety Template Evaluation Flow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean, high-resolution flowchart representing the Safety Template Rule Evaluation process for incoming database queries. Flow: Input: Incoming SQL Query -> Step 1: Parse Query (AST-aware SQL parser) -> Step 2: Match Safety Template (per-role rules) -> Step 3: Evaluate Conditions & Exceptions -> Decision/Actions: Block (Return immediate error), Warn (Pause execution, send to pending-reviews), Require WHERE (Block if missing WHERE), Allow (Forward query to database backend). Style: Clean flowchart, flat vector design, academic styling, sans-serif font, white background.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/safety_template_flow.png}
     \caption{Safety Template Rule Evaluation}
     \label{fig:safety-template-flow}
 \end{figure}
@@ -780,8 +795,11 @@ When a safety rule fires with the \texttt{warn} action, execution is suspended a
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Warned query review workflow – user submits, query paused, admin review, approve/deny, result download]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Warned Query Review Workflow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A professional diagram illustrating the Warned Query Admin Review Workflow. User path: Submit Query -> Query Suspended (Pending Status) -> Receive "Awaiting Review" Notice. Admin path: View Notification in Web UI -> Review Query Text & Rule -> Approve (Query Executes, results saved for user download) OR Deny (Query discarded). Style: Modern flat vector design, clean academic styling, sans-serif font, white background, with checkmark (green) and X-mark (red) icons.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/warned_query_workflow.png}
     \caption{Warned Query Admin Review Workflow}
     \label{fig:warned-query-workflow}
 \end{figure}
@@ -833,8 +851,11 @@ AI masking (\texttt{internal/proxy/interceptor/ai\_masking.go}) leverages the co
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: AI column classification pipeline – schema cache → LLM → classification store → interceptor → masked result]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: AI Semantic Column Classification and Masking Pipeline]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean system diagram showing the AI-Powered Semantic Column Masking Pipeline. Pipeline stages: 1. Schema Cache Worker scans target databases -> 2. Submits column names/types to LLM Classifier -> 3. LLM returns semantic types (e.g., SSN, Email, Phone, CreditCard) -> 4. Classifications stored in database -> 5. Query Interceptor resolves classification at runtime -> 6. Applies masking strategy to output rows. Style: Flat vector design, sans-serif typography, clean layout, academic textbook style, white background.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/ai_masking_pipeline.png}
     \caption{AI-Powered Semantic Column Masking}
     \label{fig:ai-masking-pipeline}
 \end{figure}
@@ -934,8 +955,11 @@ zGate ships with six built-in regulatory compliance frameworks that automaticall
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Compliance framework application flow – select framework, conflict check, apply to databases, templates created]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Compliance Framework Application Flow]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A clean, professional workflow diagram illustrating the Regulatory Compliance Framework Application. Steps: 1. Admin selects a Framework (HIPAA, PCI-DSS, SOC 2, GDPR, CCPA, NIST) -> 2. Conflict Check (Checks database for contradicting policies) -> 3. Apply Framework (Creates safety and masking templates) -> 4. Assignment tracked in db. Style: Flat vector illustration, clean lines, professional academic styling, sans-serif typography, white background.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/compliance_flow.png}
     \caption{Regulatory Compliance Framework Application}
     \label{fig:compliance-flow}
 \end{figure}
@@ -977,8 +1001,11 @@ Zara is an intelligent conversational assistant embedded in the WebUI that helps
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: Zara chat interface screenshot showing conversation and proposal confirmation UI]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: Zara AI Chat Assistant Interface]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A premium mockup of the Zara AI Admin Chat Assistant Interface. View: A clean chat widget sidebar on the right of a Web UI dashboard. Chat content: Conversational text bubble from "Zara" saying "I analyzed the anomaly alert. I propose creating a new safety template to block queries to the payroll table. Approve?" with a clean "Approve Proposal" button widget. Style: Web interface mockup, modern flat design, dashboard style, soft glassmorphism, sans-serif fonts, white/light theme.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/zara_chat.png}
     \caption{Zara AI Admin Chat Assistant}
     \label{fig:zara-chat}
 \end{figure}
@@ -1240,8 +1267,11 @@ The TUI (\texttt{zgate tui}) presents a full-screen dashboard with:
 
 \begin{figure}[H]
     \centering
-    % [PLACEHOLDER: CLI TUI screenshot showing main dashboard, session list, and /slash command bar]
-    \fbox{\parbox{0.75\textwidth}{\centering\vspace{1.5cm}\textit{[PLACEHOLDER: CLI Bubble Tea TUI Dashboard]}\vspace{1.5cm}}}
+    % =========================================================================
+    % AI IMAGE GENERATION PROMPT:
+    % A high-resolution terminal interface mockup of the zGate CLI Bubble Tea TUI Dashboard. Content: A retro-modern full-screen terminal interface with a clean dark theme. Top section: "zGate CLI Client" header. Left column: Active session list (e.g., mysql-prod: port 3306, postgres-dev: port 5432). Right column: Accessible databases table. Bottom section: A slash command bar showing `/connect mysql-prod` with status indicators. Style: Clean terminal UI mockup, pixel-perfect layout, sans-serif terminal font, crisp graphics.
+    % =========================================================================
+    \includegraphics[width=0.75\textwidth]{images/cli_tui.png}
     \caption{CLI Bubble Tea TUI Dashboard}
     \label{fig:cli-tui}
 \end{figure}

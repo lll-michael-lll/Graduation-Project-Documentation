@@ -857,12 +857,13 @@ All TDS communication occurs as a sequence of packets, each with a fixed-size he
 
 \paragraph{TDS Packet Header}
 
-\begin{verbatim}
-+--------+--------+--------+--------+--------+--------+--------+--------+
-| Type   | Status | Length          | SPID           | Packet | Window |
-| (1B)   | (1B)   | (2B)             | (2B)           | (1B)   | (1B)   |
-+--------+--------+--------+--------+--------+--------+--------+--------+
-\end{verbatim}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/tds_packet_header.png}
+    \caption{Tabular Data Stream (TDS) Packet Header Structure}
+    \label{fig:tds_packet_header}
+\end{figure}
+
 
 \begin{itemize}
     \item \textbf{Type (1 byte)}:

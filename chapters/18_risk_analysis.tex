@@ -1,180 +1,413 @@
 % !TeX root = ../document_main.tex
 % ============================================================
-% PROJECT RISK MANAGEMENT
+% 18. SECURITY THREAT MODEL
 % ============================================================
 
-\begin{sectionintro}{17}{Project Risk Management}{
+\begin{sectionintro}{17}{Security Threat Model}{
   \begin{itemize}[leftmargin=1.5em]
-    \item Protocol engineering complexity
-    \item Performance and latency optimization
-    \item Security implementation challenges
-    \item Database compatibility issues
-    \item Scope and schedule management
-    \item Team skill development
+    \item Asset Identification and Security Classification
+    \item Trust Boundary Mapping and Threat Actors
+    \item Attack Surface Analysis of zGate Components
+    \item STRIDE Analysis of Core Security Pipelines
+    \item Abuse Case Scenarios and Parser Evasions
+    \item Third-Party Dependency and Infrastructure Risks
+    \item Consolidated Risk Register and Remediation Priorities
   \end{itemize}
 }
-Risk management is critical for engineering complex security systems. This chapter analyzes potential risks including protocol reverse engineering complexity, performance optimization challenges, TLS implementation security, database driver compatibility issues, scope creep, and team skill development. We establish mitigation strategies for each identified risk and define a dynamic monitoring framework to ensure successful delivery.
+This chapter presents a comprehensive security threat model for the zGate Zero Trust database proxy. Using industry-standard security analysis methodologies including STRIDE, trust boundary mapping, and attack surface analysis, we identify and evaluate the security risks across the application, network, infrastructure, and supply chain domains. Based on this analysis, we establish a consolidated risk register and formulate evidence-based recommendations to secure the proxy deployment.
 \end{sectionintro}
 
-\section{Introduction}
-The development of a high-performance, security-critical infrastructure component such as the zGate Database Proxy involves a multitude of complex challenges that extend beyond simple implementation details. Effective risk management is therefore not merely an ancillary activity but a core pillar of our engineering methodology. This chapter provides a comprehensive analysis of the potential risks identified throughout the project lifecycle, categorized into technical, operational, and schedule-based domains. By proactively identifying these risks, establishing their probability and impact, and formulating robust mitigation strategies, the development team aims to minimize uncertainty and ensure the successful delivery of a production-grade Zero Trust solution.
+\section{Introduction and Methodology}
 
-Our risk management framework is dynamic; it is designed to be revisited during each sprint retrospective to ensure that new risks are captured and that the status of existing risks is updated as mitigation strategies are executed.
+The zGate Database Proxy operates as an intercepting gateway within a Zero Trust architecture, serving as the single point of enforcement for access control, query safety, and data masking between client applications and backend database servers. Because the gateway handles raw database credentials, decrypts transport layer security (TLS) connections, and makes real-time access-control decisions, it is a high-value target for adversaries. 
 
-\section{Risk Assessment Methodology}
-
-To quantify and prioritize risks effectively, we have adopted a standard Risk Assessment Matrix approach. This methodology evaluates each identified risk along two primary dimensions:
-
-\begin{enumerate}
-    \item \textbf{Likelihood:} The probability that the risk event will materialize.
-    \item \textbf{Impact:} The severity of the consequences should the risk operationalize.
-\end{enumerate}
-
-Based on these two factors, we classify risks into three tiers:
-\begin{itemize}
-    \item \textbf{Critical Risk:} Requires immediate attention and the development of a detailed contingency plan. These risks have the potential to halt project progress or cause total system failure.
-    \item \textbf{High Risk:} Significant threats that require active monitoring and specific mitigation tasks to be integrated into the development backlog.
-    \item \textbf{Medium/Low Risk:} Risks that are monitored periodically but do not strictly dictate immediate changes to the project roadmap.
+To systematically analyze the security posture of the platform, this chapter conducts a formal threat modeling exercise. The methodology integrates multiple security review frameworks:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Asset-Based Risk Analysis:} Identifying the system's sensitive data, credentials, and cryptographic material, and mapping their security classification and impact.
+    \item \textbf{Trust Boundary Analysis:} Defining the interfaces where data transitions between different levels of administrative control and trust.
+    \item \textbf{STRIDE Threat Categorization:} Evaluating the system against Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege threats.
+    \item \textbf{Abuse Case Scenarios:} Constructing concrete adversary paths based on realistic system configurations and potential logic flaws.
 \end{itemize}
 
-\begin{table}[h]
+The scope of this threat model covers the three primary architectural layers of the platform: the Go-based API and Gateway Server (\texttt{zGate-Server}), the React/Next.js Web UI dashboard (\texttt{zGate-WebUI}), and the Bubble Tea-based Command Line Interface (\texttt{zgate-cli}).
+
+\section{Asset Identification and Classification}
+
+The security of the zGate system depends on the protection of credentials, cryptographic keys, metadata, and user session states. Table~\ref{tab:assets} categorizes the core assets identified in the codebase, defining their confidentiality requirements and the impact of a potential compromise.
+
+\begin{table}[H]
 \centering
-\renewcommand{\arraystretch}{1.5}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Risk Description} & \textbf{Likelihood} & \textbf{Impact} & \textbf{Risk Level} \\
-\hline
-Reverse Engineering Complexity (Undocumented Protocols) & High & High & \textbf{Critical} \\
-\hline
-Performance/Latency Overhead Exceeding Budget & Medium & High & \textbf{High} \\
-\hline
-Security Vulnerabilities in Proxy Implementation & Low & Critical & \textbf{High} \\
-\hline
-Third-Party SSO Integration Incompatibility & Medium & Medium & \textbf{Medium} \\
-\hline
-Scope Creep (Feature Overload) & High & Medium & \textbf{High} \\
-\hline
-Team Skill Acquisition Curve (Go/Systems Programming) & Low & High & \textbf{Medium} \\
-\hline
-\end{tabular}%
-}
-\caption{Detailed Project Risk Assessment Matrix}
-\label{tab:risk-matrix}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{l p{3.8cm} l p{2.2cm} X}
+\toprule
+\textbf{Asset ID} & \textbf{Asset Name} & \textbf{Classification} & \textbf{Primary Location} & \textbf{Impact of Compromise} \\
+\midrule
+\textbf{AST-01} & Vault AppRole SecretID & Restricted & Env / Deployment & Compromise of all database client private keys. \\
+\textbf{AST-02} & Target Database Credentials & Confidential & Vault / Local DB & Direct, unproxied access to backend databases. \\
+\textbf{AST-03} & JWT Signing Secret & Restricted & Environment & Token forgery, administrative takeover. \\
+\textbf{AST-04} & Internal CA Private Key & Restricted & Local DB (AES-GCM) & Rogue certificate minting, mTLS bypass. \\
+\textbf{AST-05} & Active Session Tickets & Confidential & In-Memory Store & Temporary connection hijacking on proxy ports. \\
+\textbf{AST-06} & Audit Logs and Alert Data & Confidential & Local Disk / DB & Covert malicious actions, compliance failure. \\
+\textbf{AST-07} & Schema and Column Cache & Internal & In-Memory Cache & Leakage of database table layouts. \\
+\bottomrule
+\end{tabularx}
+\caption{Asset Classification and Impact Matrix}
+\label{tab:assets}
 \end{table}
 
-\section{Technical Risks Analysis}
+\subsection{Asset Details and Security Requirements}
 
-Technical risks represent the most significant threat to the project's success, primarily due to the low-level nature of the work involving binary protocols and network systems.
+\subsubsection{AST-01: Vault AppRole SecretID}
+The AppRole credentials (\texttt{VAULT\_ROLE\_ID} and \texttt{VAULT\_SECRET\_ID}) allow the API server to authenticate against HashiCorp Vault. This asset requires the highest level of protection since Vault stores the client private keys (\texttt{client\_key} field in KV-v2 path \texttt{secret/data/zgate/connections}) used by the proxy to dial backend databases in mutual TLS (mTLS) mode.
 
-\subsection{Protocol Reverse Engineering and Parsing Complexity}
-\textbf{Description:}
-The core function of zGate relies on the ability to flawlessly intercept, parse, and reconstruct binary wire protocols (MySQL Client/Server Protocol and Microsoft SQL Server TDS). These protocols are often proprietary (in the case of TDS) or complexly versioned. There is a significant risk that undocumented behaviors, specific flag combinations, or version discrepancies could cause the proxy to misinterpret packet boundaries.
+\subsubsection{AST-02: Target Database Credentials}
+These are the usernames and passwords used to log in to target database servers (MySQL, PostgreSQL, MSSQL). They are stored either in HashiCorp Vault or encrypted within the local database store. If leaked, an attacker can bypass zGate entirely and connect directly to the database backends.
 
-\textbf{Potential Consequences:}
-\begin{itemize}
-    \item \textbf{Data Corruption:} Incorrectly reconstructing a packet could corrupt the SQL query or the result set returning to the client.
-    \item \textbf{Connection Instability:} If the proxy fails to respond to a "Heartbeat" or "Ping" packet correctly due to parsing errors, the database client may terminate the connection.
-    \item \textbf{Vendor Lock-in:} The implementation might inadvertently become too coupled to a specific version of MySQL or MSSQL, failing when the database server is patched or upgraded.
+\subsubsection{AST-03: JWT Signing Secret}
+The key (\texttt{ZGATE\_JWT\_SECRET}) is used by the Go authentication server to sign access tokens (valid for 5 minutes) and refresh tokens (valid for 1 hour). If compromised, an attacker can forge administratively privileged JWTs, bypassing both Web UI and CLI authentication checks.
+
+\subsubsection{AST-04: Internal CA Private Key}
+The private key of the internal Certificate Authority (CA) is generated at first boot (or loaded from the \texttt{pki\_ca} table). It is stored in the database encrypted with AES-256-GCM. A compromise of this key allows an attacker to generate valid client certificates, rendering mTLS authentication on proxy listeners ineffective.
+
+\subsubsection{AST-05: Active Session Tickets}
+During user login or CLI connect, the API generates a cryptographically random, base64url-encoded 32-byte single-use ticket stored in the \texttt{TicketStore} with a 60-second TTL. This ticket is used as the proxy password during the wire-protocol handshake.
+
+\subsubsection{AST-06: Audit Logs and Alert Data}
+Audit logs (stored in \texttt{./logs} and the database) record all queries executed through the proxy, including masked values, execution times, and target schemas. These must be tamper-resistant to prevent malicious operators from erasing their trails.
+
+\section{Trust Boundary and Data Flow Analysis}
+
+Data flow within the zGate environment crosses several distinct zones of security control. Figure~\ref{fig:trust-boundaries} illustrates these trust boundaries.
+
+\begin{figure}[H]
+\centering
+% =========================================================================
+% AI IMAGE GENERATION PROMPT:
+% A professional, clean, high-resolution system architecture and threat modeling diagram. 
+% The diagram is divided vertically into two main zones separated by a prominent red dashed line labeled "Trust Boundary (TB-01 / TB-02)".
+% - Left Side: "Untrusted Zone (Clients)" with a light red/pink background. Contains two distinct clean boxes: "zgate-cli (Bubble Tea TUI)" and "Web UI (React/Next.js)".
+% - Right Side: "Trusted Zone (Proxy & Infrastructure)" with a light green background. Contains four nodes: "API / HTTPS Server (Port 8080)", "Proxy Server (Ports 3306, 5432, 1433)", "Config Store (MySQL)", and "KeyVault (Vault API)".
+% - Data flows are shown as labeled directional arrows:
+%   * "DF-01: HTTPS Auth" (blue arrow) from "Web UI" and "zgate-cli" to "API Server".
+%   * "DF-03: TCP Tunnel" (blue arrow) from "zgate-cli" to "Proxy Server".
+%   * "SQL" (double black arrow) from "API Server" and "Proxy Server" to "Config Store".
+%   * "Leases" (double black arrow) from "Proxy Server" to "KeyVault".
+%   * "Ticket" (double black arrow) from "API Server" to "Proxy Server".
+% Style: Flat vector illustration, clean lines, professional academic styling, sans-serif typography, high legibility, white background, no clutter.
+% =========================================================================
+% Once the image is generated and saved as images/system_trust_boundaries.png,
+% uncomment the line below and comment out the TikZ placeholder box.
+%
+ \includegraphics[width=0.95\textwidth]{images/system_trust_boundaries.png}
+
+\caption{System Trust Boundaries and Primary Data Flows}
+\label{fig:trust-boundaries}
+\end{figure}
+
+\subsection{Defined Trust Boundaries}
+
+\subsubsection{TB-01: Client-to-API Port Boundary}
+This boundary separates untrusted client agents (browsers running Next.js dashboards, headless CLI requests) from the API/HTTPS server on port 8080. Data passing through this boundary must go through rate limiting, anti-bot puzzle challenges, and JWT authentication middleware.
+
+\subsubsection{TB-02: Client-to-Proxy Port Boundary}
+This boundary separates database client applications (such as DBeaver, JDBC drivers, or command-line clients) from the protocol-aware proxy listeners. The client must present a valid 32-byte single-use ticket or complete an mTLS handshake.
+
+\subsubsection{TB-03: Server-to-Vault Boundary}
+This boundary separates the zGate API server process from HashiCorp Vault. The server authenticates using AppRole. This boundary is critical because it controls access to client private keys used for target database connection routing.
+
+\subsubsection{TB-04: Server-to-Target Database Boundary}
+This boundary handles communication from the zGate proxy dispatcher to target databases. If target databases do not enforce mTLS or certificate verification, credentials may be exposed on the wire inside the internal network.
+
+\subsection{Data Flow Security Classifications}
+
+The primary security-critical data flows are defined and classified below:
+
+\subsubsection{DF-01: User Authentication Flow}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Path:} Client $\rightarrow$ API Server (\texttt{POST /api/login} or \texttt{/api/auth/oidc/exchange}).
+    \item \textbf{Data Transmitted:} Username, password, TOTP code, or Keycloak identity token.
+    \item \textbf{Classification:} \textbf{Restricted}.
+    \item \textbf{Security Control:} Enforced TLS (HTTPS), rate limits per IP, and anti-bot validation (ALTCHA proof-of-work or arithmetic puzzle challenge).
 \end{itemize}
 
-\textbf{Mitigation Strategy:}
-To mitigate this critical risk, the team is employing a "Defense in Depth" strategy for parsing:
-\begin{itemize}
-    \item \textbf{Granular Unit Testing:} We implement unit tests for every packet type using captured bytes from real production traffic (using Wireshark) to ensure byte-for-byte accuracy.
-    \item \textbf{Fuzz Testing:} We plan to use Go's fuzzing capabilities to send random garbage data to the parsers to ensure they handle errors gracefully without crashing the entire service.
-    \item \textbf{Opaque Forwarding Fallback:} For parts of the protocol that are not strictly relevant to security policy (e.g., obscure handshake flags), the proxy is designed to forward bytes transparently rather than attempting to parse and re-serialize them, reducing the surface area for errors.
+\subsubsection{DF-02: Session Connection and Ticket Minting Flow}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Path:} CLI $\rightarrow$ API Server (\texttt{POST /api/sessions}).
+    \item \textbf{Data Transmitted:} Database target ID, request parameters. Returns a minted 32-byte session ticket and dynamic TCP port.
+    \item \textbf{Classification:} \textbf{Confidential}.
+    \item \textbf{Security Control:} JWT bearer token verification, role-based access control (RBAC) permission resolution, and database status check.
 \end{itemize}
 
-\subsection{Performance and Latency Overhead}
-\textbf{Description:}
-By introducing a "Man-in-the-Middle" proxy between the application and the database, we inevitably introduce network latency. This includes the time taken for TCP socket reads, context switching in the Operating System, memory allocation for packet buffers, and the logic execution time of the Policy Engine.
-
-\textbf{Potential Consequences:}
-If the added latency exceeds a threshold of approximately 10-20ms per query, the solution may be deemed unusable for high-frequency trading platforms or real-time applications, leading to rejection by stakeholders.
-
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Zero-Copy Networking:} We leverage Go's \texttt{io.Reader} and \texttt{io.Writer} interfaces to stream data efficiently, aiming to minimize user-space memory copying.
-    \item \textbf{Concurrency Model:} Utilizing Go's lightweight goroutines ensures that handling thousands of concurrent connections does not incur the heavy memory and CPU context-switching penalties associated with traditional thread-per-connection models (like Java or C++ threads).
-    \item \textbf{Profiling and Benchmarking:} Regular performance profiling using `pprof` is conducted during the development cycle (not just at the end) to identify "hot paths" in the code and optimize them immediately.
+\subsubsection{DF-03: Proxy Connection and Query Dispatch Flow}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Path:} Database Client $\rightarrow$ Proxy Port $\rightarrow$ Target Database.
+    \item \textbf{Data Transmitted:} Raw database protocol handshake, database queries, and row-structured results.
+    \item \textbf{Classification:} \textbf{Confidential}.
+    \item \textbf{Security Control:} Ticket validation or mTLS certificate check, before-query safety rules (safety templates), column masking, and after-query anomaly scoring.
 \end{itemize}
 
-\subsection{TLS and Cryptographic Handshake Failures}
-\textbf{Description:}
-As a security proxy, zGate must terminate TLS connections from clients and establish new TLS connections to backend databases. This introduces a "Man-in-the-Middle" architecture where certificate validation, cipher suite negotiation, and protocol versions (TLS 1.2 vs 1.3) must be handled perfectly. The risk is that strict client drivers may reject the proxy's self-signed or internal CA-signed certificates, or that the proxy fails to negotiate a common cipher suite with legacy databases.
+\section{Attack Surface Analysis}
 
-\textbf{Potential Consequences:}
-\begin{itemize}
-    \item \textbf{Connectivity Blockers:} Modern drivers (e.g., latest JDBC) often default to "Strict" SSL modes. If the proxy's TLS implementation is flawed, these clients will refuse to connect entirely.
-    \item \textbf{Security Degradation:} A misconfiguration could inadvertently downgrade connections to plaintext or weak ciphers, violating the very Zero Trust principles the project aims to uphold.
+The system exposes multiple entry points across its network listeners and deployment configurations, which can be grouped into distinct attack surfaces:
+
+\subsection{External Network Attack Surface}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{HTTPS REST API (Port 8080):} Hosts login and administration endpoints. Vulnerabilities like session hijacking, CSRF, and broken object-level authorization (BOLA) must be controlled here.
+    \item \textbf{Database Proxy Listeners (Ports 3306, 5432, 1433):} Binds public TCP ports to accept MySQL, PostgreSQL, and MSSQL connections. Exposed to protocol fuzzing and denial-of-service (Slowloris) attacks during the initial connection handshake.
 \end{itemize}
 
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Standard Library Usage:} We rely strictly on Go's `crypto/tls` standard library rather than rolling custom crypto code, ensuring compliance with modern standards.
-    \item \textbf{Configurable CA Trust:} The proxy is designed to allow easy injection of root CA certificates into client trust stores (via the CLI) to facilitate smooth "internal" certificate validation.
+\subsection{Administrative Attack Surface}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Admin Tier Control Endpoints:} Bounded by administrative role tiers (\texttt{db\_admin}, \texttt{policy\_admin}, \texttt{auditor}, and \texttt{super}). Enforced via \texttt{tierMiddleware} in the server. A failure in this middleware would expose administrative functions, such as user modification or safety template disabling, to regular users.
+    \item \textbf{MFA/TOTP Reset Endpoint:} The internal TOTP reset path (\texttt{/api/internal/totp/reset}) uses a shared secret for authentication. If this secret is exposed, an attacker can disable MFA for any administrative account.
 \end{itemize}
 
-\subsection{Database Driver Compatibility}
-\textbf{Description:}
-Not all database clients are created equal. While the `mysql` CLI might behave one way, the MySQL driver for Python (PyMySQL), Java (Connector/J), or Go (go-sql-driver) may use slightly different subsets of the wire protocol or rely on specific "undocumented" behavior (e.g., specific expecting order of handshake packets).
-
-\textbf{Potential Consequences:}
-The proxy might work perfectly for one set of tools but fail catastrophically for another, severely limiting its adoption.
-
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Broad Integration Testing:} Our test suite includes "Smoke Tests" that connect to the proxy using a variety of real-world drivers (Python, Node.js, Java) to verify cross-platform compatibility.
+\subsection{Infrastructure and Supply Chain Surface}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Go Dependency Graph:} The server uses third-party libraries for JWT handling (\texttt{golang-jwt/jwt/v5}), OIDC validation (\texttt{go-oidc/v3}), and MySQL protocol parsing (\texttt{go-mysql}). Security flaws in these packages could lead to remote code execution (RCE) or denial of service.
+    \item \textbf{Docker Deployment Environment:} The deployment relies on environment files (\texttt{.env}) to pass sensitive parameters like database root passwords, JWT secrets, and Vault role secrets. Insecure permissions on these files could expose credentials to other users on the host system.
 \end{itemize}
 
-\subsection{SQL Parsing and AST Limitations}
-\textbf{Description:}
-To enforce fine-grained policies (e.g., "User X cannot query Table Y"), zGate must parse incoming SQL strings into an Abstract Syntax Tree (AST). SQL is a complex, context-sensitive language with many proprietary extensions. There is a risk that our parser implementation may fail to understand complex nested queries, CTEs (Common Table Expressions), or stored procedure calls.
+\section{STRIDE Analysis of Core Components}
 
-\textbf{Potential Consequences:}
-\begin{itemize}
-    \item \textbf{False Positives/Negatives:} The Policy Engine might block a legitimate query because it poorly understands the syntax, or worse, allow a malicious query because it failed to detect a forbidden object access hidden in a subquery.
+This section evaluates the primary functional components of the zGate system against the STRIDE threat model categories.
+
+\subsection{API Server and Authentication Engine}
+
+The API server manages user credentials, OAuth/OIDC validation, and TOTP checks.
+
+\subsubsection{S --- Spoofing: JWT Signature Forgery}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker creates a signed JWT with administrative claims by exploiting a weak or default \texttt{ZGATE\_JWT\_SECRET}.
+    \item \textbf{Attack Scenario:} If the system is deployed using a default development secret (e.g., \texttt{"secret"}), the attacker can sign a token with \texttt{"is\_admin": true} and \texttt{"tier": "super"} and send it to administrative API routes.
+    \item \textbf{Mitigation:} The system must require a strong secret key at startup, enforcing a minimum entropy check during initialization in \texttt{auth.Init()}.
 \end{itemize}
 
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Library Adoption:} Instead of writing a parser from scratch, we utilize battle-tested open-source SQL parsers (like `pingcap/tidb/parser` for MySQL) that are already used in production databases. This significantly reduces the risk of parsing errors compared to a home-grown solution.
+\subsubsection{T --- Tampering: TOTP Code Replay}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker intercepts a valid TOTP token and replays it within the 30-second validity window.
+    \item \textbf{Attack Scenario:} The attacker captures the user's password and a active TOTP code via a proxy or network tap, then quickly submits a duplicate login request.
+    \item \textbf{Mitigation:} Implement a short-lived cache in the auth server to track used TOTP codes, rejecting duplicate submissions within the current time step.
 \end{itemize}
 
-\section{Operational and Project Management Risks}
-
-Beyond the technical challenges, the project faces operational risks related to scope, resources, and timeline.
-
-\subsection{Scope Creep and Feature Bloat}
-\textbf{Description:}
-The domain of Zero Trust security is vast. There is a constant temptation to add "just one more feature," such as AI-based anomaly detection, support for PostgreSQL/Oracle/MongoDB, or complex User Behavior Analytics (UBA).
-
-\textbf{Potential Consequences:}
-Attempting to implement too many features simultaneously risks diluting the team's focus, resulting in a system where many features are "half-done" but nothing is production-ready. This constitutes a classic software engineering failure mode known as "Gold Plating."
-
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Strict Prioritization:} We strictly adhere to the MoSCoW method (Must have, Should have, Could have, Won't have). Milestone 3 (POC) and Milestone 4 (SSO) are "Must Haves."
-    \item \textbf{Agile Iterations:} The two-week sprint cycle forces the team to deliver shippable increments. If a feature cannot be completed in a sprint, it is re-evaluated.
-    \item \textbf{Supervisor Alignment:} Regular syncs with project supervisors ensure that the scope remains realistic and aligned with academic requirements rather than commercial ambitions.
+\subsubsection{R --- Repudiation: Administrative Activity Deletion}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} A compromised database administrator deletes system events or audit log rows to cover their tracks.
+    \item \textbf{Attack Scenario:} A compromised account with the \texttt{db\_admin} tier runs direct delete queries against the \texttt{system\_events} table.
+    \item \textbf{Mitigation:} Write system logs to a local append-only file system (\texttt{./logs}) and configure forwarding to an external, read-only log management system.
 \end{itemize}
 
-\subsection{Team Skill Gaps and Technology Adoption}
-\textbf{Description:}
-The technology stack for zGate includes Systems Programming (Go), Frontend Development (React/TypeScript), and Cryptography concepts. It is rare for all team members to be equally proficient in all these areas.
-
-\textbf{Potential Consequences:}
-A "knowledge silo" effect may occur where only one person understands the core proxy code, creating a "Bus Factor" of 1. If that team member becomes unavailable, the project stalls.
-
-\textbf{Mitigation Strategy:}
-\begin{itemize}
-    \item \textbf{Code Reviews:} All pull requests require review by at least one other team member. This forces knowledge sharing and ensures that code is readable and maintainable by others.
-    \item \textbf{Pair Programming:} For the most complex components (like the TDS protocol implementations), we utilize pair programming to solve problems collaboratively and level up skills in real-time.
-    \item \textbf{Dedicated Research Phase:} Milestone 2 was explicitly dedicated to skill acquisition, ensuring the team had a foundation before writing production code.
+\subsubsection{I --- Information Disclosure: Cleartext Password Exposure}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} User or administrator passwords are exposed in cleartext within application logs.
+    \item \textbf{Attack Scenario:} The login handler encounters an error and prints the incoming request structure (including the password field) to the logger.
+    \item \textbf{Mitigation:} Explicitly sanitize the request body before logging, and verify that fields like \texttt{Password} are never passed to log wrappers.
 \end{itemize}
 
-\section{Contingency Planning}
-Despite rigorous planning, unforeseen issues ("Unknown Unknowns") can arise. To account for this, the roadmap for Term 2 includes a specific "stabilization buffer" of two weeks around Milestone 6.
+\subsubsection{E --- Elevation of Privilege: Administrative Tier Escalation}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An administrator with a lower tier escalates their access to a higher tier.
+    \item \textbf{Attack Scenario:} An administrator with the \texttt{db\_admin} tier submits a request to \texttt{PATCH /api/admin/admins/\{username\}/tier} to promote themselves to \texttt{super}.
+    \item \textbf{Mitigation:} The \texttt{SetAdminTier} function in \texttt{AdminService} validates that only a user who already holds the \texttt{super} tier can perform tier promotions.
+\end{itemize}
 
-If critical technical blockers arise that jeopardize the final delivery date—for example, if the MSSQL encryption handshake proves resistant to interception—the team has agreed on a "Scope Reduction Protocol." Under this protocol, we would pivot to focusing exclusively on perfecting the MySQL implementation to a commercial standard, rather than delivering a flawed multi-database support. This ensures that the final deliverable, while potentially smaller in scope, remains high-quality and fully functional.
+\subsection{Proxy Connection Manager and Dispatcher}
+
+The proxy layer processes database protocol packets, parses SQL queries, and applies security policies.
+
+\subsubsection{S --- Spoofing: Connection Ticket Hijacking}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker intercepts a valid connection ticket and connects to the proxy port before the legitimate user.
+    \item \textbf{Attack Scenario:} The attacker steals a dynamic ticket returned by \texttt{POST /api/sessions} and uses it to connect to the allocated proxy listener.
+    \item \textbf{Mitigation:} Dynamic tickets must be single-use (consumed immediately on connection) and have a short TTL (e.g., 60 seconds). Additionally, bind tickets to the source IP address that requested the session.
+\end{itemize}
+
+\subsubsection{T --- Tampering: Safety Parser Evasion}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker bypasses safety templates by using nested SQL, CTEs, or proprietary database syntax.
+    \item \textbf{Attack Scenario:} An attacker bypasses a block rule on the \texttt{employees} table by writing a nested query or utilizing a database-specific feature like CTEs.
+    \item \textbf{Mitigation:} Use an AST-aware SQL parser (\texttt{pingcap/tidb/parser}) to parse queries before evaluation, rather than relying on regex matchers.
+\end{itemize}
+
+\subsubsection{I --- Information Disclosure: AI Classifier Masking Failures}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} Sensitive data (like PII) is exposed in cleartext because the AI column classifier fails or times out.
+    \item \textbf{Attack Scenario:} The HTTP call to the AI classification service times out, causing the proxy to default to an unmasked state for unknown columns.
+    \item \textbf{Mitigation:} Enforce a fail-safe policy. If the classifier is unavailable, columns matching sensitive name patterns must default to masked.
+\end{itemize}
+
+\subsubsection{D --- Denial of Service: Handshake Connection Exhaustion (Slowloris)}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker opens many TCP connections on the proxy ports and does not send handshake data, exhausting system file descriptors.
+    \item \textbf{Attack Scenario:} An attacker executes a Slowloris-style attack against the proxy listener, causing new client connections to hang.
+    \item \textbf{Mitigation:} Implement a read timeout on the initial connection handshake. In \texttt{PeekRouting}, connections that fail to send database protocol data within 10 seconds must be closed.
+\end{itemize}
+
+\subsection{Internal PKI and CA Module}
+
+The PKI engine manages client certificates used for mTLS.
+
+\subsubsection{S --- Spoofing: CA Private Key Leakage}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An attacker extracts the CA private key and signs rogue client certificates.
+    \item \textbf{Attack Scenario:} An attacker obtains read access to the database configuration store, reads the encrypted CA row, and decrypts it by finding the master key in the environment variables.
+    \item \textbf{Mitigation:} The master key used to decrypt the CA key must be stored securely (e.g., in a secret manager like Vault) rather than a plaintext environment file.
+\end{itemize}
+
+\subsubsection{T --- Tampering: Stale Revocation Cache}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Threat Description:} An administrator revokes a certificate, but the user continues to connect because the proxy uses a cached revocation state.
+    \item \textbf{Attack Scenario:} An admin revokes a user certificate via the API, but the active proxy sessions continue because the revocation cache TTL has not expired.
+    \item \textbf{Mitigation:} When a certificate is revoked, trigger a direct callback to the proxy manager to terminate all active sessions associated with that certificate's fingerprint.
+\end{itemize}
+
+\section{Abuse Case Analysis}
+
+This section describes realistic attack scenarios targeting potential weaknesses in the design of the zGate system.
+
+\subsection{Abuse Case A: Lateral Movement via Ambiguous Database Session Hijacking}
+\begin{figure}[H]
+\centering
+% =========================================================================
+% AI IMAGE GENERATION PROMPT:
+% A professional cybersecurity threat flow diagram showing an adversary path for ambiguous session resolution.
+% - Left Side: A node labeled "Attacker (Compromised Client)" with a soft red fill.
+% - Center: A node labeled "zGate Proxy (Ambiguous Resolver)" with a soft blue fill.
+% - Top-Right: A database cylinder icon labeled "Database A (Low-Privilege)" with a soft green fill.
+% - Bottom-Right: A database cylinder icon labeled "Database B (High-Privilege)" with a soft red fill.
+% - Connectors:
+%   * A solid black arrow labeled "1. Connects with SA Ticket" pointing from the Attacker to the zGate Proxy.
+%   * A dashed blue arrow labeled "2. Normal Route" pointing from the zGate Proxy to Database A.
+%   * A solid bold red arrow labeled "3. Hijacked Route" pointing from the zGate Proxy to Database B.
+% Style: Flat design, vector icons, clean flow diagram, sans-serif font, academic textbook presentation style, white background, crisp high-resolution layout.
+% =========================================================================
+% Once the image is generated and saved as images/ambiguous_session_resolution.png,
+% uncomment the line below and comment out the TikZ placeholder box.
+%
+ \includegraphics[width=0.8\textwidth]{images/ambiguous_session_resolution.png}
+
+\caption{Adversary path for ambiguous session resolution}
+\label{fig:abuse-session}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Context:} A service account is configured to access two databases: \texttt{db\_prod\_billing} (Restricted) and \texttt{db\_dev\_sandbox} (Internal). The service account has active sessions open for both.
+    \item \textbf{Attack Path:}
+    \begin{enumerate}
+        \item The attacker gains access to the service account client credentials on a developer machine.
+        \item The attacker attempts a connection to the proxy port. Since the service account holds active sessions for both databases, a naive username-only resolution in the proxy manager might non-deterministically select either database connection.
+        \item By repeatedly connecting, the attacker eventually gets routed to \texttt{db\_prod\_billing} despite only intending to access the sandbox database.
+    \end{enumerate}
+    \item \textbf{Remediation:} The resolution logic in \texttt{ResolveUniqueDatabaseForUser} must check the target database name during the connection handshake. If a user has multiple active sessions, connection requests without a matching database target name must be rejected.
+\end{itemize}
+
+\subsection{Abuse Case B: SQL Parser Evasion using Dialect-Specific CTE Tricks}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Context:} The safety templates block write access to the \texttt{salary\_history} table.
+    \item \textbf{Attack Path:}
+    \begin{enumerate}
+        \item The attacker drafts a write statement nested inside a CTE structure:
+        \begin{verbatim}
+        WITH malicious_cte AS (
+            UPDATE salary_history SET salary = 999999 WHERE user_id = 42
+            RETURNING 1
+        ) SELECT 1;
+        \end{verbatim}
+        \item The proxy uses a general parser that does not correctly parse database-specific CTE write actions, classifying the query as a read-only \texttt{SELECT}.
+        \item The query is forwarded to the backend PostgreSQL database, which supports updates inside CTEs, executing the unauthorized change.
+    \end{enumerate}
+    \item \textbf{Remediation:} Configure the query analyzer to enforce strict SQL dialect validation matching the target database type. Any query containing syntax structures not recognized by the AST parser must be blocked.
+\end{itemize}
+
+\subsection{Abuse Case C: Keycloak-to-DB Out-of-Sync Administrative Lockout}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Context:} An administrator is suspended in Keycloak due to suspected credential compromise.
+    \item \textbf{Attack Path:}
+    \begin{enumerate}
+        \item The administrator's account is deactivated in Keycloak.
+        \item A background sync job fails (e.g., due to a temporary network issue, recorded as a \texttt{keycloakSyncFailed} system event).
+        \item The administrator's session and refresh tokens remain valid on the local zGate server for their remaining lifetime.
+        \item The attacker uses the compromised administrator's active session to access the admin dashboard and modify database permissions before the local session expires.
+    \end{enumerate}
+    \item \textbf{Remediation:} The Web UI and API server must perform real-time verification of the OIDC token state with Keycloak for high-privilege operations, rather than relying solely on local JWT lifetime checks.
+\end{itemize}
+
+\section{Third-Party and Dependency Risk Analysis}
+
+The zGate software stack depends on external libraries to manage security features and protocol formatting. Table~\ref{tab:deps} lists key dependencies and evaluates their security implications.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{l l X X}
+\toprule
+\textbf{Dependency} & \textbf{Usage Zone} & \textbf{Identified Risk} & \textbf{Remediation / Control} \\
+\midrule
+\texttt{golang-jwt/jwt/v5} & Auth / Token verification & Key confusion, algorithm downgrade vulnerabilities. & Restrict allowed signing methods explicitly to HMAC-SHA256 in verification checks. \\
+\texttt{go-oidc/v3} & SSO / Keycloak integration & JWKS signature evasion, invalid claim extraction. & Verify issuer matches the public identity domain; use custom client validations. \\
+\texttt{go-mysql} & Proxy / Handshake parsing & Buffer overflow or panic on malformed packets. & Implement input validation in parsing blocks; isolate listeners with strict OS limits. \\
+\texttt{hashicorp/vault/api} & Key Vault access & Token renewal failure, SecretID exposure in deployment. & Use AppRole token self-renewal with short lifetimes; restrict read permissions to the proxy user. \\
+\bottomrule
+\end{tabularx}
+\caption{Third-Party Dependency Risks}
+\label{tab:deps}
+\end{table}
+
+\section{Consolidated Risk Register}
+
+Table~\ref{tab:risk-register} lists the identified threats, sorted by overall risk level.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{l p{3.2cm} c c c X}
+\toprule
+\textbf{ID} & \textbf{Threat Name} & \textbf{Likelihood} & \textbf{Impact} & \textbf{Risk Level} & \textbf{Primary Mitigation} \\
+\midrule
+\textbf{THR-01} & CA Private Key Leakage & Low & Critical & \textbf{High} & Encrypt key using AES-GCM; restrict database access. \\
+\textbf{THR-02} & AST Parser Evasion & Medium & High & \textbf{High} & Use AST-aware parsing; block queries with unrecognized syntax. \\
+\textbf{THR-03} & Handshake Slowloris & High & Medium & \textbf{High} & Implement strict connection timeouts in \texttt{PeekRouting}. \\
+\textbf{THR-04} & Admin Tier Escalation & Low & Critical & \textbf{High} & Enforce strict checks in \texttt{SetAdminTier}; validate callers. \\
+\textbf{THR-05} & Stale Certificate Revocation & Medium & High & \textbf{High} & Trigger immediate session termination on cert revocation. \\
+\textbf{THR-06} & Vault AppRole Leakage & Low & High & \textbf{Medium} & Restrict SecretID read access; rotate AppRole credentials. \\
+\textbf{THR-07} & TOTP Token Replay & Medium & Medium & \textbf{Medium} & Implement a one-time validation cache for submitted OTP codes. \\
+\textbf{THR-08} & Cleartext Log Exposure & Low & High & \textbf{Medium} & Sanitize query outputs; implement write-once access controls on logs. \\
+\bottomrule
+\end{tabularx}
+\caption{Consolidated Threat Risk Register}
+\label{tab:risk-register}
+\end{table}
+
+\section{Strategic Security Recommendations}
+
+To improve the security posture of the zGate Database Proxy, the following recommendations are structured by implementation timeline:
+
+\subsection{Immediate Actions (0---30 Days)}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Enforce mTLS in Production:} Set \texttt{ENFORCE\_MTLS=true} in production environments to disable the ticket-based auth fallback, removing the threat of connection ticket interception.
+    \item \textbf{Add TOTP Replay Prevention:} Modify the TOTP login verification code to record the last validated time step for each user, blocking multiple login requests using the same code within a 30-second window.
+    \item \textbf{Verify JWT Secret Entropy:} Enforce a check during server startup in \texttt{auth.Init()} to ensure that the configured JWT secret meets a minimum length (e.g., at least 256 bits).
+\end{enumerate}
+
+\subsection{Short-Term Actions (1---3 Months)}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Implement Handshake Timeouts:} Enforce a strict 10-second timeout on initial packet reads inside the proxy listeners' \texttt{PeekRouting} phase to prevent TCP file descriptor exhaustion from Slowloris attacks.
+    \item \textbf{Monitor Sync Failures:} Configure automated alerts for \texttt{keycloakSyncFailed} events in the \texttt{system\_events} store to notify security administrators if user accounts fail to sync with Keycloak.
+    \item \textbf{Rotate Vault Credentials:} Automate the rotation of HashiCorp Vault AppRole \texttt{SecretID} values using a local configuration agent or cron utility.
+\end{enumerate}
+
+\subsection{Medium-Term Actions (3---6 Months)}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Dialect Validation in AST Parser:} Configure the SQL safety parser to explicitly validate query syntax against the specific database dialect of the target connection, blocking queries with unrecognized syntax.
+    \item \textbf{Implement Certificate Pinning:} Update the CLI client to pin the fingerprint of the server's internal CA, preventing connection intercept attacks.
+    \item \textbf{Centralize Audit Log Delivery:} Configure the logging subsystem to forward proxy audit logs to an external syslog or SIEM endpoint, and restrict local log write access to append-only.
+\end{enumerate}
+
+\subsection{Long-Term Actions (6---12 Months)}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Integrate HSM for CA Key Storage:} Migrate the internal CA private key from the local database configuration store to a hardware security module (HSM) or a Vault Transit secrets engine.
+    \item \textbf{Automated Fuzz Testing:} Integrate database protocol packet fuzzing into the CI/CD pipeline to test the robustness of the custom MySQL and Postgres handshake parsers against malformed input.
+\end{enumerate}
