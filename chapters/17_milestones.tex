@@ -8,15 +8,15 @@
     \item Problem definition and market validation
     \item Technical research and skill acquisition
     \item Proof of concept delivery
-    \item External identity integration
-    \item Observability and production readiness
-    \item Final validation and deployment
+    \item Security hardening, identity integration \& AST parsing
+    \item AI sidecar, observability \& production deployment
+    \item Comprehensive system testing \& compliance documentation
   \end{itemize}
 }
-Milestones structure the development journey into measurable achievements. This chapter outlines six critical milestones from problem definition through final deployment, with the first three completed in Term 1 establishing the proof of concept. We detail the progression from market validation and technical research to external identity integration, observability features, and comprehensive production validation.
+Milestones structure the development journey into measurable achievements. This chapter outlines six critical milestones from problem definition through final compliance documentation, with the first three completed in Term 1 establishing the proof of concept. We detail the progression from market validation and technical research to security hardening, AI sidecar deployment, and comprehensive system testing.
 \end{sectionintro}
 
-The development of zGate is structured around six critical milestones that progressively build the system from foundational research to a production-ready solution. The first three milestones, which have been successfully completed during Term~1, established the architectural core and delivered a functional Proof of Concept (POC). The remaining three milestones, scheduled for Term~2, focus on layering security integrations, governance features, and comprehensive validation.
+The development of zGate is structured around six critical milestones that progressively build the system from foundational research to a production-ready solution. The first three milestones, which have been successfully completed during Term~1, established the architectural core and delivered a functional Proof of Concept (POC). The remaining three milestones focus on security hardening, identity integration, AI sidecar deployments, and comprehensive system validation.
 
 \section{Milestone Roadmap}
 
@@ -120,87 +120,89 @@ Originally scoped to focus solely on connection handling, this milestone was str
 
 %-----------------------------------------------------------
 
-\subsection{Milestone 4: External IAM \& Identity Integration}
-\textbf{Status:} Planned \hfill \textbf{Duration:} January -- February (Term 2)
+\subsection{Milestone 4: Security Hardening, Identity Integration \& AST Parsing}
+\textbf{Status:} $\checkmark$ Completed \hfill \textbf{Duration:} January 1 -- March 14
 
-This milestone bridges the internal token system established in Milestone~3 with external Identity Providers (IdP), enabling enterprise-grade Single Sign-On (SSO) capabilities.
+Brief Description: Harden authentication paths with MFA, PKCE, and OS-native keystores, while transitioning SQL evaluation from basic regex to high-fidelity Abstract Syntax Tree (AST) visitors with multi-level admin controls.
 
 \subsubsection{Objectives}
 \begin{itemize}
-    \item Integrate external Identity Providers for SSO authentication.
-    \item Replace internal authentication with federated identity management.
-    \item Map external identity claims to internal Role-Based Access Control (RBAC) policies.
+    \item Architect standard-compliant secure token management lifecycles and isolate gateway client identity using host-native hardware keyrings.
+    \item Enforce compile-time query evaluation using AST scanning to block malicious structural SQL injection vectors.
+    \item Introduce strict multi-tier administrative permissions for user and server management actions.
 \end{itemize}
 
 \subsubsection{Key Activities}
 \begin{itemize}
-    \item \textbf{Third-Party Integration:} Connect the Admin Dashboard and Proxy to external providers (Google, Okta, Azure AD) to enable SSO workflows.
-    \item \textbf{Authentication Flow:} Implement the OAuth2/OIDC handshake where the interface redirects to the IdP and receives identity tokens.
-    \item \textbf{RBAC Mapping:} Map identity claims from third-party providers to user roles within the zGate policy engine.
+    \item \textbf{Identity Integration:} Explored Keycloak and Auth0 identity providers to design robust Multi-Factor Authentication (MFA) and PKCE workflows.
+    \item \textbf{Credential Abstraction:} Integrated OS-native secure credential abstractions including macOS Keychain, Windows Credential Manager, and Linux Secret Service.
+    \item \textbf{AST Safety Parsing:} Developed the C\# AST Safety Analysis Visitor and dynamic Schema Masking Visitor inside a dedicated parsing assembly.
+    \item \textbf{gRPC Channels:} Built high-speed backend gRPC hosting channels to allow real-time communication between the Go server proxy and the C\# parser.
+    \item \textbf{Admin privilege infrastructure:} Designed and implemented the Multi-Level Admin Privilege infrastructure on the backend and Next.js frontend.
 \end{itemize}
 
-\subsubsection{Expected Deliverables}
+\subsubsection{Deliverables}
 \begin{itemize}
-    \item SSO login capability via ``Sign in with Google/Okta'' or other configured IdPs.
-    \item Removal of hardcoded or internal-only authentication from the POC.
-    \item Comprehensive documentation for IdP configuration.
+    \item \textbf{zGate-CLI:} Go-based command line agent fitted with secure OS keyring bindings, GitHub Actions CI pipelines, and OAuth2 device flows.
+    \item \textbf{zGate-Tsql-Parser:} Complete C\# repository tracking token normalization visitors, safety rules, and gRPC server bootstrappers.
+    \item \textbf{zGate-WebUI:} Multi-tier admin workspaces, live system query telemetry tables, role privilege assigner dialogs, and SSO/PKCE screens.
 \end{itemize}
 
 %-----------------------------------------------------------
 
-\subsection{Milestone 5: Observability \& Production Readiness}
-\textbf{Status:} Planned \hfill \textbf{Duration:} March -- April (Term 2)
+\subsection{Milestone 5: AI Sidecar, Observability \& Production Deployment}
+\textbf{Status:} $\checkmark$ Completed \hfill \textbf{Duration:} March 15 -- May 24
 
-This milestone transforms the initial dashboard into a comprehensive monitoring platform suitable for production deployment.
+Brief Description: Deploy an isolated Python-based machine learning sidecar for anomaly detection and data masking, configure Prometheus/Grafana observability, integrate HashiCorp Vault, and launch containerized Next.js/Caddy environments.
 
 \subsubsection{Objectives}
 \begin{itemize}
-    \item Implement comprehensive metrics visualization and monitoring.
-    \item Establish audit logging for compliance requirements.
-    \item Ensure system robustness under various failure conditions.
+    \item Intercept database logs through machine learning models to identify abnormal runtime query patterns.
+    \item Incorporate automated telemetry systems to monitor core server health metrics.
+    \item Eliminate plaintext configuration profiles by seeding gateway microservices through encrypted secret vaults and orchestration layers.
 \end{itemize}
 
 \subsubsection{Key Activities}
 \begin{itemize}
-    \item \textbf{Metric Visualization:} Populate the dashboard with real-time graphs utilizing connection pooling metrics and system health indicators.
-    \item \textbf{Audit Logging:} Structure session data and access events into a searchable audit trail for compliance and forensic purposes.
-    \item \textbf{Error Handling Polish:} Implement graceful handling of all possible error conditions across the system, ensuring stability under load.
+    \item \textbf{Machine Learning Models:} Built PyTorch Deep Denoising Autoencoders, supervised XGBoost Classifiers, and Multi-Model Stacker scoring pipelines.
+    \item \textbf{PII Redaction Engine:} Engineered AI-based dynamic column classifications, heuristic regex policies, and masking rules to redact PII from database responses.
+    \item \textbf{Observability Integration:} Configured the centralized Prometheus/Grafana Telemetry \& Observability stack for the server engine to track live connection latency.
+    \item \textbf{Vault and Orchestration:} Integrated HashiCorp Vault infrastructure and engineered deployment pipelines using Docker Compose orchestrations with Caddy Edge Reverse Proxies.
+    \item \textbf{WebUI Hash Refactoring:} Refactored WebUI data display layers to strip predictable database IDs, replacing them with custom encrypted GUID structures.
 \end{itemize}
 
-\subsubsection{Expected Deliverables}
+\subsubsection{Deliverables}
 \begin{itemize}
-    \item Production-ready Admin Dashboard with live metrics visualization.
-    \item Searchable audit logs with filtering and export capabilities.
-    \item Comprehensive error handling and graceful degradation.
+    \item \textbf{zGate-AI:} Python service sidecar featuring ML classification pipelines, fingerprint trackers, and an interactive AI chat assistant.
+    \item \textbf{zGate-Deploy:} Production blueprints detailing development and deployment branch environments, custom Caddy rulesets, and Vault setups.
+    \item \textbf{zGate-WebUI:} Production-ready release built with serverless routing rules, custom onboarding walkthrough tours, filtered histories, and Stripe billing engine checkouts.
 \end{itemize}
 
 %-----------------------------------------------------------
 
-\subsection{Milestone 6: Final Validation, Benchmarking \& Delivery}
-\textbf{Status:} Planned \hfill \textbf{Duration:} May -- June (Term 2)
+\subsection{Milestone 6: Comprehensive System Testing \& Compliance Documentation}
+\textbf{Status:} $\checkmark$ Completed \hfill \textbf{Duration:} June 1 -- June 17
 
-The final milestone serves as a comprehensive quality assurance phase to ensure the system meets production standards and is fully documented.
+Brief Description: Formulating formal system threat models, optimizing test suite execution, compiling project coverage matrices, and finalizing graduation project attestation documentation.
 
 \subsubsection{Objectives}
 \begin{itemize}
-    \item Stress-test the system under realistic load conditions.
-    \item Validate security robustness through penetration testing.
-    \item Finalize all documentation and prepare for project handoff.
+    \item Evaluate full cross-workspace component reliability through rigorous unit and integration test strategies.
+    \item Draft centralized threat evaluation models to document edge infrastructure security and resilience.
 \end{itemize}
 
 \subsubsection{Key Activities}
 \begin{itemize}
-    \item \textbf{Performance Benchmarking:} Execute load testing to measure latency overhead introduced by the proxy. Optimize Go code based on profiling results.
-    \item \textbf{Security Auditing:} Conduct internal penetration testing, including SQL injection and bypass attack attempts, to validate the robustness of the Policy Engine.
-    \item \textbf{Final Documentation:} Complete the Administrator's Guide, Developer Handbook, and final academic report.
+    \item \textbf{Testing Workflows:} Formulated extensive unit and integration testing workflows across frontend views and proxy layers.
+    \item \textbf{Code Coverage Analysis:} Verified code execution coverage reports to target unhandled application error boundaries.
+    \item \textbf{Threat Modeling:} Drafted the official graduation project system Threat Model, specifically analyzing Out-Of-Memory (OOM) vectors and Denial of Service (DoS) vulnerability resilience.
+    \item \textbf{Technical Compilation:} Compiled team technical documentation sections, timeline logs, and contribution indexes for final review.
 \end{itemize}
 
-\subsubsection{Expected Deliverables}
+\subsubsection{Deliverables}
 \begin{itemize}
-    \item Final Source Code Release (v1.0).
-    \item Comprehensive Final Project Report.
-    \item Robust Demo Environment ready for final presentation.
-    \item Complete documentation suite (installation guides, API documentation, user manuals).
+    \item \textbf{Documentation:} Completed graduation technical documentation manual featuring Threat Models, structural blueprints, and compliance attestations.
+    \item \textbf{Test Harness:} Complete automated test suites providing robust code coverage execution across all active repositories.
 \end{itemize}
 
 %-----------------------------------------------------------
@@ -213,39 +215,40 @@ Table~\ref{tab:milestone-timeline} presents a consolidated view of all milestone
 \centering
 \caption{Milestone Timeline Summary}
 \label{tab:milestone-timeline}
-\begin{tabular}{|c|l|l|c|}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|l|c|c|}
 \hline
 \textbf{MS} & \textbf{Milestone Name} & \textbf{Timeline} & \textbf{Status} \\
 \hline
 1 & Problem Definition \& Market Validation & Sept 5 -- Oct 15 & $\checkmark$ Completed \\
 2 & Technical Skill Acquisition \& Research & Oct 16 -- Nov 15 & $\checkmark$ Completed \\
 3 & Functional POC \& Core Features & Nov 16 -- Dec 15 & $\checkmark$ Completed \\
-4 & External IAM \& Identity Integration & Jan -- Feb & Planned \\
-5 & Observability \& Production Readiness & Mar -- Apr & Planned \\
-6 & Final Validation \& Delivery & May -- June & Planned \\
+4 & Security Hardening, Identity Integration \& AST Parsing & Jan 1 -- Mar 14 & $\checkmark$ Completed \\
+5 & AI Sidecar, Observability \& Production Deployment & Mar 15 -- May 24 & $\checkmark$ Completed \\
+6 & Comprehensive System Testing \& Compliance Doc & June 1 -- June 17 & $\checkmark$ Completed \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-\section{Term 1 Timeline Chart}
+\section{Timeline Gantt Chart}
 
-Figure~\ref{fig:term1-timeline} illustrates the project timeline for Term~1, depicting the progression from the Planning \& Analysis phase through the Design phase and into the initial Development phase.
+Figure~\ref{fig:project-timeline} illustrates the comprehensive project timeline and Gantt chart, depicting the progression across all development phases of the zGate system.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{images/Term 1 Timeline.jpeg}
-    \caption{Term 1 Project Timeline (September -- December)}
-    \label{fig:term1-timeline}
+    \includegraphics[width=\textwidth]{images/Project_timeline.png}
+    \caption{Project Timeline Gantt Chart}
+    \label{fig:project-timeline}
 \end{figure}
 
-% Note: For Term 2 Gantt chart, consider using the following Mermaid syntax:
+% Note: For Gantt chart, consider using the following Mermaid syntax:
 % gantt
-%     title Term 2 Development Timeline
+%     title Project Timeline
 %     dateFormat  YYYY-MM-DD
 %     section Milestone 4
-%     IAM Integration           :m4, 2025-01-15, 45d
+%     Security Hardening & AST  :m4, 2026-01-01, 73d
 %     section Milestone 5
-%     Observability & Metrics   :m5, after m4, 60d
+%     AI Sidecar & Obs         :m5, 2026-03-15, 70d
 %     section Milestone 6
-%     Testing & Validation      :m6, after m5, 45d
-%     Final Documentation       :doc, after m5, 50d
+%     Testing & Validation      :m6, 2026-06-01, 17d
